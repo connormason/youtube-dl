@@ -38,7 +38,6 @@ class FileDownloader(object):
     continuedl:         Try to continue downloads if possible.
     noprogress:         Do not print the progress bar.
     logtostderr:        Log messages to stderr instead of stdout.
-    consoletitle:       Display progress in console window's titlebar.
     nopart:             Do not use temporary .part files.
     updatetime:         Use the Last-modified header to set output file timestamps.
     test:               Download only first bytes to test the downloader.
@@ -162,9 +161,6 @@ class FileDownloader(object):
     def to_stderr(self, message):
         self.ydl.to_screen(message)
 
-    def to_console_title(self, message):
-        self.ydl.to_console_title(message)
-
     def trouble(self, *args, **kargs):
         self.ydl.trouble(*args, **kargs)
 
@@ -253,7 +249,6 @@ class FileDownloader(object):
             else:
                 clear_line = ('\r\x1b[K' if sys.stderr.isatty() else '\r')
             self.to_screen(clear_line + fullmsg, skip_eol=not is_last_line)
-        self.to_console_title('youtube-dl ' + msg)
 
     def report_progress(self, s):
         if s['status'] == 'finished':

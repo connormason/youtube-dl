@@ -361,7 +361,6 @@ def _real_main(argv=None):
         'playlistrandom': opts.playlist_random,
         'noplaylist': opts.noplaylist,
         'logtostderr': opts.outtmpl == '-',
-        'consoletitle': opts.consoletitle,
         'nopart': opts.nopart,
         'updatetime': opts.updatetime,
         'writedescription': opts.writedescription,

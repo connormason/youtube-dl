@@ -636,10 +636,6 @@ def parseOpts(overrideArguments=None):
         action='store_true', dest='noprogress', default=False,
         help='Do not print progress bar')
     verbosity.add_option(
-        '--console-title',
-        action='store_true', dest='consoletitle', default=False,
-        help='Display progress in console titlebar')
-    verbosity.add_option(
         '-v', '--verbose',
         action='store_true', dest='verbose', default=False,
         help='Print various debugging information')
