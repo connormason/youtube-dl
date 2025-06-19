@@ -20,7 +20,6 @@ from .http import HttpFD
 from .rtmp import RtmpFD
 from .rtsp import RtspFD
 from .ism import IsmFD
-from .niconico import NiconicoDmcFD
 from .external import (
     get_external_downloader,
     FFmpegFD,
