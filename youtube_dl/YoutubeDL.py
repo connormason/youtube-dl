@@ -450,6 +450,13 @@ class YoutubeDL(object):
 
         register_socks_protocols()
 
+    def __enter__(self) -> 'YoutubeDL':
+         return self
+
+    def __exit__(self, *args: Any) -> None:
+        if self.params.get('cookiefile') is not None:
+            self.cookiejar.save(ignore_discard=True, ignore_expires=True)
+
     def warn_if_short_id(self, argv):
         # short YouTube ID starting with dash?
         idxs = [
