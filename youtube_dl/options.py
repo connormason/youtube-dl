@@ -378,10 +378,6 @@ def parseOpts(overrideArguments=None):
         '--ap-password',
         dest='ap_password', metavar='PASSWORD',
         help='Multiple-system operator account password. If this option is left out, youtube-dl will ask interactively.')
-    adobe_pass.add_option(
-        '--ap-list-mso',
-        action='store_true', dest='ap_list_mso', default=False,
-        help='List all supported multiple-system operators')
 
     video_format = optparse.OptionGroup(parser, 'Video Format Options')
     video_format.add_option(
