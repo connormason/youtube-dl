@@ -117,7 +117,6 @@ from .utils import (
 )
 from .cache import Cache
 from .extractor import get_info_extractor, gen_extractor_classes, _LAZY_LOADER
-from .extractor.openload import PhantomJSwrapper
 from .downloader import get_suitable_downloader
 from .downloader.rtmp import rtmpdump_version
 from .postprocessor import (
@@ -256,8 +255,6 @@ class YoutubeDL(object):
     geo_verification_proxy:  URL of the proxy to use for IP address verification
                        on geo-restricted sites.
     socket_timeout:    Time to wait for unresponsive hosts, in seconds
-    bidi_workaround:   Work around buggy terminals without bidirectional text
-                       support, using fridibi
     debug_printtraffic:Print out sent and received HTTP traffic
     include_ads:       Download ads as well
     default_search:    Prepend this string if an input url is not valid.
@@ -419,33 +416,6 @@ class YoutubeDL(object):
         check_deprecated('autonumber', '--auto-number', '-o "%(autonumber)s-%(title)s.%(ext)s"')
         check_deprecated('usetitle', '--title', '-o "%(title)s-%(id)s.%(ext)s"')
 
-        if params.get('bidi_workaround', False):
-            try:
-                import pty
-                master, slave = pty.openpty()
-                width = compat_get_terminal_size().columns
-                if width is None:
-                    width_args = []
-                else:
-                    width_args = ['-w', str(width)]
-                sp_kwargs = dict(
-                    stdin=subprocess.PIPE,
-                    stdout=slave,
-                    stderr=self._err_file)
-                try:
-                    self._output_process = subprocess.Popen(
-                        ['bidiv'] + width_args, **sp_kwargs
-                    )
-                except OSError:
-                    self._output_process = subprocess.Popen(
-                        ['fribidi', '-c', 'UTF-8'] + width_args, **sp_kwargs)
-                self._output_channel = os.fdopen(master, 'rb')
-            except OSError as ose:
-                if ose.errno == errno.ENOENT:
-                    self.report_warning('Could not find fribidi executable, ignoring --bidi-workaround . Make sure that  fribidi  is an executable file in one of the directories in your $PATH.')
-                else:
-                    raise
-
         if (sys.platform != 'win32'
                 and sys.getfilesystemencoding() in ['ascii', 'ANSI_X3.4-1968']
                 and not params.get('restrictfilenames', False)):
@@ -478,6 +448,13 @@ class YoutubeDL(object):
             self.add_progress_hook(ph)
 
         register_socks_protocols()
+
+    def __enter__(self) -> 'YoutubeDL':
+         return self
+
+    def __exit__(self, *args: Any) -> None:
+        if self.params.get('cookiefile') is not None:
+            self.cookiejar.save(ignore_discard=True, ignore_expires=True)
 
     def warn_if_short_id(self, argv):
         # short YouTube ID starting with dash?
@@ -591,44 +568,9 @@ class YoutubeDL(object):
         else:
             logger.error(message)
 
-    def to_console_title(self, message):
-        if not self.params.get('consoletitle', False):
-            return
-        if compat_os_name == 'nt':
-            if ctypes.windll.kernel32.GetConsoleWindow():
-                # c_wchar_p() might not be necessary if `message` is
-                # already of type unicode()
-                ctypes.windll.kernel32.SetConsoleTitleW(ctypes.c_wchar_p(message))
-        elif 'TERM' in os.environ:
-            self._write_string('\033]0;%s\007' % message, self._screen_file)
-
-    def save_console_title(self):
-        if not self.params.get('consoletitle', False):
-            return
-        if self.params.get('simulate', False):
-            return
-        if compat_os_name != 'nt' and 'TERM' in os.environ:
-            # Save the title on stack
-            self._write_string('\033[22;0t', self._screen_file)
-
-    def restore_console_title(self):
-        if not self.params.get('consoletitle', False):
-            return
-        if self.params.get('simulate', False):
-            return
-        if compat_os_name != 'nt' and 'TERM' in os.environ:
-            # Restore the title from stack
-            self._write_string('\033[23;0t', self._screen_file)
-
-    def __enter__(self):
-        self.save_console_title()
-        return self
-
-    def __exit__(self, *args):
-        self.restore_console_title()
-
-        if self.params.get('cookiefile') is not None:
-            self.cookiejar.save(ignore_discard=True, ignore_expires=True)
+    def to_screen(self, message, skip_eol=False):
+        """Print message to stdout if not in quiet mode."""
+        return self.to_stdout(message, skip_eol, check_quiet=True)
 
     def trouble(self, *args, **kwargs):
         """Determine action to take when a download problem appears.
@@ -2583,7 +2525,6 @@ class YoutubeDL(object):
 
         exe_versions = FFmpegPostProcessor.get_versions(self)
         exe_versions['rtmpdump'] = rtmpdump_version()
-        exe_versions['phantomjs'] = PhantomJSwrapper._version()
         exe_str = ', '.join(
             '%s %s' % (exe, v)
             for exe, v in sorted(exe_versions.items())

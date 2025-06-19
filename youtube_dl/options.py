@@ -136,10 +136,6 @@ def parseOpts(overrideArguments=None):
         action='version',
         help='Print program version and exit')
     general.add_option(
-        '-U', '--update',
-        action='store_true', dest='update_self',
-        help='Update this program to latest version. Make sure that you have sufficient permissions (run with sudo if needed)')
-    general.add_option(
         '-i', '--ignore-errors',
         action='store_true', dest='ignoreerrors', default=False,
         help='Continue on download errors, for example to skip unavailable videos in a playlist')
@@ -382,10 +378,6 @@ def parseOpts(overrideArguments=None):
         '--ap-password',
         dest='ap_password', metavar='PASSWORD',
         help='Multiple-system operator account password. If this option is left out, youtube-dl will ask interactively.')
-    adobe_pass.add_option(
-        '--ap-list-mso',
-        action='store_true', dest='ap_list_mso', default=False,
-        help='List all supported multiple-system operators')
 
     video_format = optparse.OptionGroup(parser, 'Video Format Options')
     video_format.add_option(
@@ -557,10 +549,6 @@ def parseOpts(overrideArguments=None):
               'NB Use --cookies rather than adding a Cookie header if its contents may be sensitive; '
               'data from a Cookie header will be sent to all domains, not just the one intended')
     )
-    workarounds.add_option(
-        '--bidi-workaround',
-        dest='bidi_workaround', action='store_true',
-        help='Work around terminals that lack bidirectional text support. Requires bidiv or fribidi executable in PATH')
     workarounds.add_option(
         '--sleep-interval', '--min-sleep-interval', metavar='SECONDS',
         dest='sleep_interval', type=float,

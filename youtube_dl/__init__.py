@@ -37,12 +37,10 @@ from .utils import (
     write_string,
     render_table,
 )
-from .update import update_self
 from .downloader import (
     FileDownloader,
 )
 from .extractor import gen_extractors, list_extractors
-from .extractor.adobepass import MSO_INFO
 from .YoutubeDL import YoutubeDL
 
 
@@ -118,10 +116,6 @@ def _real_main(argv=None):
                 desc += ' (Example: "%s%s:%s" )' % (ie.SEARCH_KEY, random.choice(_COUNTS), random.choice(_SEARCHES))
             write_string(desc + '\n', out=sys.stdout)
         sys.exit(0)
-    if opts.ap_list_mso:
-        table = [[mso_id, mso_info['name']] for mso_id, mso_info in MSO_INFO.items()]
-        write_string('Supported TV Providers:\n' + render_table(['mso', 'mso name'], table) + '\n', out=sys.stdout)
-        sys.exit(0)
 
     # Conflicting, missing and erroneous options
     if opts.usenetrc and (opts.username is not None or opts.password is not None):
@@ -171,8 +165,6 @@ def _real_main(argv=None):
             parser.error('max sleep interval must be greater than or equal to min sleep interval')
     else:
         opts.max_sleep_interval = opts.sleep_interval
-    if opts.ap_mso and opts.ap_mso not in MSO_INFO:
-        parser.error('Unsupported TV Provider, use --ap-list-mso to get a list of supported TV Providers')
 
     if opts.no_check_extensions:
         _UnsafeExtensionError.lenient = True
@@ -326,7 +318,6 @@ def _real_main(argv=None):
         'password': opts.password,
         'twofactor': opts.twofactor,
         'videopassword': opts.videopassword,
-        'ap_mso': opts.ap_mso,
         'ap_username': opts.ap_username,
         'ap_password': opts.ap_password,
         'quiet': (opts.quiet or any_getting or any_printing),
@@ -407,7 +398,6 @@ def _real_main(argv=None):
         'prefer_insecure': opts.prefer_insecure,
         'proxy': opts.proxy,
         'socket_timeout': opts.socket_timeout,
-        'bidi_workaround': opts.bidi_workaround,
         'debug_printtraffic': opts.debug_printtraffic,
         'prefer_ffmpeg': opts.prefer_ffmpeg,
         'include_ads': opts.include_ads,
@@ -446,9 +436,6 @@ def _real_main(argv=None):
     }
 
     with YoutubeDL(ydl_opts) as ydl:
-        # Update version
-        if opts.update_self:
-            update_self(ydl.to_screen, opts.verbose, ydl._opener)
 
         # Remove cache dir
         if opts.rm_cachedir:
@@ -456,7 +443,7 @@ def _real_main(argv=None):
 
         # Maybe do nothing
         if (len(all_urls) < 1) and (opts.load_info_filename is None):
-            if opts.update_self or opts.rm_cachedir:
+            if opts.rm_cachedir:
                 sys.exit()
 
             ydl.warn_if_short_id(sys.argv[1:] if argv is None else argv)
