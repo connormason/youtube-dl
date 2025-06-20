@@ -4783,10 +4783,6 @@ def urlhandle_detect_ext(url_handle):
     return mimetype2ext(getheader('Content-Type'))
 
 
-def encode_data_uri(data, mime_type):
-    return 'data:{};base64,{}'.format(mime_type, base64.b64encode(data).decode('ascii'))
-
-
 def age_restricted(content_limit, age_limit):
     """Returns True iff the content should be blocked"""
 
