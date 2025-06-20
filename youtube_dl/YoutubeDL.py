@@ -658,7 +658,7 @@ class YoutubeDL:
         if self.params.get('logger'):
             self.params['logger'].debug(message)
         else:
-            self.to_stderr(message, only_once)
+            self.to_stderr(message)
 
     def report_unscoped_cookies(self, *args, **kwargs):
         # message=None, tb=False, is_error=False
