@@ -246,44 +246,6 @@ def parseOpts(overrideArguments=None):
         help='Make all connections via IPv6',
     )
 
-    geo = optparse.OptionGroup(parser, 'Geo Restriction')
-    geo.add_option(
-        '--geo-verification-proxy',
-        dest='geo_verification_proxy',
-        default=None,
-        metavar='URL',
-        help='Use this proxy to verify the IP address for some geo-restricted sites. '
-        'The default proxy specified by --proxy (or none, if the option is not present) is used for the actual downloading.',
-    )
-    geo.add_option(
-        '--geo-bypass',
-        action='store_true',
-        dest='geo_bypass',
-        default=True,
-        help='Bypass geographic restriction via faking X-Forwarded-For HTTP header',
-    )
-    geo.add_option(
-        '--no-geo-bypass',
-        action='store_false',
-        dest='geo_bypass',
-        default=True,
-        help='Do not bypass geographic restriction via faking X-Forwarded-For HTTP header',
-    )
-    geo.add_option(
-        '--geo-bypass-country',
-        metavar='CODE',
-        dest='geo_bypass_country',
-        default=None,
-        help='Force bypass geographic restriction with explicitly provided two-letter ISO 3166-2 country code',
-    )
-    geo.add_option(
-        '--geo-bypass-ip-block',
-        metavar='IP_BLOCK',
-        dest='geo_bypass_ip_block',
-        default=None,
-        help='Force bypass geographic restriction with explicitly provided IP block in CIDR notation',
-    )
-
     selection = optparse.OptionGroup(parser, 'Video Selection')
     selection.add_option(
         '--playlist-start',
@@ -1190,7 +1152,6 @@ def parseOpts(overrideArguments=None):
 
     parser.add_option_group(general)
     parser.add_option_group(network)
-    parser.add_option_group(geo)
     parser.add_option_group(selection)
     parser.add_option_group(downloader)
     parser.add_option_group(filesystem)

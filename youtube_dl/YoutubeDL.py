@@ -240,8 +240,6 @@ class YoutubeDL:
     prefer_insecure:   Use HTTP instead of HTTPS to retrieve information.
                        At the moment, this is only supported by YouTube.
     proxy:             URL of the proxy server to use
-    geo_verification_proxy:  URL of the proxy to use for IP address verification
-                       on geo-restricted sites.
     socket_timeout:    Time to wait for unresponsive hosts, in seconds
     debug_printtraffic:Print out sent and received HTTP traffic
     include_ads:       Download ads as well
@@ -308,15 +306,6 @@ class YoutubeDL:
                        If it returns None, the video is downloaded.
                        match_filter_func in utils.py is one example for this.
     no_color:          Do not emit color codes in output.
-    geo_bypass:        Bypass geographic restriction via faking X-Forwarded-For
-                       HTTP header
-    geo_bypass_country:
-                       Two-letter ISO 3166-2 country code that will be used for
-                       explicit geographic restriction bypassing via faking
-                       X-Forwarded-For HTTP header
-    geo_bypass_ip_block:
-                       IP range in CIDR notation that will be used similarly to
-                       geo_bypass_country
 
     The following options determine which downloader is picked:
     external_downloader: Executable of the external downloader to call.

@@ -431,11 +431,7 @@ def _real_main(argv=None):
         'hls_use_mpegts': opts.hls_use_mpegts,
         'external_downloader_args': external_downloader_args,
         'postprocessor_args': postprocessor_args,
-        'geo_verification_proxy': opts.geo_verification_proxy,
         'config_location': opts.config_location,
-        'geo_bypass': opts.geo_bypass,
-        'geo_bypass_country': opts.geo_bypass_country,
-        'geo_bypass_ip_block': opts.geo_bypass_ip_block,
     }
 
     with YoutubeDL(ydl_opts) as ydl:
