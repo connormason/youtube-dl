@@ -1,49 +1,43 @@
-# coding: utf-8
-
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
 import re
 import sys
 
+from ..compat import compat_etree_fromstring
+from ..compat import compat_str
+from ..compat import compat_urllib_parse_unquote
+from ..compat import compat_urlparse
+from ..compat import compat_xml_parse_error
+from ..utils import ExtractorError
+from ..utils import HEADRequest
+from ..utils import UnsupportedError
+from ..utils import determine_ext
+from ..utils import float_or_none
+from ..utils import int_or_none
+from ..utils import is_html
+from ..utils import js_to_json
+from ..utils import merge_dicts
+from ..utils import orderedSet
+from ..utils import parse_duration
+from ..utils import parse_resolution
+from ..utils import sanitized_Request
+from ..utils import smuggle_url
+from ..utils import unescapeHTML
+from ..utils import unified_timestamp
+from ..utils import unsmuggle_url
+from ..utils import url_or_none
+from ..utils import urljoin
+from ..utils import xpath_attr
+from ..utils import xpath_text
+from ..utils import xpath_with_ns
+from .cloudflarestream import CloudflareStreamIE
 from .common import InfoExtractor
-from .youtube import YoutubeIE
-from ..compat import (
-    compat_etree_fromstring,
-    compat_str,
-    compat_urllib_parse_unquote,
-    compat_urlparse,
-    compat_xml_parse_error,
-)
-from ..utils import (
-    determine_ext,
-    ExtractorError,
-    float_or_none,
-    HEADRequest,
-    int_or_none,
-    is_html,
-    js_to_json,
-    merge_dicts,
-    orderedSet,
-    parse_duration,
-    parse_resolution,
-    sanitized_Request,
-    smuggle_url,
-    unescapeHTML,
-    unified_timestamp,
-    unsmuggle_url,
-    UnsupportedError,
-    url_or_none,
-    urljoin,
-    xpath_attr,
-    xpath_text,
-    xpath_with_ns,
-)
 from .commonprotocols import RtmpIE
 from .googledrive import GoogleDriveIE
 from .soundcloud import SoundcloudEmbedIE
 from .tunein import TuneInBaseIE
-from .cloudflarestream import CloudflareStreamIE
+from .youtube import YoutubeIE
 
 
 class GenericIE(InfoExtractor):
@@ -78,7 +72,7 @@ class GenericIE(InfoExtractor):
             'add_ie': ['Youtube'],
             'params': {
                 'skip_download': True,
-            }
+            },
         },
         # YouTube embed via <data-embed-url="">
         {
@@ -94,7 +88,7 @@ class GenericIE(InfoExtractor):
             },
             'params': {
                 'skip_download': True,
-            }
+            },
         },
         # YouTube <object> embed
         {
@@ -121,7 +115,7 @@ class GenericIE(InfoExtractor):
                 'uploader': 'Sophos Security',
                 'title': 'Chet Chat 171 - Oct 29, 2014',
                 'upload_date': '20141029',
-            }
+            },
         },
         # Soundcloud multiple embeds
         {
@@ -164,7 +158,7 @@ class GenericIE(InfoExtractor):
 
     def report_following_redirect(self, new_url):
         """Report information extraction."""
-        self._downloader.to_screen('[redirect] Following redirect to %s' % new_url)
+        self._downloader.to_screen(f'[redirect] Following redirect to {new_url}')
 
     def _extract_rss(self, url, video_id, doc):
         playlist_title = doc.find('./channel/title').text
@@ -191,9 +185,7 @@ class GenericIE(InfoExtractor):
                 continue
 
             def itunes(key):
-                return xpath_text(
-                    it, xpath_with_ns('./itunes:%s' % key, NS_MAP),
-                    default=None)
+                return xpath_text(it, xpath_with_ns(f'./itunes:{key}', NS_MAP), default=None)
 
             duration = itunes('duration')
             explicit = (itunes('explicit') or '').lower()
@@ -204,20 +196,21 @@ class GenericIE(InfoExtractor):
             else:
                 age_limit = None
 
-            entries.append({
-                '_type': 'url_transparent',
-                'url': next_url,
-                'title': it.find('title').text,
-                'description': xpath_text(it, 'description', default=None),
-                'timestamp': unified_timestamp(
-                    xpath_text(it, 'pubDate', default=None)),
-                'duration': int_or_none(duration) or parse_duration(duration),
-                'thumbnail': url_or_none(xpath_attr(it, xpath_with_ns('./itunes:image', NS_MAP), 'href')),
-                'episode': itunes('title'),
-                'episode_number': int_or_none(itunes('episode')),
-                'season_number': int_or_none(itunes('season')),
-                'age_limit': age_limit,
-            })
+            entries.append(
+                {
+                    '_type': 'url_transparent',
+                    'url': next_url,
+                    'title': it.find('title').text,
+                    'description': xpath_text(it, 'description', default=None),
+                    'timestamp': unified_timestamp(xpath_text(it, 'pubDate', default=None)),
+                    'duration': int_or_none(duration) or parse_duration(duration),
+                    'thumbnail': url_or_none(xpath_attr(it, xpath_with_ns('./itunes:image', NS_MAP), 'href')),
+                    'episode': itunes('title'),
+                    'episode_number': int_or_none(itunes('episode')),
+                    'season_number': int_or_none(itunes('season')),
+                    'age_limit': age_limit,
+                }
+            )
 
         return {
             '_type': 'playlist',
@@ -228,11 +221,14 @@ class GenericIE(InfoExtractor):
         }
 
     def _extract_camtasia(self, url, video_id, webpage):
-        """ Returns None if no camtasia video can be found. """
+        """Returns None if no camtasia video can be found."""
 
         camtasia_cfg = self._search_regex(
             r'fo\.addVariable\(\s*"csConfigFile",\s*"([^"]+)"\s*\);',
-            webpage, 'camtasia configuration file', default=None)
+            webpage,
+            'camtasia configuration file',
+            default=None,
+        )
         if camtasia_cfg is None:
             return None
 
@@ -240,9 +236,11 @@ class GenericIE(InfoExtractor):
 
         camtasia_url = compat_urlparse.urljoin(url, camtasia_cfg)
         camtasia_cfg = self._download_xml(
-            camtasia_url, video_id,
+            camtasia_url,
+            video_id,
             note='Downloading camtasia configuration',
-            errnote='Failed to download camtasia configuration')
+            errnote='Failed to download camtasia configuration',
+        )
         fileset_node = camtasia_cfg.find('./playlist/array/fileset')
 
         entries = []
@@ -251,12 +249,14 @@ class GenericIE(InfoExtractor):
             if url_n is None:
                 continue
 
-            entries.append({
-                'id': os.path.splitext(url_n.text.rpartition('/')[2])[0],
-                'title': '%s - %s' % (title, n.tag),
-                'url': compat_urlparse.urljoin(url, url_n.text),
-                'duration': float_or_none(n.find('./duration').text),
-            })
+            entries.append(
+                {
+                    'id': os.path.splitext(url_n.text.rpartition('/')[2])[0],
+                    'title': f'{title} - {n.tag}',
+                    'url': compat_urlparse.urljoin(url, url_n.text),
+                    'duration': float_or_none(n.find('./duration').text),
+                }
+            )
 
         return {
             '_type': 'playlist',
@@ -265,11 +265,10 @@ class GenericIE(InfoExtractor):
         }
 
     def _extract_kvs(self, url, webpage, video_id):
-
         def getlicensetoken(license):
             modlicense = license.replace('$', '').replace('0', '1')
             center = int(len(modlicense) / 2)
-            fronthalf = int(modlicense[:center + 1])
+            fronthalf = int(modlicense[: center + 1])
             backhalf = int(modlicense[center:])
 
             modlicense = compat_str(4 * abs(fronthalf - backhalf))
@@ -302,8 +301,8 @@ class GenericIE(InfoExtractor):
             return '/'.join(urlparts) + '?' + url_query
 
         flashvars = self._search_regex(
-            r'(?s)<script\b[^>]*>.*?var\s+flashvars\s*=\s*(\{.+?\});.*?</script>',
-            webpage, 'flashvars')
+            r'(?s)<script\b[^>]*>.*?var\s+flashvars\s*=\s*(\{.+?\});.*?</script>', webpage, 'flashvars'
+        )
         flashvars = self._parse_json(flashvars, video_id, transform_source=js_to_json)
 
         # extract the part after the last / as the display_id from the
@@ -311,7 +310,9 @@ class GenericIE(InfoExtractor):
         display_id = self._search_regex(
             r'(?:<link href="https?://[^"]+/(.+?)/?" rel="canonical"\s*/?>'
             r'|<link rel="canonical" href="https?://[^"]+/(.+?)/?"\s*/?>)',
-            webpage, 'display_id', fatal=False
+            webpage,
+            'display_id',
+            fatal=False,
         )
         title = self._html_search_regex(r'<(?:h1|title)>(?:Video: )?(.+?)</(?:h1|title)>', webpage, 'title')
 
@@ -326,13 +327,17 @@ class GenericIE(InfoExtractor):
             if '/get_file/' not in flashvars[key]:
                 continue
             format_id = flashvars.get(key + '_text', key)
-            formats.append(merge_dicts(
-                parse_resolution(format_id) or parse_resolution(flashvars[key]), {
-                    'url': urljoin(url, getrealurl(flashvars[key], flashvars['license_code'])),
-                    'format_id': format_id,
-                    'ext': 'mp4',
-                    'http_headers': {'Referer': url},
-                }))
+            formats.append(
+                merge_dicts(
+                    parse_resolution(format_id) or parse_resolution(flashvars[key]),
+                    {
+                        'url': urljoin(url, getrealurl(flashvars[key], flashvars['license_code'])),
+                        'format_id': format_id,
+                        'ext': 'mp4',
+                        'http_headers': {'Referer': url},
+                    },
+                )
+            )
             if not formats[-1].get('height'):
                 formats[-1]['quality'] = 1
 
@@ -358,24 +363,27 @@ class GenericIE(InfoExtractor):
 
             if default_search in ('auto', 'auto_warning', 'fixup_error'):
                 if re.match(r'^[^\s/]+\.[^\s/]+/', url):
-                    self._downloader.report_warning('The url doesn\'t specify the protocol, trying with http')
+                    self._downloader.report_warning("The url doesn't specify the protocol, trying with http")
                     return self.url_result('http://' + url)
                 elif default_search != 'fixup_error':
                     if default_search == 'auto_warning':
                         if re.match(r'^(?:url|URL)$', url):
                             raise ExtractorError(
-                                'Invalid URL:  %r . Call youtube-dl like this:  youtube-dl -v "https://www.youtube.com/watch?v=BaW_jenozKc"  ' % url,
-                                expected=True)
+                                f'Invalid URL:  {url!r} . Call youtube-dl like this:  youtube-dl -v "https://www.youtube.com/watch?v=BaW_jenozKc"  ',
+                                expected=True,
+                            )
                         else:
                             self._downloader.report_warning(
-                                'Falling back to youtube search for  %s . Set --default-search "auto" to suppress this warning.' % url)
+                                f'Falling back to youtube search for  {url} . Set --default-search "auto" to suppress this warning.'
+                            )
                     return self.url_result('ytsearch:' + url)
 
             if default_search in ('error', 'fixup_error'):
                 raise ExtractorError(
-                    '%r is not a valid URL. '
-                    'Set --default-search "ytsearch" (or run  youtube-dl "ytsearch:%s" ) to search YouTube'
-                    % (url, url), expected=True)
+                    f'{url!r} is not a valid URL. '
+                    f'Set --default-search "ytsearch" (or run  youtube-dl "ytsearch:{url}" ) to search YouTube',
+                    expected=True,
+                )
             else:
                 if ':' not in default_search:
                     default_search += ':'
@@ -390,13 +398,12 @@ class GenericIE(InfoExtractor):
         else:
             video_id = self._generic_id(url)
 
-        self.to_screen('%s: Requesting header' % video_id)
+        self.to_screen(f'{video_id}: Requesting header')
 
         head_req = HEADRequest(url)
         head_response = self._request_webpage(
-            head_req, video_id,
-            note=False, errnote='Could not send HEAD request to %s' % url,
-            fatal=False)
+            head_req, video_id, note=False, errnote=f'Could not send HEAD request to {url}', fatal=False
+        )
 
         if head_response is not False:
             # Check for redirect
@@ -404,8 +411,7 @@ class GenericIE(InfoExtractor):
             if url != new_url:
                 self.report_following_redirect(new_url)
                 if force_videoid:
-                    new_url = smuggle_url(
-                        new_url, {'force_videoid': force_videoid})
+                    new_url = smuggle_url(new_url, {'force_videoid': force_videoid})
                 return self.url_result(new_url)
 
         full_response = None
@@ -418,12 +424,15 @@ class GenericIE(InfoExtractor):
         info_dict = {
             'id': video_id,
             'title': self._generic_title(url),
-            'timestamp': unified_timestamp(head_response.headers.get('Last-Modified'))
+            'timestamp': unified_timestamp(head_response.headers.get('Last-Modified')),
         }
 
         # Check for direct link to a video
         content_type = head_response.headers.get('Content-Type', '').lower()
-        m = re.match(r'^(?P<type>audio|video|application(?=/(?:ogg$|(?:vnd\.apple\.|x-)?mpegurl)))/(?P<format_id>[^;\s]+)', content_type)
+        m = re.match(
+            r'^(?P<type>audio|video|application(?=/(?:ogg$|(?:vnd\.apple\.|x-)?mpegurl)))/(?P<format_id>[^;\s]+)',
+            content_type,
+        )
         if m:
             format_id = compat_str(m.group('format_id'))
             if format_id.endswith('mpegurl'):
@@ -431,11 +440,9 @@ class GenericIE(InfoExtractor):
             elif format_id == 'f4m':
                 formats = self._extract_f4m_formats(url, video_id)
             else:
-                formats = [{
-                    'format_id': format_id,
-                    'url': url,
-                    'vcodec': 'none' if m.group('type') == 'audio' else None
-                }]
+                formats = [
+                    {'format_id': format_id, 'url': url, 'vcodec': 'none' if m.group('type') == 'audio' else None}
+                ]
                 info_dict['direct'] = True
             self._sort_formats(formats)
             info_dict['formats'] = formats
@@ -444,7 +451,8 @@ class GenericIE(InfoExtractor):
         if not self._downloader.params.get('test', False) and not is_intentional:
             force = self._downloader.params.get('force_generic_extractor', False)
             self._downloader.report_warning(
-                '%s on generic information extractor.' % ('Forcing' if force else 'Falling back'))
+                '%s on generic information extractor.' % ('Forcing' if force else 'Falling back')
+            )
 
         if not full_response:
             request = sanitized_Request(url)
@@ -470,16 +478,16 @@ class GenericIE(InfoExtractor):
         # Maybe it's a direct link to a video?
         # Be careful not to download the whole thing!
         if not is_html(first_bytes):
-            self._downloader.report_warning(
-                'URL could be a direct video link, returning it as such.')
-            info_dict.update({
-                'direct': True,
-                'url': url,
-            })
+            self._downloader.report_warning('URL could be a direct video link, returning it as such.')
+            info_dict.update(
+                {
+                    'direct': True,
+                    'url': url,
+                }
+            )
             return info_dict
 
-        webpage = self._webpage_read_content(
-            full_response, url, video_id, prefix=first_bytes)
+        webpage = self._webpage_read_content(full_response, url, video_id, prefix=first_bytes)
 
         if '<title>DPG Media Privacy Gate</title>' in webpage:
             webpage = self._download_webpage(url, video_id)
@@ -501,15 +509,12 @@ class GenericIE(InfoExtractor):
                 return smil
             elif doc.tag == '{http://xspf.org/ns/0/}playlist':
                 return self.playlist_result(
-                    self._parse_xspf(
-                        doc, video_id, xspf_url=url,
-                        xspf_base_url=full_response.geturl()),
-                    video_id)
+                    self._parse_xspf(doc, video_id, xspf_url=url, xspf_base_url=full_response.geturl()), video_id
+                )
             elif re.match(r'(?i)^(?:{[^}]+})?MPD$', doc.tag):
                 info_dict['formats'] = self._parse_mpd_formats(
-                    doc,
-                    mpd_base_url=full_response.geturl().rpartition('/')[0],
-                    mpd_url=url)
+                    doc, mpd_base_url=full_response.geturl().rpartition('/')[0], mpd_url=url
+                )
                 self._sort_formats(info_dict['formats'])
                 return info_dict
             elif re.match(r'^{http://ns\.adobe\.com/f4m/[12]\.0}manifest$', doc.tag):
@@ -534,8 +539,8 @@ class GenericIE(InfoExtractor):
         # Unescape squarespace embeds to be detected by generic extractor,
         # see https://github.com/ytdl-org/youtube-dl/issues/21294
         webpage = re.sub(
-            r'<div[^>]+class=[^>]*?\bsqs-video-wrapper\b[^>]*>',
-            lambda x: unescapeHTML(x.group(0)), webpage)
+            r'<div[^>]+class=[^>]*?\bsqs-video-wrapper\b[^>]*>', lambda x: unescapeHTML(x.group(0)), webpage
+        )
 
         # it's tempting to parse this further, but you would
         # have to take into account all the variations like
@@ -543,10 +548,9 @@ class GenericIE(InfoExtractor):
         #   Site Name | Video Title
         #   Video Title - Tagline | Site Name
         # and so on and so forth; it's just not practical
-        video_title = self._og_search_title(
-            webpage, default=None) or self._html_search_regex(
-            r'(?s)<title>(.*?)</title>', webpage, 'video title',
-            default='video')
+        video_title = self._og_search_title(webpage, default=None) or self._html_search_regex(
+            r'(?s)<title>(.*?)</title>', webpage, 'video title', default='video'
+        )
 
         # Try to detect age limit automatically
         age_limit = self._rta_search(webpage)
@@ -561,29 +565,27 @@ class GenericIE(InfoExtractor):
             m = re.search(marker, webpage)
             if not m:
                 continue
-            age_limit = max(
-                age_limit or 0,
-                int_or_none(m.groups() and m.group(1), default=18))
+            age_limit = max(age_limit or 0, int_or_none(m.groups() and m.group(1), default=18))
 
         # video uploader is domain name
-        video_uploader = self._search_regex(
-            r'^(?:https?://)?([^/]*)/.*', url, 'video uploader')
+        video_uploader = self._search_regex(r'^(?:https?://)?([^/]*)/.*', url, 'video uploader')
 
         video_description = self._og_search_description(webpage, default=None)
         video_thumbnail = self._og_search_thumbnail(webpage, default=None)
 
-        info_dict.update({
-            'title': video_title,
-            'description': video_description,
-            'thumbnail': video_thumbnail,
-            'age_limit': age_limit,
-        })
+        info_dict.update(
+            {
+                'title': video_title,
+                'description': video_description,
+                'thumbnail': video_thumbnail,
+                'age_limit': age_limit,
+            }
+        )
 
         # Look for YouTube embeds
         youtube_urls = YoutubeIE._extract_urls(webpage)
         if youtube_urls:
-            return self.playlist_from_matches(
-                youtube_urls, video_id, video_title, ie=YoutubeIE.ie_key())
+            return self.playlist_from_matches(youtube_urls, video_id, video_title, ie=YoutubeIE.ie_key())
 
         # Look for Bandcamp pages with custom domain
         mobj = re.search(r'<meta property="og:url"[^>]*?content="(.*?bandcamp\.com.*?)"', webpage)
@@ -593,8 +595,7 @@ class GenericIE(InfoExtractor):
             return self.url_result(burl)
 
         # Look for embedded Vevo player
-        mobj = re.search(
-            r'<iframe[^>]+?src=(["\'])(?P<url>(?:https?:)?//(?:cache\.)?vevo\.com/.+?)\1', webpage)
+        mobj = re.search(r'<iframe[^>]+?src=(["\'])(?P<url>(?:https?:)?//(?:cache\.)?vevo\.com/.+?)\1', webpage)
         if mobj is not None:
             return self.url_result(mobj.group('url'))
 
@@ -616,25 +617,29 @@ class GenericIE(InfoExtractor):
         cloudflarestream_urls = CloudflareStreamIE._extract_urls(webpage)
         if cloudflarestream_urls:
             return self.playlist_from_matches(
-                cloudflarestream_urls, video_id, video_title, ie=CloudflareStreamIE.ie_key())
+                cloudflarestream_urls, video_id, video_title, ie=CloudflareStreamIE.ie_key()
+            )
 
         # Look for generic KVS player (before ld+json for tests)
         found = self._search_regex(
-            (r'<script\b[^>]+?\bsrc\s*=\s*(["\'])https?://(?:\S+?/)+kt_player\.js\?v=(?P<ver>\d+(?:\.\d+)+)\1[^>]*>',
-             # kt_player('kt_player', 'https://i.shoosh.co/player/kt_player.swf?v=5.5.1', ...
-             r'kt_player\s*\(\s*(["\'])(?:(?!\1)[\w\W])+\1\s*,\s*(["\'])https?://(?:\S+?/)+kt_player\.swf\?v=(?P<ver>\d+(?:\.\d+)+)\2\s*,',
-             ), webpage, 'KVS player', group='ver', default=False)
+            (
+                r'<script\b[^>]+?\bsrc\s*=\s*(["\'])https?://(?:\S+?/)+kt_player\.js\?v=(?P<ver>\d+(?:\.\d+)+)\1[^>]*>',
+                # kt_player('kt_player', 'https://i.shoosh.co/player/kt_player.swf?v=5.5.1', ...
+                r'kt_player\s*\(\s*(["\'])(?:(?!\1)[\w\W])+\1\s*,\s*(["\'])https?://(?:\S+?/)+kt_player\.swf\?v=(?P<ver>\d+(?:\.\d+)+)\2\s*,',
+            ),
+            webpage,
+            'KVS player',
+            group='ver',
+            default=False,
+        )
         if found:
-            self.report_extraction('%s: KVS Player' % (video_id, ))
+            self.report_extraction(f'{video_id}: KVS Player')
             if found.split('.')[0] not in ('4', '5', '6'):
-                self.report_warning('Untested major version (%s) in player engine - download may fail.' % (found, ))
-            return merge_dicts(
-                self._extract_kvs(url, webpage, video_id),
-                info_dict)
+                self.report_warning(f'Untested major version ({found}) in player engine - download may fail.')
+            return merge_dicts(self._extract_kvs(url, webpage, video_id), info_dict)
 
         # Looking for http://schema.org/VideoObject
-        json_ld = self._search_json_ld(
-            webpage, video_id, default={}, expected_type='VideoObject')
+        json_ld = self._search_json_ld(webpage, video_id, default={}, expected_type='VideoObject')
         if json_ld.get('url'):
             return merge_dicts(json_ld, info_dict)
 
@@ -654,40 +659,53 @@ class GenericIE(InfoExtractor):
         found = filter_video(re.findall(r'flashvars: [\'"](?:.*&)?file=(http[^\'"&]*)', webpage))
         if not found:
             # Look for gorilla-vid style embedding
-            found = filter_video(re.findall(r'''(?sx)
+            found = filter_video(
+                re.findall(
+                    r"""(?sx)
                 (?:
                     jw_plugins|
                     JWPlayerOptions|
                     jwplayer\s*\(\s*["'][^'"]+["']\s*\)\s*\.setup
                 )
                 .*?
-                ['"]?file['"]?\s*:\s*["\'](.*?)["\']''', webpage))
+                ['"]?file['"]?\s*:\s*["\'](.*?)["\']""",
+                    webpage,
+                )
+            )
         if not found:
             # Broaden the search a little bit
             found = filter_video(re.findall(r'[^A-Za-z0-9]?(?:file|source)=(http[^\'"&]*)', webpage))
         if not found:
             # Broaden the findall a little bit: JWPlayer JS loader
-            found = filter_video(re.findall(
-                r'[^A-Za-z0-9]?(?:file|video_url)["\']?:\s*["\'](http(?![^\'"]+\.[0-9]+[\'"])[^\'"]+)["\']', webpage))
+            found = filter_video(
+                re.findall(
+                    r'[^A-Za-z0-9]?(?:file|video_url)["\']?:\s*["\'](http(?![^\'"]+\.[0-9]+[\'"])[^\'"]+)["\']', webpage
+                )
+            )
         if not found:
             # Flow player
-            found = filter_video(re.findall(r'''(?xs)
+            found = filter_video(
+                re.findall(
+                    r"""(?xs)
                 flowplayer\("[^"]+",\s*
                     \{[^}]+?\}\s*,
                     \s*\{[^}]+? ["']?clip["']?\s*:\s*\{\s*
                         ["']?url["']?\s*:\s*["']([^"']+)["']
-            ''', webpage))
+            """,
+                    webpage,
+                )
+            )
         if not found:
             # Cinerama player
-            found = re.findall(
-                r"cinerama\.embedPlayer\(\s*\'[^']+\',\s*'([^']+)'", webpage)
+            found = re.findall(r"cinerama\.embedPlayer\(\s*\'[^']+\',\s*'([^']+)'", webpage)
         if not found:
             # Try to find twitter cards info
             # twitter:player:stream should be checked before twitter:player since
             # it is expected to contain a raw stream (see
             # https://dev.twitter.com/cards/types/player#On_twitter.com_via_desktop_browser)
-            found = filter_video(re.findall(
-                r'<meta (?:property|name)="twitter:player:stream" (?:content|value)="(.+?)"', webpage))
+            found = filter_video(
+                re.findall(r'<meta (?:property|name)="twitter:player:stream" (?:content|value)="(.+?)"', webpage)
+            )
         if not found:
             # We look for Open Graph info:
             # We have to match any number spaces between elements, some sites try to align them (eg.: statigr.am)
@@ -699,8 +717,9 @@ class GenericIE(InfoExtractor):
             REDIRECT_REGEX = r'[0-9]{,2};\s*(?:URL|url)=\'?([^\'"]+)'
             found = re.search(
                 r'(?i)<meta\s+(?=(?:[a-z-]+="[^"]+"\s+)*http-equiv="refresh")'
-                r'(?:[a-z-]+="[^"]+"\s+)*?content="%s' % REDIRECT_REGEX,
-                webpage)
+                rf'(?:[a-z-]+="[^"]+"\s+)*?content="{REDIRECT_REGEX}',
+                webpage,
+            )
             if not found:
                 # Look also in Refresh HTTP header
                 refresh_header = head_response.headers.get('Refresh')
@@ -754,11 +773,13 @@ class GenericIE(InfoExtractor):
             }
 
             if RtmpIE.suitable(video_url):
-                entry_info_dict.update({
-                    '_type': 'url_transparent',
-                    'ie_key': RtmpIE.ie_key(),
-                    'url': video_url,
-                })
+                entry_info_dict.update(
+                    {
+                        '_type': 'url_transparent',
+                        'ie_key': RtmpIE.ie_key(),
+                        'url': video_url,
+                    }
+                )
                 entries.append(entry_info_dict)
                 continue
 
@@ -785,9 +806,7 @@ class GenericIE(InfoExtractor):
                 # the manifest itself.
                 # 1. https://azure.microsoft.com/en-us/documentation/articles/media-services-deliver-content-overview/#streaming-url-formats
                 # 2. https://svs.itworkscdn.net/lbcivod/smil:itwfcdn/lbci/170976.smil/Manifest
-                entry_info_dict = self.url_result(
-                    smuggle_url(video_url, {'to_generic': True}),
-                    GenericIE.ie_key())
+                entry_info_dict = self.url_result(smuggle_url(video_url, {'to_generic': True}), GenericIE.ie_key())
             else:
                 entry_info_dict['url'] = video_url
 

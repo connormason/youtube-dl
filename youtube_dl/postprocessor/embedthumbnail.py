@@ -1,26 +1,19 @@
-# coding: utf-8
-from __future__ import unicode_literals
-
+from __future__ import annotations
 
 import logging
 import os
 import subprocess
 
-from .ffmpeg import FFmpegPostProcessor
-
-from ..utils import (
-    check_executable,
-    encodeArgument,
-    encodeFilename,
-    PostProcessingError,
-    prepend_extension,
-    process_communicate_or_kill,
-    replace_extension,
-    shell_quote,
-)
-
 from ..compat import compat_open as open
-
+from ..utils import PostProcessingError
+from ..utils import check_executable
+from ..utils import encodeArgument
+from ..utils import encodeFilename
+from ..utils import prepend_extension
+from ..utils import process_communicate_or_kill
+from ..utils import replace_extension
+from ..utils import shell_quote
+from .ffmpeg import FFmpegPostProcessor
 
 logger = logging.getLogger('soundcloudutil.downloader')
 
@@ -31,7 +24,7 @@ class EmbedThumbnailPPError(PostProcessingError):
 
 class EmbedThumbnailPP(FFmpegPostProcessor):
     def __init__(self, downloader=None, already_have_thumbnail=False):
-        super(EmbedThumbnailPP, self).__init__(downloader)
+        super().__init__(downloader)
         self._already_have_thumbnail = already_have_thumbnail
 
     def run(self, info):
@@ -39,14 +32,13 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
         temp_filename = prepend_extension(filename, 'temp')
 
         if not info.get('thumbnails'):
-            self._downloader.to_screen('[embedthumbnail] There aren\'t any thumbnails to embed')
+            self._downloader.to_screen("[embedthumbnail] There aren't any thumbnails to embed")
             return [], info
 
         thumbnail_filename = info['thumbnails'][-1]['filename']
 
         if not os.path.exists(encodeFilename(thumbnail_filename)):
-            self._downloader.report_warning(
-                'Skipping embedding the thumbnail because the file is missing.')
+            self._downloader.report_warning('Skipping embedding the thumbnail because the file is missing.')
             return [], info
 
         def is_webp(path):
@@ -60,7 +52,8 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
             thumbnail_ext = thumbnail_ext[1:].lower()
             if thumbnail_ext != 'webp' and is_webp(thumbnail_filename):
                 self._downloader.to_screen(
-                    '[ffmpeg] Correcting extension to webp and escaping path for thumbnail "%s"' % thumbnail_filename)
+                    f'[ffmpeg] Correcting extension to webp and escaping path for thumbnail "{thumbnail_filename}"'
+                )
                 thumbnail_webp_filename = replace_extension(thumbnail_filename, 'webp')
                 os.rename(encodeFilename(thumbnail_filename), encodeFilename(thumbnail_webp_filename))
                 thumbnail_filename = thumbnail_webp_filename
@@ -73,7 +66,7 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
             escaped_thumbnail_filename = thumbnail_filename.replace('%', '#')
             os.rename(encodeFilename(thumbnail_filename), encodeFilename(escaped_thumbnail_filename))
             escaped_thumbnail_jpg_filename = replace_extension(escaped_thumbnail_filename, 'jpg')
-            self._downloader.to_screen('[ffmpeg] Converting thumbnail "%s" to JPEG' % escaped_thumbnail_filename)
+            self._downloader.to_screen(f'[ffmpeg] Converting thumbnail "{escaped_thumbnail_filename}" to JPEG')
             self.run_ffmpeg(escaped_thumbnail_filename, escaped_thumbnail_jpg_filename, ['-bsf:v', 'mjpeg2jpeg'])
             os.remove(encodeFilename(escaped_thumbnail_filename))
             thumbnail_jpg_filename = replace_extension(thumbnail_filename, 'jpg')
@@ -83,10 +76,19 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
 
         if info['ext'] == 'mp3':
             options = [
-                '-c', 'copy', '-map', '0', '-map', '1',
-                '-metadata:s:v', 'title="Album cover"', '-metadata:s:v', 'comment="Cover (Front)"']
+                '-c',
+                'copy',
+                '-map',
+                '0',
+                '-map',
+                '1',
+                '-metadata:s:v',
+                'title="Album cover"',
+                '-metadata:s:v',
+                'comment="Cover (Front)"',
+            ]
 
-            self._downloader.to_screen('[ffmpeg] Adding thumbnail to "%s"' % filename)
+            self._downloader.to_screen(f'[ffmpeg] Adding thumbnail to "{filename}"')
 
             self.run_ffmpeg_multiple_files([filename, thumbnail_filename], temp_filename, options)
 
@@ -96,24 +98,24 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
             os.rename(encodeFilename(temp_filename), encodeFilename(filename))
 
         elif info['ext'] in ['m4a', 'mp4']:
-            atomicparsley = next((x
-                                  for x in ['AtomicParsley', 'atomicparsley']
-                                  if check_executable(x, ['-v'])), None)
+            atomicparsley = next((x for x in ['AtomicParsley', 'atomicparsley'] if check_executable(x, ['-v'])), None)
 
             if atomicparsley is None:
                 raise EmbedThumbnailPPError('AtomicParsley was not found. Please install.')
 
-            cmd = [encodeFilename(atomicparsley, True),
-                   encodeFilename(filename, True),
-                   encodeArgument('--artwork'),
-                   encodeFilename(thumbnail_filename, True),
-                   encodeArgument('-o'),
-                   encodeFilename(temp_filename, True)]
+            cmd = [
+                encodeFilename(atomicparsley, True),
+                encodeFilename(filename, True),
+                encodeArgument('--artwork'),
+                encodeFilename(thumbnail_filename, True),
+                encodeArgument('-o'),
+                encodeFilename(temp_filename, True),
+            ]
 
-            self._downloader.to_screen('[atomicparsley] Adding thumbnail to "%s"' % filename)
+            self._downloader.to_screen(f'[atomicparsley] Adding thumbnail to "{filename}"')
 
             if self._downloader.params.get('verbose', False):
-                self._downloader.to_screen('[debug] AtomicParsley command line: %s' % shell_quote(cmd))
+                self._downloader.to_screen(f'[debug] AtomicParsley command line: {shell_quote(cmd)}')
 
             p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = process_communicate_or_kill(p)
@@ -127,7 +129,7 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
             # for formats that don't support thumbnails (like 3gp) AtomicParsley
             # won't create to the temporary file
             if b'No changes' in stdout:
-                self._downloader.report_warning('The file format doesn\'t support embedding a thumbnail')
+                self._downloader.report_warning("The file format doesn't support embedding a thumbnail")
             else:
                 os.remove(encodeFilename(filename))
                 os.rename(encodeFilename(temp_filename), encodeFilename(filename))

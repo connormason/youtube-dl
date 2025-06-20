@@ -431,4 +431,3 @@ description = video.get('summary')
 duration = float_or_none(video.get('durationMs'), scale=1000)
 view_count = int_or_none(video.get('views'))
 ```
-

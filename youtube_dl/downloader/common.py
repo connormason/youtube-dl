@@ -1,23 +1,21 @@
-from __future__ import division, unicode_literals
+from __future__ import annotations
 
 import os
+import random
 import re
 import sys
 import time
-import random
 
 from ..compat import compat_os_name
-from ..utils import (
-    decodeArgument,
-    encodeFilename,
-    error_to_compat_str,
-    format_bytes,
-    shell_quote,
-    timeconvert,
-)
+from ..utils import decodeArgument
+from ..utils import encodeFilename
+from ..utils import error_to_compat_str
+from ..utils import format_bytes
+from ..utils import shell_quote
+from ..utils import timeconvert
 
 
-class FileDownloader(object):
+class FileDownloader:
     """File Downloader class.
 
     File downloader objects are the ones responsible of downloading the
@@ -85,7 +83,7 @@ class FileDownloader(object):
     def format_percent(percent):
         if percent is None:
             return '---.-%'
-        return '%6s' % ('%3.1f%%' % percent)
+        return '%6s' % (f'{percent:3.1f}%')
 
     @classmethod
     def calc_eta(cls, start_or_rate, now_or_remaining, *args):
@@ -120,11 +118,11 @@ class FileDownloader(object):
     def format_speed(speed):
         if speed is None:
             return '%10s' % '---b/s'
-        return '%10s' % ('%s/s' % format_bytes(speed))
+        return '%10s' % (f'{format_bytes(speed)}/s')
 
     @staticmethod
     def format_retries(retries):
-        return 'inf' if retries == float('inf') else '%.0f' % retries
+        return 'inf' if retries == float('inf') else f'{retries:.0f}'
 
     @staticmethod
     def filesize_or_none(unencoded_filename):
@@ -153,7 +151,7 @@ class FileDownloader(object):
             return None
         number = float(matchobj.group(1))
         multiplier = 1024.0 ** 'bkmgtpezy'.index(matchobj.group(2).lower())
-        return int(round(number * multiplier))
+        return round(number * multiplier)
 
     def to_screen(self, *args, **kargs):
         self.ydl.to_screen(*args, **kargs)
@@ -188,14 +186,17 @@ class FileDownloader(object):
 
     def temp_name(self, filename):
         """Returns a temporary filename for the given filename."""
-        if self.params.get('nopart', False) or filename == '-' or \
-                (os.path.exists(encodeFilename(filename)) and not os.path.isfile(encodeFilename(filename))):
+        if (
+            self.params.get('nopart', False)
+            or filename == '-'
+            or (os.path.exists(encodeFilename(filename)) and not os.path.isfile(encodeFilename(filename)))
+        ):
             return filename
         return filename + '.part'
 
     def undo_temp_name(self, filename):
         if filename.endswith('.part'):
-            return filename[:-len('.part')]
+            return filename[: -len('.part')]
         return filename
 
     def ytdl_filename(self, filename):
@@ -206,8 +207,8 @@ class FileDownloader(object):
             if old_filename == new_filename:
                 return
             os.rename(encodeFilename(old_filename), encodeFilename(new_filename))
-        except (IOError, OSError) as err:
-            self.report_error('unable to rename file: %s' % error_to_compat_str(err))
+        except OSError as err:
+            self.report_error(f'unable to rename file: {error_to_compat_str(err)}')
 
     def try_utime(self, filename, last_modified_hdr):
         """Try to set the last-modified time of the given file."""
@@ -240,14 +241,13 @@ class FileDownloader(object):
             self.to_screen(fullmsg)
         else:
             if compat_os_name == 'nt':
-                prev_len = getattr(self, '_report_progress_prev_line_length',
-                                   0)
+                prev_len = getattr(self, '_report_progress_prev_line_length', 0)
                 if prev_len > len(fullmsg):
                     fullmsg += ' ' * (prev_len - len(fullmsg))
                 self._report_progress_prev_line_length = len(fullmsg)
                 clear_line = '\r'
             else:
-                clear_line = ('\r\x1b[K' if sys.stderr.isatty() else '\r')
+                clear_line = '\r\x1b[K' if sys.stderr.isatty() else '\r'
             self.to_screen(clear_line + fullmsg, skip_eol=not is_last_line)
 
     def report_progress(self, s):
@@ -262,8 +262,7 @@ class FileDownloader(object):
                 if s.get('elapsed') is not None:
                     s['_elapsed_str'] = self.format_seconds(s['elapsed'])
                     msg_template += ' in %(_elapsed_str)s'
-                self._report_progress_status(
-                    msg_template % s, is_last_line=True)
+                self._report_progress_status(msg_template % s, is_last_line=True)
 
         if self.params.get('noprogress'):
             return
@@ -312,18 +311,19 @@ class FileDownloader(object):
 
     def report_resuming_byte(self, resume_len):
         """Report attempt to resume at given byte."""
-        self.to_screen('[download] Resuming download at byte %s' % resume_len)
+        self.to_screen(f'[download] Resuming download at byte {resume_len}')
 
     def report_retry(self, err, count, retries):
         """Report retry in case of HTTP error 5xx"""
         self.to_screen(
             '[download] Got server HTTP error: %s. Retrying (attempt %d of %s)...'
-            % (error_to_compat_str(err), count, self.format_retries(retries)))
+            % (error_to_compat_str(err), count, self.format_retries(retries))
+        )
 
     def report_file_already_downloaded(self, file_name):
         """Report file has already been fully downloaded."""
         try:
-            self.to_screen('[download] %s has already been downloaded' % file_name)
+            self.to_screen(f'[download] {file_name} has already been downloaded')
         except UnicodeEncodeError:
             self.to_screen('[download] The file has already been downloaded')
 
@@ -340,10 +340,7 @@ class FileDownloader(object):
         See: https://github.com/yt-dlp/yt-dlp/security/advisories/GHSA-v8mc-9377-rwjj
         """
 
-        nooverwrites_and_exists = (
-            self.params.get('nooverwrites', False)
-            and os.path.exists(encodeFilename(filename))
-        )
+        nooverwrites_and_exists = self.params.get('nooverwrites', False) and os.path.exists(encodeFilename(filename))
 
         if not hasattr(filename, 'write'):
             continuedl_and_exists = (
@@ -355,11 +352,13 @@ class FileDownloader(object):
             # Check file already present
             if filename != '-' and (nooverwrites_and_exists or continuedl_and_exists):
                 self.report_file_already_downloaded(filename)
-                self._hook_progress({
-                    'filename': filename,
-                    'status': 'finished',
-                    'total_bytes': os.path.getsize(encodeFilename(filename)),
-                })
+                self._hook_progress(
+                    {
+                        'filename': filename,
+                        'status': 'finished',
+                        'total_bytes': os.path.getsize(encodeFilename(filename)),
+                    }
+                )
                 return True
 
         min_sleep_interval = self.params.get('sleep_interval')
@@ -367,9 +366,9 @@ class FileDownloader(object):
             max_sleep_interval = self.params.get('max_sleep_interval', min_sleep_interval)
             sleep_interval = random.uniform(min_sleep_interval, max_sleep_interval)
             self.to_screen(
-                '[download] Sleeping %s seconds...' % (
-                    int(sleep_interval) if sleep_interval.is_integer()
-                    else '%.2f' % sleep_interval))
+                '[download] Sleeping %s seconds...'
+                % (int(sleep_interval) if sleep_interval.is_integer() else f'{sleep_interval:.2f}')
+            )
             time.sleep(sleep_interval)
 
         return self.real_download(filename, info_dict)
@@ -396,5 +395,4 @@ class FileDownloader(object):
         if exe is None:
             exe = os.path.basename(str_args[0])
 
-        self.to_screen('[debug] %s command line: %s' % (
-            exe, shell_quote(str_args)))
+        self.to_screen(f'[debug] {exe} command line: {shell_quote(str_args)}')

@@ -1,23 +1,20 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
 import re
 import subprocess
 import time
 
-from .common import FileDownloader
 from ..compat import compat_str
-from ..utils import (
-    check_executable,
-    encodeFilename,
-    encodeArgument,
-    get_exe_version,
-)
+from ..utils import check_executable
+from ..utils import encodeArgument
+from ..utils import encodeFilename
+from ..utils import get_exe_version
+from .common import FileDownloader
 
 
 def rtmpdump_version():
-    return get_exe_version(
-        'rtmpdump', ['--help'], r'(?i)RTMPDump\s*v?([0-9a-zA-Z._-]+)')
+    return get_exe_version('rtmpdump', ['--help'], r'(?i)RTMPDump\s*v?([0-9a-zA-Z._-]+)')
 
 
 class RtmpFD(FileDownloader):
@@ -57,16 +54,18 @@ class RtmpFD(FileDownloader):
                         data_len = None
                         if percent > 0:
                             data_len = int(downloaded_data_len * 100 / percent)
-                        self._hook_progress({
-                            'status': 'downloading',
-                            'downloaded_bytes': downloaded_data_len,
-                            'total_bytes_estimate': data_len,
-                            'tmpfilename': tmpfilename,
-                            'filename': filename,
-                            'eta': eta,
-                            'elapsed': time_now - start,
-                            'speed': speed,
-                        })
+                        self._hook_progress(
+                            {
+                                'status': 'downloading',
+                                'downloaded_bytes': downloaded_data_len,
+                                'total_bytes_estimate': data_len,
+                                'tmpfilename': tmpfilename,
+                                'filename': filename,
+                                'eta': eta,
+                                'elapsed': time_now - start,
+                                'speed': speed,
+                            }
+                        )
                         cursor_in_new_line = False
                     else:
                         # no percent for live streams
@@ -75,14 +74,16 @@ class RtmpFD(FileDownloader):
                             downloaded_data_len = int(float(mobj.group(1)) * 1024)
                             time_now = time.time()
                             speed = self.calc_speed(start, time_now, downloaded_data_len)
-                            self._hook_progress({
-                                'downloaded_bytes': downloaded_data_len,
-                                'tmpfilename': tmpfilename,
-                                'filename': filename,
-                                'status': 'downloading',
-                                'elapsed': time_now - start,
-                                'speed': speed,
-                            })
+                            self._hook_progress(
+                                {
+                                    'downloaded_bytes': downloaded_data_len,
+                                    'tmpfilename': tmpfilename,
+                                    'filename': filename,
+                                    'status': 'downloading',
+                                    'elapsed': time_now - start,
+                                    'speed': speed,
+                                }
+                            )
                             cursor_in_new_line = False
                         elif self.params.get('verbose', False):
                             if not cursor_in_new_line:
@@ -123,9 +124,7 @@ class RtmpFD(FileDownloader):
         # Download using rtmpdump. rtmpdump returns exit code 2 when
         # the connection was interrupted and resuming appears to be
         # possible. This is part of rtmpdump's normal usage, AFAIK.
-        basic_args = [
-            'rtmpdump', '--verbose', '-r', url,
-            '-o', tmpfilename]
+        basic_args = ['rtmpdump', '--verbose', '-r', url, '-o', tmpfilename]
         if player_url is not None:
             basic_args += ['--swfVfy', player_url]
         if page_url is not None:
@@ -183,9 +182,9 @@ class RtmpFD(FileDownloader):
 
         while retval in (RD_INCOMPLETE, RD_FAILED) and not test and not live:
             prevsize = os.path.getsize(encodeFilename(tmpfilename))
-            self.to_screen('[rtmpdump] Downloaded %s bytes' % prevsize)
+            self.to_screen(f'[rtmpdump] Downloaded {prevsize} bytes')
             time.sleep(5.0)  # This seems to be needed
-            args = basic_args + ['--resume']
+            args = [*basic_args, '--resume']
             if retval == RD_FAILED:
                 args += ['--skip', '1']
             args = [encodeArgument(a) for a in args]
@@ -195,20 +194,24 @@ class RtmpFD(FileDownloader):
                 break
             # Some rtmp streams seem abort after ~ 99.8%. Don't complain for those
             if prevsize == cursize and retval == RD_INCOMPLETE and cursize > 1024:
-                self.to_screen('[rtmpdump] Could not download the whole video. This can happen for some advertisements.')
+                self.to_screen(
+                    '[rtmpdump] Could not download the whole video. This can happen for some advertisements.'
+                )
                 retval = RD_SUCCESS
                 break
         if retval == RD_SUCCESS or (test and retval == RD_INCOMPLETE):
             fsize = os.path.getsize(encodeFilename(tmpfilename))
-            self.to_screen('[rtmpdump] Downloaded %s bytes' % fsize)
+            self.to_screen(f'[rtmpdump] Downloaded {fsize} bytes')
             self.try_rename(tmpfilename, filename)
-            self._hook_progress({
-                'downloaded_bytes': fsize,
-                'total_bytes': fsize,
-                'filename': filename,
-                'status': 'finished',
-                'elapsed': time.time() - started,
-            })
+            self._hook_progress(
+                {
+                    'downloaded_bytes': fsize,
+                    'total_bytes': fsize,
+                    'filename': filename,
+                    'status': 'finished',
+                    'elapsed': time.time() - started,
+                }
+            )
             return True
         else:
             self.to_stderr('\n')

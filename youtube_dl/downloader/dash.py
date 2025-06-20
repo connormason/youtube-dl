@@ -1,13 +1,11 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import itertools
 
-from .fragment import FragmentFD
 from ..compat import compat_urllib_error
-from ..utils import (
-    DownloadError,
-    urljoin,
-)
+from ..utils import DownloadError
+from ..utils import urljoin
+from .fragment import FragmentFD
 
 
 class DashSegmentsFD(FragmentFD):
@@ -19,8 +17,7 @@ class DashSegmentsFD(FragmentFD):
 
     def real_download(self, filename, info_dict):
         fragment_base_url = info_dict.get('fragment_base_url')
-        fragments = info_dict['fragments'][:1] if self.params.get(
-            'test', False) else info_dict['fragments']
+        fragments = info_dict['fragments'][:1] if self.params.get('test', False) else info_dict['fragments']
 
         ctx = {
             'filename': filename,
@@ -47,7 +44,7 @@ class DashSegmentsFD(FragmentFD):
             fragment_range = fragment.get('range')
             if fragment_range:
                 headers = headers.copy() if headers else {}
-                headers['Range'] = 'bytes=%s' % (fragment_range,)
+                headers['Range'] = f'bytes={fragment_range}'
             for count in itertools.count():
                 try:
                     success, frag_content = self._download_fragment(ctx, fragment_url, info_dict, headers)
@@ -75,7 +72,7 @@ class DashSegmentsFD(FragmentFD):
                 if not fatal:
                     self.report_skip_fragment(frag_index)
                     continue
-                self.report_error('giving up after %s fragment retries' % count)
+                self.report_error(f'giving up after {count} fragment retries')
                 return False
 
         self._finish_frag_download(ctx)

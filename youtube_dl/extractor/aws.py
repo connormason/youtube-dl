@@ -1,12 +1,11 @@
-# coding: utf-8
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import datetime
 import hashlib
 import hmac
 
-from .common import InfoExtractor
 from ..compat import compat_urllib_parse_urlencode
+from .common import InfoExtractor
 
 
 class AWSIE(InfoExtractor):
@@ -21,7 +20,7 @@ class AWSIE(InfoExtractor):
             'Accept': 'application/json',
             'Host': self._AWS_PROXY_HOST,
             'X-Amz-Date': amz_date,
-            'X-Api-Key': self._AWS_API_KEY
+            'X-Api-Key': self._AWS_API_KEY,
         }
         session_token = aws_dict.get('session_token')
         if session_token:
@@ -34,16 +33,11 @@ class AWSIE(InfoExtractor):
         canonical_querystring = compat_urllib_parse_urlencode(query)
         canonical_headers = ''
         for header_name, header_value in sorted(headers.items()):
-            canonical_headers += '%s:%s\n' % (header_name.lower(), header_value)
+            canonical_headers += f'{header_name.lower()}:{header_value}\n'
         signed_headers = ';'.join([header.lower() for header in sorted(headers.keys())])
-        canonical_request = '\n'.join([
-            'GET',
-            aws_dict['uri'],
-            canonical_querystring,
-            canonical_headers,
-            signed_headers,
-            aws_hash('')
-        ])
+        canonical_request = '\n'.join(
+            ['GET', aws_dict['uri'], canonical_querystring, canonical_headers, signed_headers, aws_hash('')]
+        )
 
         # Task 2: http://docs.aws.amazon.com/general/latest/gr/sigv4-create-string-to-sign.html
         credential_scope_list = [date, self._AWS_REGION, 'execute-api', 'aws4_request']
@@ -67,12 +61,18 @@ class AWSIE(InfoExtractor):
         signature = aws_hmac_hexdigest(k_signing, string_to_sign)
 
         # Task 4: http://docs.aws.amazon.com/general/latest/gr/sigv4-add-signature-to-request.html
-        headers['Authorization'] = ', '.join([
-            '%s Credential=%s/%s' % (self._AWS_ALGORITHM, aws_dict['access_key'], credential_scope),
-            'SignedHeaders=%s' % signed_headers,
-            'Signature=%s' % signature,
-        ])
+        headers['Authorization'] = ', '.join(
+            [
+                '{} Credential={}/{}'.format(self._AWS_ALGORITHM, aws_dict['access_key'], credential_scope),
+                f'SignedHeaders={signed_headers}',
+                f'Signature={signature}',
+            ]
+        )
 
         return self._download_json(
-            'https://%s%s%s' % (self._AWS_PROXY_HOST, aws_dict['uri'], '?' + canonical_querystring if canonical_querystring else ''),
-            video_id, headers=headers)
+            'https://{}{}{}'.format(
+                self._AWS_PROXY_HOST, aws_dict['uri'], '?' + canonical_querystring if canonical_querystring else ''
+            ),
+            video_id,
+            headers=headers,
+        )

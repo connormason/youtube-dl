@@ -64,4 +64,3 @@ You can access the videos in the playlist with the ``entries`` field:
     Video #7: Coding a better government
     Video #8: The era of open innovation
     Video #9: The currency of the new economy is trust
-

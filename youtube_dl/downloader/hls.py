@@ -1,29 +1,26 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
-import re
 import binascii
+import re
+
 try:
     from Crypto.Cipher import AES
+
     can_decrypt_frag = True
 except ImportError:
     can_decrypt_frag = False
 
-from .fragment import FragmentFD
+from ..compat import compat_struct_pack
+from ..compat import compat_urllib_error
+from ..compat import compat_urlparse
+from ..utils import parse_m3u8_attributes
+from ..utils import update_url_query
 from .external import FFmpegFD
-
-from ..compat import (
-    compat_urllib_error,
-    compat_urlparse,
-    compat_struct_pack,
-)
-from ..utils import (
-    parse_m3u8_attributes,
-    update_url_query,
-)
+from .fragment import FragmentFD
 
 
 class HlsFD(FragmentFD):
-    """ A limited implementation that does not require ffmpeg """
+    """A limited implementation that does not require ffmpeg"""
 
     FD_NAME = 'hlsnative'
 
@@ -32,18 +29,15 @@ class HlsFD(FragmentFD):
         UNSUPPORTED_FEATURES = (
             r'#EXT-X-KEY:METHOD=(?!NONE|AES-128)',  # encrypted streams [1]
             # r'#EXT-X-BYTERANGE',  # playlists composed of byte ranges of media files [2]
-
             # Live streams heuristic does not always work (e.g. geo restricted to Germany
             # http://hls-geo.daserste.de/i/videoportal/Film/c_620000/622873/format,716451,716457,716450,716458,716459,.mp4.csmil/index_4_av.m3u8?null=0)
             # r'#EXT-X-MEDIA-SEQUENCE:(?!0$)',  # live streams [3]
-
             # This heuristic also is not correct since segments may not be appended as well.
             # Twitch vods of finished streams have EXT-X-PLAYLIST-TYPE:EVENT despite
             # no segments will definitely be appended to the end of the playlist.
             # r'#EXT-X-PLAYLIST-TYPE:EVENT',  # media segments may be appended to the end of
             #                                 # event media playlists [4]
             r'#EXT-X-MAP:',  # media initialization [5]
-
             # 1. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.2.4
             # 2. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.2.2
             # 3. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.3.2
@@ -59,7 +53,7 @@ class HlsFD(FragmentFD):
 
     def real_download(self, filename, info_dict):
         man_url = info_dict['url']
-        self.to_screen('[%s] Downloading m3u8 manifest' % self.FD_NAME)
+        self.to_screen(f'[{self.FD_NAME}] Downloading m3u8 manifest')
 
         urlh = self.ydl.urlopen(self._prepare_url(info_dict, man_url))
         man_url = urlh.geturl()
@@ -70,20 +64,22 @@ class HlsFD(FragmentFD):
                 self.report_error('pycrypto not found. Please install it.')
                 return False
             self.report_warning(
-                'hlsnative has detected features it does not support, '
-                'extraction will be delegated to ffmpeg')
+                'hlsnative has detected features it does not support, extraction will be delegated to ffmpeg'
+            )
             fd = FFmpegFD(self.ydl, self.params)
             for ph in self._progress_hooks:
                 fd.add_progress_hook(ph)
             return fd.real_download(filename, info_dict)
 
         def is_ad_fragment_start(s):
-            return (s.startswith('#ANVATO-SEGMENT-INFO') and 'type=ad' in s
-                    or s.startswith('#UPLYNK-SEGMENT') and s.endswith(',ad'))
+            return (s.startswith('#ANVATO-SEGMENT-INFO') and 'type=ad' in s) or (
+                s.startswith('#UPLYNK-SEGMENT') and s.endswith(',ad')
+            )
 
         def is_ad_fragment_end(s):
-            return (s.startswith('#ANVATO-SEGMENT-INFO') and 'type=master' in s
-                    or s.startswith('#UPLYNK-SEGMENT') and s.endswith(',segment'))
+            return (s.startswith('#ANVATO-SEGMENT-INFO') and 'type=master' in s) or (
+                s.startswith('#UPLYNK-SEGMENT') and s.endswith(',segment')
+            )
 
         media_frags = 0
         ad_frags = 0
@@ -134,10 +130,7 @@ class HlsFD(FragmentFD):
                     frag_index += 1
                     if frag_index <= ctx['fragment_index']:
                         continue
-                    frag_url = (
-                        line
-                        if re.match(r'^https?://', line)
-                        else compat_urlparse.urljoin(man_url, line))
+                    frag_url = line if re.match(r'^https?://', line) else compat_urlparse.urljoin(man_url, line)
                     if extra_query:
                         frag_url = update_url_query(frag_url, extra_query)
                     count = 0
@@ -146,8 +139,7 @@ class HlsFD(FragmentFD):
                         headers['Range'] = 'bytes=%d-%d' % (byte_range['start'], byte_range['end'] - 1)
                     while count <= fragment_retries:
                         try:
-                            success, frag_content = self._download_fragment(
-                                ctx, frag_url, info_dict, headers)
+                            success, frag_content = self._download_fragment(ctx, frag_url, info_dict, headers)
                             if not success:
                                 return False
                             break
@@ -165,19 +157,23 @@ class HlsFD(FragmentFD):
                             media_sequence += 1
                             self.report_skip_fragment(frag_index)
                             continue
-                        self.report_error(
-                            'giving up after %s fragment retries' % fragment_retries)
+                        self.report_error(f'giving up after {fragment_retries} fragment retries')
                         return False
                     if decrypt_info['METHOD'] == 'AES-128':
                         iv = decrypt_info.get('IV') or compat_struct_pack('>8xq', media_sequence)
-                        decrypt_info['KEY'] = decrypt_info.get('KEY') or self.ydl.urlopen(
-                            self._prepare_url(info_dict, info_dict.get('_decryption_key_url') or decrypt_info['URI'])).read()
+                        decrypt_info['KEY'] = (
+                            decrypt_info.get('KEY')
+                            or self.ydl.urlopen(
+                                self._prepare_url(
+                                    info_dict, info_dict.get('_decryption_key_url') or decrypt_info['URI']
+                                )
+                            ).read()
+                        )
                         # Don't decrypt the content in tests since the data is explicitly truncated and it's not to a valid block
                         # size (see https://github.com/ytdl-org/youtube-dl/pull/27660). Tests only care that the correct data downloaded,
                         # not what it decrypts to.
                         if not test:
-                            frag_content = AES.new(
-                                decrypt_info['KEY'], AES.MODE_CBC, iv).decrypt(frag_content)
+                            frag_content = AES.new(decrypt_info['KEY'], AES.MODE_CBC, iv).decrypt(frag_content)
                     self._append_fragment(ctx, frag_content)
                     # We only download the first fragment during the test
                     if test:
@@ -191,8 +187,7 @@ class HlsFD(FragmentFD):
                         if 'IV' in decrypt_info:
                             decrypt_info['IV'] = binascii.unhexlify(decrypt_info['IV'][2:].zfill(32))
                         if not re.match(r'^https?://', decrypt_info['URI']):
-                            decrypt_info['URI'] = compat_urlparse.urljoin(
-                                man_url, decrypt_info['URI'])
+                            decrypt_info['URI'] = compat_urlparse.urljoin(man_url, decrypt_info['URI'])
                         if extra_query:
                             decrypt_info['URI'] = update_url_query(decrypt_info['URI'], extra_query)
                         if decrypt_url != decrypt_info['URI']:
@@ -201,7 +196,9 @@ class HlsFD(FragmentFD):
                     media_sequence = int(line[22:])
                 elif line.startswith('#EXT-X-BYTERANGE'):
                     splitted_byte_range = line[17:].split('@')
-                    sub_range_start = int(splitted_byte_range[1]) if len(splitted_byte_range) == 2 else byte_range['end']
+                    sub_range_start = (
+                        int(splitted_byte_range[1]) if len(splitted_byte_range) == 2 else byte_range['end']
+                    )
                     byte_range = {
                         'start': sub_range_start,
                         'end': sub_range_start + int(splitted_byte_range[0]),

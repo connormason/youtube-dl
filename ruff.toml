@@ -1,0 +1,39 @@
+# Global
+line-length     = 120
+indent-width    = 4
+target-version  = "py39"
+extend-exclude  = [
+    "bin",
+    "devscripts",
+    "docs",
+]
+
+# Linting
+[lint]
+extend-select = [
+    "COM",      # flake8-commas
+    "I",        # isort
+    "PGH",      # pygrep-hooks
+    "RUF",      # ruff
+    "UP",       # pyupgrade
+    "W",        # pycodestyle warnings
+]
+ignore = [
+    "COM812",   # Trailing comma missing
+    "RUF022",   # `__all__` is not sorted
+]
+
+[lint.isort]
+force-single-line   = true
+required-imports    = [
+    "from __future__ import annotations"
+]
+
+# Formatting
+[format]
+quote-style             = "single"
+indent-style            = "space"
+docstring-code-format   = true
+exclude = [
+    ".gitignore",
+]

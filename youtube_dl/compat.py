@@ -1,6 +1,4 @@
-# coding: utf-8
-from __future__ import unicode_literals
-from __future__ import division
+from __future__ import annotations
 
 import base64
 import binascii
@@ -23,7 +21,10 @@ import sys
 import types
 import xml.etree.ElementTree
 
-_IDENTITY = lambda x: x
+
+def _IDENTITY(x):
+    return x
+
 
 # naming convention
 # 'compat_' + Python3_name.replace('.', '_')
@@ -34,19 +35,17 @@ _IDENTITY = lambda x: x
 # compat_str, compat_basestring, compat_chr
 try:
     # Python 2
-    compat_str, compat_basestring, compat_chr = (
-        unicode, basestring, unichr
-    )
+    compat_str, compat_basestring, compat_chr = (unicode, basestring, unichr)
 except NameError:
-    compat_str, compat_basestring, compat_chr = (
-        str, (str, bytes), chr
-    )
+    compat_str, compat_basestring, compat_chr = (str, (str, bytes), chr)
 
 
 # compat_casefold
 try:
     compat_str.casefold
-    compat_casefold = lambda s: s.casefold()
+
+    def compat_casefold(s):
+        return s.casefold()
 except AttributeError:
     from .casefold import _casefold as compat_casefold
 
@@ -68,8 +67,8 @@ except ImportError:  # Python 2
 try:
     type(compat_urllib_request.Request('http://127.0.0.1', method='GET'))
 except TypeError:
-    def _add_init_method_arg(cls):
 
+    def _add_init_method_arg(cls):
         init = cls.__init__
 
         def wrapped_init(self, *args, **kwargs):
@@ -100,7 +99,9 @@ try:
     import urllib.parse as compat_urllib_parse
 except ImportError:  # Python 2
     import urllib as compat_urllib_parse
+
     import urlparse as _urlparse
+
     for a in dir(_urlparse):
         if not hasattr(compat_urllib_parse, a):
             setattr(compat_urllib_parse, a, getattr(_urlparse, a))
@@ -133,16 +134,7 @@ except ImportError:  # Python 2
     import cookielib as compat_cookiejar
 compat_http_cookiejar = compat_cookiejar
 
-if sys.version_info[0] == 2:
-    class compat_cookiejar_Cookie(compat_cookiejar.Cookie):
-        def __init__(self, version, name, value, *args, **kwargs):
-            if isinstance(name, compat_str):
-                name = name.encode()
-            if isinstance(value, compat_str):
-                value = value.encode()
-            compat_cookiejar.Cookie.__init__(self, version, name, value, *args, **kwargs)
-else:
-    compat_cookiejar_Cookie = compat_cookiejar.Cookie
+compat_cookiejar_Cookie = compat_cookiejar.Cookie
 compat_http_cookiejar_Cookie = compat_cookiejar_Cookie
 
 
@@ -156,6 +148,7 @@ compat_http_cookies = compat_cookies
 
 # compat_http_cookies_SimpleCookie
 if sys.version_info[0] == 2 or sys.version_info < (3, 3):
+
     class compat_cookies_SimpleCookie(compat_cookies.SimpleCookie):
         def load(self, rawdata):
             must_have_value = 0
@@ -163,11 +156,9 @@ if sys.version_info[0] == 2 or sys.version_info < (3, 3):
                 if sys.version_info[:2] != (2, 7) or sys.platform.startswith('java'):
                     # attribute must have value for parsing
                     rawdata, must_have_value = re.subn(
-                        r'(?i)(;\s*)(secure|httponly)(\s*(?:;|$))', r'\1\2=\2\3', rawdata)
-                if sys.version_info[0] == 2:
-                    if isinstance(rawdata, compat_str):
-                        rawdata = str(rawdata)
-            super(compat_cookies_SimpleCookie, self).load(rawdata)
+                        r'(?i)(;\s*)(secure|httponly)(\s*(?:;|$))', r'\1\2=\2\3', rawdata
+                    )
+            super().load(rawdata)
             if must_have_value > 0:
                 for morsel in self.values():
                     for attr in ('secure', 'httponly'):
@@ -2453,11 +2444,11 @@ compat_urllib_request_urlretrieve = compat_urlretrieve
 
 # compat_html_parser_HTMLParser, compat_html_parser_HTMLParseError
 try:
-    from HTMLParser import (
-        HTMLParser as compat_HTMLParser,
-        HTMLParseError as compat_HTMLParseError)
+    from HTMLParser import HTMLParseError as compat_HTMLParseError
+    from HTMLParser import HTMLParser as compat_HTMLParser
 except ImportError:  # Python 3
     from html.parser import HTMLParser as compat_HTMLParser
+
     try:
         from html.parser import HTMLParseError as compat_HTMLParseError
     except ImportError:  # Python >3.4
@@ -2468,6 +2459,7 @@ except ImportError:  # Python 3
         class compat_HTMLParseError(Exception):
             pass
 
+
 compat_html_parser_HTMLParser = compat_HTMLParser
 compat_html_parser_HTMLParseError = compat_HTMLParseError
 
@@ -2475,9 +2467,13 @@ compat_html_parser_HTMLParseError = compat_HTMLParseError
 # compat_subprocess_get_DEVNULL
 try:
     _DEVNULL = subprocess.DEVNULL
-    compat_subprocess_get_DEVNULL = lambda: _DEVNULL
+
+    def compat_subprocess_get_DEVNULL():
+        return _DEVNULL
 except AttributeError:
-    compat_subprocess_get_DEVNULL = lambda: open(os.path.devnull, 'w')
+
+    def compat_subprocess_get_DEVNULL():
+        return open(os.path.devnull, 'w')
 
 
 # compat_http_server
@@ -2492,11 +2488,11 @@ except ImportError:
 # compat_urllib_parse_urlencode,
 # compat_urllib_parse_parse_qs
 try:
-    from urllib.parse import unquote_to_bytes as compat_urllib_parse_unquote_to_bytes
+    from urllib.parse import parse_qs as compat_parse_qs
     from urllib.parse import unquote as compat_urllib_parse_unquote
     from urllib.parse import unquote_plus as compat_urllib_parse_unquote_plus
+    from urllib.parse import unquote_to_bytes as compat_urllib_parse_unquote_to_bytes
     from urllib.parse import urlencode as compat_urllib_parse_urlencode
-    from urllib.parse import parse_qs as compat_parse_qs
 except ImportError:  # Python 2
     _asciire = getattr(compat_urllib_parse, '_asciire', None) or re.compile(r'([\x00-\x7f]+)')
 
@@ -2567,11 +2563,10 @@ except ImportError:  # Python 2
     # the friends or manually ensure input query contains only byte strings.
     # We will stick with latter thus recursively encoding the whole query.
     def compat_urllib_parse_urlencode(query, doseq=0, safe='', encoding='utf-8', errors='strict'):
-
         def encode_elem(e):
             if isinstance(e, dict):
                 e = encode_dict(e)
-            elif isinstance(e, (list, tuple,)):
+            elif isinstance(e, (list, tuple)):
                 e = type(e)(encode_elem(el) for el in e)
             elif isinstance(e, compat_str):
                 e = e.encode(encoding, errors)
@@ -2584,8 +2579,7 @@ except ImportError:  # Python 2
 
     # HACK: The following is the correct parse_qs implementation from cpython 3's stdlib.
     # Python 2's version is apparently totally broken
-    def _parse_qsl(qs, keep_blank_values=False, strict_parsing=False,
-                   encoding='utf-8', errors='replace'):
+    def _parse_qsl(qs, keep_blank_values=False, strict_parsing=False, encoding='utf-8', errors='replace'):
         qs, _coerce_result = qs, compat_str
         pairs = [s2 for s1 in qs.split('&') for s2 in s1.split(';')]
         r = []
@@ -2595,7 +2589,7 @@ except ImportError:  # Python 2
             nv = name_value.split('=', 1)
             if len(nv) != 2:
                 if strict_parsing:
-                    raise ValueError('bad query field: %r' % (name_value,))
+                    raise ValueError(f'bad query field: {name_value!r}')
                 # Handle case of a control-name with no equal sign
                 if keep_blank_values:
                     nv.append('')
@@ -2603,21 +2597,17 @@ except ImportError:  # Python 2
                     continue
             if len(nv[1]) or keep_blank_values:
                 name = nv[0].replace('+', ' ')
-                name = compat_urllib_parse_unquote(
-                    name, encoding=encoding, errors=errors)
+                name = compat_urllib_parse_unquote(name, encoding=encoding, errors=errors)
                 name = _coerce_result(name)
                 value = nv[1].replace('+', ' ')
-                value = compat_urllib_parse_unquote(
-                    value, encoding=encoding, errors=errors)
+                value = compat_urllib_parse_unquote(value, encoding=encoding, errors=errors)
                 value = _coerce_result(value)
                 r.append((name, value))
         return r
 
-    def compat_parse_qs(qs, keep_blank_values=False, strict_parsing=False,
-                        encoding='utf-8', errors='replace'):
+    def compat_parse_qs(qs, keep_blank_values=False, strict_parsing=False, encoding='utf-8', errors='replace'):
         parsed_result = {}
-        pairs = _parse_qsl(qs, keep_blank_values, strict_parsing,
-                           encoding=encoding, errors=errors)
+        pairs = _parse_qsl(qs, keep_blank_values, strict_parsing, encoding=encoding, errors=errors)
         for name, value in pairs:
             if name in parsed_result:
                 parsed_result[name].append(value)
@@ -2625,14 +2615,14 @@ except ImportError:  # Python 2
                 parsed_result[name] = [value]
         return parsed_result
 
-    setattr(compat_urllib_parse, '_urlencode',
-            getattr(compat_urllib_parse, 'urlencode'))
+    setattr(compat_urllib_parse, '_urlencode', getattr(compat_urllib_parse, 'urlencode'))
     for name, fix in (
-            ('unquote_to_bytes', compat_urllib_parse_unquote_to_bytes),
-            ('parse_unquote', compat_urllib_parse_unquote),
-            ('unquote_plus', compat_urllib_parse_unquote_plus),
-            ('urlencode', compat_urllib_parse_urlencode),
-            ('parse_qs', compat_parse_qs)):
+        ('unquote_to_bytes', compat_urllib_parse_unquote_to_bytes),
+        ('parse_unquote', compat_urllib_parse_unquote),
+        ('unquote_plus', compat_urllib_parse_unquote_plus),
+        ('urlencode', compat_urllib_parse_urlencode),
+        ('parse_qs', compat_parse_qs),
+    ):
         setattr(compat_urllib_parse, name, fix)
 
     try:
@@ -2657,9 +2647,7 @@ except ImportError:  # Python 2
                 safe_map = {}
                 for i in range(256):
                     c = chr(i)
-                    safe_map[c] = (
-                        c if (i < 128 and c in safe)
-                        else b'%{0:02X}'.format(i))
+                    safe_map[c] = c if (i < 128 and c in safe) else b'%{0:02X}'.format(i)
                 _safemaps[cachekey] = safe_map
 
             if safe.issuperset(s):
@@ -2668,9 +2656,7 @@ except ImportError:  # Python 2
 
         # linked code
         def _quote_plus(s, safe=''):
-            return (
-                _quote(s, safe + b' ').replace(b' ', b'+') if b' ' in s
-                else _quote(s, safe))
+            return _quote(s, safe + b' ').replace(b' ', b'+') if b' ' in s else _quote(s, safe)
 
         # linked code
         def _urlcleanup():
@@ -2679,10 +2665,7 @@ except ImportError:  # Python 2
             _safemaps.clear()
             compat_urllib_parse.ftpcache.clear()
 
-        for name, fix in (
-                ('quote', _quote),
-                ('quote_plus', _quote_plus),
-                ('urlcleanup', _urlcleanup)):
+        for name, fix in (('quote', _quote), ('quote_plus', _quote_plus), ('urlcleanup', _urlcleanup)):
             setattr(compat_urllib_parse, '_' + name, getattr(compat_urllib_parse, name))
             setattr(compat_urllib_parse, name, fix)
 
@@ -2719,8 +2702,7 @@ except ImportError:  # Python < 3.4
             if not mediatype:
                 mediatype = 'text/plain;charset=US-ASCII'
 
-            headers = email.message_from_string(
-                'Content-type: %s\nContent-length: %d\n' % (mediatype, len(data)))
+            headers = email.message_from_string('Content-type: %s\nContent-length: %d\n' % (mediatype, len(data)))
 
             return compat_urllib_response.addinfourl(io.BytesIO(data), headers, url)
 
@@ -2752,48 +2734,16 @@ except TypeError:  # Python <=2.6
     from xml.etree.ElementTree import _ElementInterface as compat_etree_Element
 compat_xml_etree_ElementTree_Element = compat_etree_Element
 
-if sys.version_info[0] >= 3:
-    def compat_etree_fromstring(text):
-        return _etree.XML(text, parser=_etree.XMLParser(target=_TreeBuilder()))
-else:
-    # python 2.x tries to encode unicode strings with ascii (see the
-    # XMLParser._fixtext method)
-    try:
-        _etree_iter = _etree.Element.iter
-    except AttributeError:  # Python <=2.6
-        def _etree_iter(root):
-            for el in root.findall('*'):
-                yield el
-                for sub in _etree_iter(el):
-                    yield sub
 
-    # on 2.6 XML doesn't have a parser argument, function copied from CPython
-    # 2.7 source
-    def _XML(text, parser=None):
-        if not parser:
-            parser = _etree.XMLParser(target=_TreeBuilder())
-        parser.feed(text)
-        return parser.close()
-
-    def _element_factory(*args, **kwargs):
-        el = _etree.Element(*args, **kwargs)
-        for k, v in el.items():
-            if isinstance(v, bytes):
-                el.set(k, v.decode('utf-8'))
-        return el
-
-    def compat_etree_fromstring(text):
-        doc = _XML(text, parser=_etree.XMLParser(target=_TreeBuilder(element_factory=_element_factory)))
-        for el in _etree_iter(doc):
-            if el.text is not None and isinstance(el.text, bytes):
-                el.text = el.text.decode('utf-8')
-        return doc
+def compat_etree_fromstring(text):
+    return _etree.XML(text, parser=_etree.XMLParser(target=_TreeBuilder()))
 
 
 # compat_xml_etree_register_namespace
 try:
     compat_etree_register_namespace = _etree.register_namespace
 except AttributeError:
+
     def compat_etree_register_namespace(prefix, uri):
         """Register a namespace prefix.
         The registry is global, and any existing mapping for either the
@@ -2808,232 +2758,17 @@ except AttributeError:
             if k == uri or v == prefix:
                 del _etree._namespace_map[k]
         _etree._namespace_map[uri] = prefix
+
+
 compat_xml_etree_register_namespace = compat_etree_register_namespace
 
 
 # compat_xpath, compat_etree_iterfind
-if sys.version_info < (2, 7):
-    # Here comes the crazy part: In 2.6, if the xpath is a unicode,
-    # .//node does not match if a node is a direct child of . !
-    def compat_xpath(xpath):
-        if isinstance(xpath, compat_str):
-            xpath = xpath.encode('ascii')
-        return xpath
-
-    # further code below based on CPython 2.7 source
-    import functools
-
-    _xpath_tokenizer_re = re.compile(r'''(?x)
-        (                                   # (1)
-            '[^']*'|"[^"]*"|                # quoted strings, or
-            ::|//?|\.\.|\(\)|[/.*:[\]()@=]  # navigation specials
-        )|                                  # or (2)
-        ((?:\{[^}]+\})?[^/[\]()@=\s]+)|     # token: optional {ns}, no specials
-        \s+                                 # or white space
-    ''')
-
-    def _xpath_tokenizer(pattern, namespaces=None):
-        for token in _xpath_tokenizer_re.findall(pattern):
-            tag = token[1]
-            if tag and tag[0] != "{" and ":" in tag:
-                try:
-                    if not namespaces:
-                        raise KeyError
-                    prefix, uri = tag.split(":", 1)
-                    yield token[0], "{%s}%s" % (namespaces[prefix], uri)
-                except KeyError:
-                    raise SyntaxError("prefix %r not found in prefix map" % prefix)
-            else:
-                yield token
-
-    def _get_parent_map(context):
-        parent_map = context.parent_map
-        if parent_map is None:
-            context.parent_map = parent_map = {}
-            for p in context.root.getiterator():
-                for e in p:
-                    parent_map[e] = p
-        return parent_map
-
-    def _select(context, result, filter_fn=lambda *_: True):
-        for elem in result:
-            for e in elem:
-                if filter_fn(e, elem):
-                    yield e
-
-    def _prepare_child(next_, token):
-        tag = token[1]
-        return functools.partial(_select, filter_fn=lambda e, _: e.tag == tag)
-
-    def _prepare_star(next_, token):
-        return _select
-
-    def _prepare_self(next_, token):
-        return lambda _, result: (e for e in result)
-
-    def _prepare_descendant(next_, token):
-        token = next(next_)
-        if token[0] == "*":
-            tag = "*"
-        elif not token[0]:
-            tag = token[1]
-        else:
-            raise SyntaxError("invalid descendant")
-
-        def select(context, result):
-            for elem in result:
-                for e in elem.getiterator(tag):
-                    if e is not elem:
-                        yield e
-        return select
-
-    def _prepare_parent(next_, token):
-        def select(context, result):
-            # FIXME: raise error if .. is applied at toplevel?
-            parent_map = _get_parent_map(context)
-            result_map = {}
-            for elem in result:
-                if elem in parent_map:
-                    parent = parent_map[elem]
-                    if parent not in result_map:
-                        result_map[parent] = None
-                        yield parent
-        return select
-
-    def _prepare_predicate(next_, token):
-        signature = []
-        predicate = []
-        for token in next_:
-            if token[0] == "]":
-                break
-            if token[0] and token[0][:1] in "'\"":
-                token = "'", token[0][1:-1]
-            signature.append(token[0] or "-")
-            predicate.append(token[1])
-
-        def select(context, result, filter_fn=lambda _: True):
-            for elem in result:
-                if filter_fn(elem):
-                    yield elem
-
-        signature = "".join(signature)
-        # use signature to determine predicate type
-        if signature == "@-":
-            # [@attribute] predicate
-            key = predicate[1]
-            return functools.partial(
-                select, filter_fn=lambda el: el.get(key) is not None)
-        if signature == "@-='":
-            # [@attribute='value']
-            key = predicate[1]
-            value = predicate[-1]
-            return functools.partial(
-                select, filter_fn=lambda el: el.get(key) == value)
-        if signature == "-" and not re.match(r"\d+$", predicate[0]):
-            # [tag]
-            tag = predicate[0]
-            return functools.partial(
-                select, filter_fn=lambda el: el.find(tag) is not None)
-        if signature == "-='" and not re.match(r"\d+$", predicate[0]):
-            # [tag='value']
-            tag = predicate[0]
-            value = predicate[-1]
-
-            def itertext(el):
-                for e in el.getiterator():
-                    e = e.text
-                    if e:
-                        yield e
-
-            def select(context, result):
-                for elem in result:
-                    for e in elem.findall(tag):
-                        if "".join(itertext(e)) == value:
-                            yield elem
-                            break
-            return select
-        if signature == "-" or signature == "-()" or signature == "-()-":
-            # [index] or [last()] or [last()-index]
-            if signature == "-":
-                index = int(predicate[0]) - 1
-            else:
-                if predicate[0] != "last":
-                    raise SyntaxError("unsupported function")
-                if signature == "-()-":
-                    try:
-                        index = int(predicate[2]) - 1
-                    except ValueError:
-                        raise SyntaxError("unsupported expression")
-                else:
-                    index = -1
-
-            def select(context, result):
-                parent_map = _get_parent_map(context)
-                for elem in result:
-                    try:
-                        parent = parent_map[elem]
-                        # FIXME: what if the selector is "*" ?
-                        elems = list(parent.findall(elem.tag))
-                        if elems[index] is elem:
-                            yield elem
-                    except (IndexError, KeyError):
-                        pass
-            return select
-        raise SyntaxError("invalid predicate")
-
-    ops = {
-        "": _prepare_child,
-        "*": _prepare_star,
-        ".": _prepare_self,
-        "..": _prepare_parent,
-        "//": _prepare_descendant,
-        "[": _prepare_predicate,
-    }
-
-    _cache = {}
-
-    class _SelectorContext:
-        parent_map = None
-
-        def __init__(self, root):
-            self.root = root
-
-    # Generate all matching objects.
-
-    def compat_etree_iterfind(elem, path, namespaces=None):
-        # compile selector pattern
-        if path[-1:] == "/":
-            path = path + "*"  # implicit all (FIXME: keep this?)
-        try:
-            selector = _cache[path]
-        except KeyError:
-            if len(_cache) > 100:
-                _cache.clear()
-            if path[:1] == "/":
-                raise SyntaxError("cannot use absolute path on element")
-            tokens = _xpath_tokenizer(path, namespaces)
-            selector = []
-            for token in tokens:
-                if token[0] == "/":
-                    continue
-                try:
-                    selector.append(ops[token[0]](tokens, token))
-                except StopIteration:
-                    raise SyntaxError("invalid path")
-            _cache[path] = selector
-        # execute selector pattern
-        result = [elem]
-        context = _SelectorContext(elem)
-        for select in selector:
-            result = select(context, result)
-        return result
-
-    # end of code based on CPython 2.7 source
+def compat_etree_iterfind(element, match):
+    return element.iterfind(match)
 
 
-else:
-    compat_etree_iterfind = lambda element, match: element.iterfind(match)
-    compat_xpath = _IDENTITY
+compat_xpath = _IDENTITY
 
 
 # compat_os_name
@@ -3042,12 +2777,14 @@ compat_os_name = os._name if os.name == 'java' else os.name
 
 # compat_shlex_quote
 if compat_os_name == 'nt':
+
     def compat_shlex_quote(s):
-        return s if re.match(r'^[-_\w./]+$', s) else '"%s"' % s.replace('"', '\\"')
+        return s if re.match(r'^[-_\w./]+$', s) else '"{}"'.format(s.replace('"', '\\"'))
 else:
     try:
         from shlex import quote as compat_shlex_quote
     except ImportError:  # Python < 3.3
+
         def compat_shlex_quote(s):
             if re.match(r'^[-_\w./]+$', s):
                 return s
@@ -3058,9 +2795,7 @@ else:
 # compat_shlex.split
 try:
     args = shlex.split('中文')
-    assert (isinstance(args, list)
-            and isinstance(args[0], compat_str)
-            and args[0] == '中文')
+    assert isinstance(args, list) and isinstance(args[0], compat_str) and args[0] == '中文'
     compat_shlex_split = shlex.split
 except (AssertionError, UnicodeEncodeError):
     # Working around shlex issue with unicode strings on some python 2
@@ -3080,89 +2815,13 @@ def compat_ord(c):
 
 
 # compat_getenv, compat_os_path_expanduser, compat_setenv
-if sys.version_info >= (3, 0):
-    compat_getenv = os.getenv
-    compat_expanduser = os.path.expanduser
+compat_getenv = os.getenv
+compat_expanduser = os.path.expanduser
 
-    def compat_setenv(key, value, env=os.environ):
-        env[key] = value
-else:
-    # Environment variables should be decoded with filesystem encoding.
-    # Otherwise it will fail if any non-ASCII characters present (see #3854 #3217 #2918)
 
-    def compat_getenv(key, default=None):
-        from .utils import get_filesystem_encoding
-        env = os.getenv(key, default)
-        if env:
-            env = env.decode(get_filesystem_encoding())
-        return env
+def compat_setenv(key, value, env=os.environ):
+    env[key] = value
 
-    def compat_setenv(key, value, env=os.environ):
-        def encode(v):
-            from .utils import get_filesystem_encoding
-            return v.encode(get_filesystem_encoding()) if isinstance(v, compat_str) else v
-        env[encode(key)] = encode(value)
-
-    # HACK: The default implementations of os.path.expanduser from cpython do not decode
-    # environment variables with filesystem encoding. We will work around this by
-    # providing adjusted implementations.
-    # The following are os.path.expanduser implementations from cpython 2.7.8 stdlib
-    # for different platforms with correct environment variables decoding.
-
-    if compat_os_name == 'posix':
-        def compat_expanduser(path):
-            """Expand ~ and ~user constructions.  If user or $HOME is unknown,
-            do nothing."""
-            if not path.startswith('~'):
-                return path
-            i = path.find('/', 1)
-            if i < 0:
-                i = len(path)
-            if i == 1:
-                if 'HOME' not in os.environ:
-                    import pwd
-                    userhome = pwd.getpwuid(os.getuid()).pw_dir
-                else:
-                    userhome = compat_getenv('HOME')
-            else:
-                import pwd
-                try:
-                    pwent = pwd.getpwnam(path[1:i])
-                except KeyError:
-                    return path
-                userhome = pwent.pw_dir
-            userhome = userhome.rstrip('/')
-            return (userhome + path[i:]) or '/'
-    elif compat_os_name in ('nt', 'ce'):
-        def compat_expanduser(path):
-            """Expand ~ and ~user constructs.
-
-            If user or $HOME is unknown, do nothing."""
-            if path[:1] != '~':
-                return path
-            i, n = 1, len(path)
-            while i < n and path[i] not in '/\\':
-                i = i + 1
-
-            if 'HOME' in os.environ:
-                userhome = compat_getenv('HOME')
-            elif 'USERPROFILE' in os.environ:
-                userhome = compat_getenv('USERPROFILE')
-            elif 'HOMEPATH' not in os.environ:
-                return path
-            else:
-                try:
-                    drive = compat_getenv('HOMEDRIVE')
-                except KeyError:
-                    drive = ''
-                userhome = os.path.join(drive, compat_getenv('HOMEPATH'))
-
-            if i != 1:  # ~user
-                userhome = os.path.join(os.path.dirname(userhome), path[1:i])
-
-            return userhome + path[i:]
-    else:
-        compat_expanduser = os.path.expanduser
 
 compat_os_path_expanduser = compat_expanduser
 
@@ -3197,21 +2856,18 @@ compat_os_path_realpath = compat_realpath
 
 
 # compat_print
-if sys.version_info < (3, 0):
-    def compat_print(s):
-        from .utils import preferredencoding
-        print(s.encode(preferredencoding(), 'xmlcharrefreplace'))
-else:
-    def compat_print(s):
-        assert isinstance(s, compat_str)
-        print(s)
+def compat_print(s):
+    assert isinstance(s, compat_str)
+    print(s)
 
 
 # compat_getpass_getpass
 if sys.version_info < (3, 0) and sys.platform == 'win32':
+
     def compat_getpass(prompt, *args, **kwargs):
         if isinstance(prompt, compat_str):
             from .utils import preferredencoding
+
             prompt = prompt.encode(preferredencoding())
         return getpass.getpass(prompt, *args, **kwargs)
 else:
@@ -3232,6 +2888,7 @@ except NameError:  # Python 3
 try:
     (lambda x: x)(**{'x': 0})
 except TypeError:
+
     def compat_kwargs(kwargs):
         return dict((bytes(k), v) for k, v in kwargs.items())
 else:
@@ -3249,48 +2906,26 @@ except NameError:  # Python 3
 try:
     compat_integer_types = (int, long)
 except NameError:  # Python 3
-    compat_integer_types = (int, )
+    compat_integer_types = (int,)
 
 # compat_int
 compat_int = compat_integer_types[-1]
 
 
 # compat_socket_create_connection
-if sys.version_info < (2, 7):
-    def compat_socket_create_connection(address, timeout, source_address=None):
-        host, port = address
-        err = None
-        for res in socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM):
-            af, socktype, proto, canonname, sa = res
-            sock = None
-            try:
-                sock = socket.socket(af, socktype, proto)
-                sock.settimeout(timeout)
-                if source_address:
-                    sock.bind(source_address)
-                sock.connect(sa)
-                return sock
-            except socket.error as _:
-                err = _
-                if sock is not None:
-                    sock.close()
-        if err is not None:
-            raise err
-        else:
-            raise socket.error('getaddrinfo returns an empty list')
-else:
-    compat_socket_create_connection = socket.create_connection
+compat_socket_create_connection = socket.create_connection
 
 
 # compat_contextlib_suppress
 try:
     from contextlib import suppress as compat_contextlib_suppress
 except ImportError:
-    class compat_contextlib_suppress(object):
+
+    class compat_contextlib_suppress:
         _exceptions = None
 
         def __init__(self, *exceptions):
-            super(compat_contextlib_suppress, self).__init__()
+            super().__init__()
             # TODO: [Base]ExceptionGroup (3.12+)
             self._exceptions = exceptions
 
@@ -3339,13 +2974,13 @@ def _workaround_optparse_bug9161():
         real_add_option = optparse.OptionGroup.add_option
 
         def _compat_add_option(self, *args, **kwargs):
-            enc = lambda v: (
-                v.encode('ascii', 'replace') if isinstance(v, compat_str)
-                else v)
+            def enc(v):
+                return v.encode('ascii', 'replace') if isinstance(v, compat_str) else v
+
             bargs = [enc(a) for a in args]
-            bkwargs = dict(
-                (k, enc(v)) for k, v in kwargs.items())
+            bkwargs = dict((k, enc(v)) for k, v in kwargs.items())
             return real_add_option(self, *bargs, **bkwargs)
+
         optparse.OptionGroup.add_option = _compat_add_option
 
 
@@ -3357,6 +2992,7 @@ except ImportError:
 
     def compat_get_terminal_size(fallback=(80, 24)):
         from .utils import process_communicate_or_kill
+
         columns = compat_getenv('COLUMNS')
         if columns:
             columns = int(columns)
@@ -3370,9 +3006,7 @@ except ImportError:
 
         if columns is None or lines is None or columns <= 0 or lines <= 0:
             try:
-                sp = subprocess.Popen(
-                    ['stty', 'size'],
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                sp = subprocess.Popen(['stty', 'size'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out, err = process_communicate_or_kill(sp)
                 _lines, _columns = map(int, out.split())
             except Exception:
@@ -3385,6 +3019,7 @@ except ImportError:
 
         return _terminal_size(columns, lines)
 
+
 compat_shutil_get_terminal_size = compat_get_terminal_size
 
 
@@ -3393,6 +3028,7 @@ try:
     type(itertools.count(start=0, step=1))
     compat_itertools_count = itertools.count
 except TypeError:  # Python 2.6 lacks step
+
     def compat_itertools_count(start=0, step=1):
         while True:
             yield start
@@ -3400,11 +3036,7 @@ except TypeError:  # Python 2.6 lacks step
 
 
 # compat_tokenize_tokenize
-if sys.version_info >= (3, 0):
-    from tokenize import tokenize as compat_tokenize_tokenize
-else:
-    from tokenize import generate_tokens as compat_tokenize_tokenize
-
+from tokenize import tokenize as compat_tokenize_tokenize
 
 # compat_struct_pack, compat_struct_unpack, compat_Struct
 try:
@@ -3426,16 +3058,17 @@ except TypeError:
         def __init__(self, fmt):
             if isinstance(fmt, compat_str):
                 fmt = fmt.encode('ascii')
-            super(compat_Struct, self).__init__(fmt)
+            super().__init__(fmt)
 else:
     compat_struct_pack = struct.pack
     compat_struct_unpack = struct.unpack
     if platform.python_implementation() == 'IronPython' and sys.version_info < (2, 7, 8):
+
         class compat_Struct(struct.Struct):
             def unpack(self, string):
                 if not isinstance(string, buffer):  # noqa: F821
                     string = buffer(string)  # noqa: F821
-                return super(compat_Struct, self).unpack(string)
+                return super().unpack(string)
     else:
         compat_Struct = struct.Struct
 
@@ -3483,12 +3116,9 @@ except ImportError:
 try:
     from collections import ChainMap as compat_collections_chain_map
     # Py3.3's ChainMap is deficient
-    if sys.version_info < (3, 4):
-        raise ImportError
 except ImportError:
     # Py <= 3.3
     class compat_collections_chain_map(compat_collections_abc.MutableMapping):
-
         maps = [{}]
 
         def __init__(self, *maps):
@@ -3551,13 +3181,7 @@ compat_re_Match = type(re.match('a', 'a'))
 
 
 # compat_base64_b64decode
-if sys.version_info < (3, 3):
-    def compat_b64decode(s, *args, **kwargs):
-        if isinstance(s, compat_str):
-            s = s.encode('ascii')
-        return base64.b64decode(s, *args, **kwargs)
-else:
-    compat_b64decode = base64.b64decode
+compat_b64decode = base64.b64decode
 
 compat_base64_b64decode = compat_b64decode
 
@@ -3577,28 +3201,23 @@ if platform.python_implementation() == 'PyPy' and sys.pypy_version_info < (5, 4,
 
         return resf
 else:
+
     def compat_ctypes_WINFUNCTYPE(*args, **kwargs):
         return ctypes.WINFUNCTYPE(*args, **kwargs)
 
 
 # compat_open
-if sys.version_info < (3, 0):
-    # open(file, mode='r', buffering=- 1, encoding=None, errors=None, newline=None, closefd=True) not: opener=None
-    def compat_open(file_, *args, **kwargs):
-        if len(args) > 6 or 'opener' in kwargs:
-            raise ValueError('open: unsupported argument "opener"')
-        return io.open(file_, *args, **kwargs)
-else:
-    compat_open = open
+compat_open = open
 
 
 # compat_register_utf8
 def compat_register_utf8():
     if sys.platform == 'win32':
         # https://github.com/ytdl-org/youtube-dl/issues/820
-        from codecs import register, lookup
-        register(
-            lambda name: lookup('utf-8') if name == 'cp65001' else None)
+        from codecs import lookup
+        from codecs import register
+
+        register(lambda name: lookup('utf-8') if name == 'cp65001' else None)
 
 
 # compat_datetime_timedelta_total_seconds

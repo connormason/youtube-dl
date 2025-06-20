@@ -1,15 +1,13 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
 
-from ..utils import (
-    PostProcessingError,
-    cli_configuration_args,
-    encodeFilename,
-)
+from ..utils import PostProcessingError
+from ..utils import cli_configuration_args
+from ..utils import encodeFilename
 
 
-class PostProcessor(object):
+class PostProcessor:
     """Post Processor class.
 
     PostProcessor objects can be added to downloaders with their

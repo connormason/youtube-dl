@@ -1,18 +1,16 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import subprocess
 
-from .common import PostProcessor
 from ..compat import compat_shlex_quote
-from ..utils import (
-    encodeArgument,
-    PostProcessingError,
-)
+from ..utils import PostProcessingError
+from ..utils import encodeArgument
+from .common import PostProcessor
 
 
 class ExecAfterDownloadPP(PostProcessor):
     def __init__(self, downloader, exec_cmd):
-        super(ExecAfterDownloadPP, self).__init__(downloader)
+        super().__init__(downloader)
         self.exec_cmd = exec_cmd
 
     def run(self, information):
@@ -22,10 +20,9 @@ class ExecAfterDownloadPP(PostProcessor):
 
         cmd = cmd.replace('{}', compat_shlex_quote(information['filepath']))
 
-        self._downloader.to_screen('[exec] Executing command: %s' % cmd)
+        self._downloader.to_screen(f'[exec] Executing command: {cmd}')
         retCode = subprocess.call(encodeArgument(cmd), shell=True)
         if retCode != 0:
-            raise PostProcessingError(
-                'Command returned error code %d' % retCode)
+            raise PostProcessingError('Command returned error code %d' % retCode)
 
         return [], information

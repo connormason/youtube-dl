@@ -1,15 +1,12 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
-import time
 import binascii
 import io
+import time
 
+from ..compat import compat_Struct
+from ..compat import compat_urllib_error
 from .fragment import FragmentFD
-from ..compat import (
-    compat_Struct,
-    compat_urllib_error,
-)
-
 
 u8 = compat_Struct('>B')
 u88 = compat_Struct('>Bx')
@@ -66,7 +63,7 @@ def write_piff_header(stream, params):
     mvhd_payload += u32.pack(0) * 2  # reserved
     mvhd_payload += unity_matrix
     mvhd_payload += u32.pack(0) * 6  # pre defined
-    mvhd_payload += u32.pack(0xffffffff)  # next track id
+    mvhd_payload += u32.pack(0xFFFFFFFF)  # next track id
     moov_payload = full_box(b'mvhd', 1, 0, mvhd_payload)  # Movie Header Box
 
     tkhd_payload = u64.pack(creation_time)
@@ -82,13 +79,17 @@ def write_piff_header(stream, params):
     tkhd_payload += unity_matrix
     tkhd_payload += u1616.pack(width)
     tkhd_payload += u1616.pack(height)
-    trak_payload = full_box(b'tkhd', 1, TRACK_ENABLED | TRACK_IN_MOVIE | TRACK_IN_PREVIEW, tkhd_payload)  # Track Header Box
+    trak_payload = full_box(
+        b'tkhd', 1, TRACK_ENABLED | TRACK_IN_MOVIE | TRACK_IN_PREVIEW, tkhd_payload
+    )  # Track Header Box
 
     mdhd_payload = u64.pack(creation_time)
     mdhd_payload += u64.pack(modification_time)
     mdhd_payload += u32.pack(timescale)
     mdhd_payload += u64.pack(duration)
-    mdhd_payload += u16.pack(((ord(language[0]) - 0x60) << 10) | ((ord(language[1]) - 0x60) << 5) | (ord(language[2]) - 0x60))
+    mdhd_payload += u16.pack(
+        ((ord(language[0]) - 0x60) << 10) | ((ord(language[1]) - 0x60) << 5) | (ord(language[2]) - 0x60)
+    )
     mdhd_payload += u16.pack(0)  # pre defined
     mdia_payload = full_box(b'mdhd', 1, 0, mdhd_payload)  # Media Header Box
 
@@ -146,7 +147,9 @@ def write_piff_header(stream, params):
             sps, pps = codec_private_data.split(u32.pack(1))[1:]
             avcc_payload = u8.pack(1)  # configuration version
             avcc_payload += sps[1:4]  # avc profile indication + profile compatibility + avc level indication
-            avcc_payload += u8.pack(0xfc | (params.get('nal_unit_length_field', 4) - 1))  # complete representation (1) + reserved (11111) + length size minus one
+            avcc_payload += u8.pack(
+                0xFC | (params.get('nal_unit_length_field', 4) - 1)
+            )  # complete representation (1) + reserved (11111) + length size minus one
             avcc_payload += u8.pack(1)  # reserved (0) + number of sps (0000001)
             avcc_payload += u16.pack(len(sps))
             avcc_payload += sps
@@ -211,8 +214,7 @@ class IsmFD(FragmentFD):
     FD_NAME = 'ism'
 
     def real_download(self, filename, info_dict):
-        segments = info_dict['fragments'][:1] if self.params.get(
-            'test', False) else info_dict['fragments']
+        segments = info_dict['fragments'][:1] if self.params.get('test', False) else info_dict['fragments']
 
         ctx = {
             'filename': filename,
@@ -251,7 +253,7 @@ class IsmFD(FragmentFD):
                 if skip_unavailable_fragments:
                     self.report_skip_fragment(frag_index)
                     continue
-                self.report_error('giving up after %s fragment retries' % fragment_retries)
+                self.report_error(f'giving up after {fragment_retries} fragment retries')
                 return False
 
         self._finish_frag_download(ctx)

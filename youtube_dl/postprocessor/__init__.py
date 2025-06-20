@@ -1,22 +1,20 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
 from .embedthumbnail import EmbedThumbnailPP
-from .ffmpeg import (
-    ConvertAACToMP3PP,
-    FFmpegPostProcessor,
-    FFmpegEmbedSubtitlePP,
-    FFmpegExtractAudioPP,
-    FFmpegFixupStretchedPP,
-    FFmpegFixupM3u8PP,
-    FFmpegFixupM4aPP,
-    FFmpegMergerPP,
-    FFmpegMetadataPP,
-    FFmpegVideoConvertorPP,
-    FFmpegSubtitlesConvertorPP,
-)
-from .xattrpp import XAttrMetadataPP
 from .execafterdownload import ExecAfterDownloadPP
+from .ffmpeg import ConvertAACToMP3PP
+from .ffmpeg import FFmpegEmbedSubtitlePP
+from .ffmpeg import FFmpegExtractAudioPP
+from .ffmpeg import FFmpegFixupM3u8PP
+from .ffmpeg import FFmpegFixupM4aPP
+from .ffmpeg import FFmpegFixupStretchedPP
+from .ffmpeg import FFmpegMergerPP
+from .ffmpeg import FFmpegMetadataPP
+from .ffmpeg import FFmpegPostProcessor
+from .ffmpeg import FFmpegSubtitlesConvertorPP
+from .ffmpeg import FFmpegVideoConvertorPP
 from .metadatafromtitle import MetadataFromTitlePP
+from .xattrpp import XAttrMetadataPP
 
 
 def get_postprocessor(key):

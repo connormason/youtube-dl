@@ -39,10 +39,7 @@ from .soundcloud import (
     SoundcloudPlaylistIE,
     SoundcloudSearchIE,
 )
-from .soundgasm import (
-    SoundgasmIE,
-    SoundgasmProfileIE
-)
+from .soundgasm import SoundgasmIE, SoundgasmProfileIE
 from .spotify import (
     SpotifyIE,
     SpotifyShowIE,

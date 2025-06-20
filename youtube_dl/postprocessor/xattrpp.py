@@ -1,17 +1,14 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
-from .common import PostProcessor
 from ..compat import compat_os_name
-from ..utils import (
-    hyphenate_date,
-    write_xattr,
-    XAttrMetadataError,
-    XAttrUnavailableError,
-)
+from ..utils import XAttrMetadataError
+from ..utils import XAttrUnavailableError
+from ..utils import hyphenate_date
+from ..utils import write_xattr
+from .common import PostProcessor
 
 
 class XAttrMetadataPP(PostProcessor):
-
     #
     # More info about extended attributes for media:
     #   http://freedesktop.org/wiki/CommonExtendedAttributes/
@@ -24,10 +21,10 @@ class XAttrMetadataPP(PostProcessor):
     #
 
     def run(self, info):
-        """ Set extended attributes on downloaded file (if xattr support is found). """
+        """Set extended attributes on downloaded file (if xattr support is found)."""
 
         # Write the metadata to the file's xattrs
-        self._downloader.to_screen('[metadata] Writing metadata to file\'s xattrs')
+        self._downloader.to_screen("[metadata] Writing metadata to file's xattrs")
 
         filename = info['filepath']
 
@@ -44,7 +41,6 @@ class XAttrMetadataPP(PostProcessor):
 
             num_written = 0
             for xattrname, infoname in xattr_mapping.items():
-
                 value = info.get(infoname)
 
                 if value:
@@ -64,13 +60,13 @@ class XAttrMetadataPP(PostProcessor):
         except XAttrMetadataError as e:
             if e.reason == 'NO_SPACE':
                 self._downloader.report_warning(
-                    'There\'s no disk space left, disk quota exceeded or filesystem xattr limit exceeded. '
-                    + (('Some ' if num_written else '') + 'extended attributes are not written.').capitalize())
+                    "There's no disk space left, disk quota exceeded or filesystem xattr limit exceeded. "
+                    + (('Some ' if num_written else '') + 'extended attributes are not written.').capitalize()
+                )
             elif e.reason == 'VALUE_TOO_LONG':
-                self._downloader.report_warning(
-                    'Unable to write extended attributes due to too long values.')
+                self._downloader.report_warning('Unable to write extended attributes due to too long values.')
             else:
-                msg = 'This filesystem doesn\'t support extended attributes. '
+                msg = "This filesystem doesn't support extended attributes. "
                 if compat_os_name == 'nt':
                     msg += 'You need to use NTFS.'
                 else:
