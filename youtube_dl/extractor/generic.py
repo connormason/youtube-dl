@@ -1,49 +1,43 @@
-# coding: utf-8
-
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
 import re
 import sys
 
+from ..compat import compat_etree_fromstring
+from ..compat import compat_str
+from ..compat import compat_urllib_parse_unquote
+from ..compat import compat_urlparse
+from ..compat import compat_xml_parse_error
+from ..utils import ExtractorError
+from ..utils import HEADRequest
+from ..utils import UnsupportedError
+from ..utils import determine_ext
+from ..utils import float_or_none
+from ..utils import int_or_none
+from ..utils import is_html
+from ..utils import js_to_json
+from ..utils import merge_dicts
+from ..utils import orderedSet
+from ..utils import parse_duration
+from ..utils import parse_resolution
+from ..utils import sanitized_Request
+from ..utils import smuggle_url
+from ..utils import unescapeHTML
+from ..utils import unified_timestamp
+from ..utils import unsmuggle_url
+from ..utils import url_or_none
+from ..utils import urljoin
+from ..utils import xpath_attr
+from ..utils import xpath_text
+from ..utils import xpath_with_ns
+from .cloudflarestream import CloudflareStreamIE
 from .common import InfoExtractor
-from .youtube import YoutubeIE
-from ..compat import (
-    compat_etree_fromstring,
-    compat_str,
-    compat_urllib_parse_unquote,
-    compat_urlparse,
-    compat_xml_parse_error,
-)
-from ..utils import (
-    determine_ext,
-    ExtractorError,
-    float_or_none,
-    HEADRequest,
-    int_or_none,
-    is_html,
-    js_to_json,
-    merge_dicts,
-    orderedSet,
-    parse_duration,
-    parse_resolution,
-    sanitized_Request,
-    smuggle_url,
-    unescapeHTML,
-    unified_timestamp,
-    unsmuggle_url,
-    UnsupportedError,
-    url_or_none,
-    urljoin,
-    xpath_attr,
-    xpath_text,
-    xpath_with_ns,
-)
 from .commonprotocols import RtmpIE
 from .googledrive import GoogleDriveIE
 from .soundcloud import SoundcloudEmbedIE
 from .tunein import TuneInBaseIE
-from .cloudflarestream import CloudflareStreamIE
+from .youtube import YoutubeIE
 
 
 class GenericIE(InfoExtractor):

@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-# coding: utf-8
-
-from __future__ import absolute_import, unicode_literals
+from __future__ import annotations
 
 import collections
 import copy
@@ -16,15 +14,14 @@ import logging
 import operator
 import os
 import platform
+import random
 import re
 import shutil
 import subprocess
-import socket
 import sys
 import time
 import tokenize
 import traceback
-import random
 from typing import Any
 from typing import cast
 
@@ -35,102 +32,97 @@ except ImportError:
     OPENSSL_VERSION = 'OpenSSL 1.0.2(?)'
 from string import ascii_letters
 
-from .compat import (
-    compat_basestring,
-    compat_collections_chain_map as ChainMap,
-    compat_filter as filter,
-    compat_get_terminal_size,
-    compat_http_client,
-    compat_http_cookiejar_Cookie,
-    compat_http_cookies_SimpleCookie,
-    compat_integer_types,
-    compat_kwargs,
-    compat_map as map,
-    compat_numeric_types,
-    compat_open as open,
-    compat_os_name,
-    compat_str,
-    compat_tokenize_tokenize,
-    compat_urllib_error,
-    compat_urllib_parse,
-    compat_urllib_request,
-    compat_urllib_request_DataHandler,
-)
-from .utils import (
-    _UnsafeExtensionError,
-    age_restricted,
-    args_to_str,
-    bug_reports_message,
-    ContentTooShortError,
-    date_from_str,
-    DateRange,
-    DEFAULT_OUTTMPL,
-    determine_ext,
-    determine_protocol,
-    DownloadError,
-    encode_compat_str,
-    encodeFilename,
-    error_to_compat_str,
-    expand_path,
-    ExtractorError,
-    format_bytes,
-    formatSeconds,
-    GeoRestrictedError,
-    int_or_none,
-    ISO3166Utils,
-    join_nonempty,
-    locked_file,
-    LazyList,
-    make_HTTPS_handler,
-    MaxDownloadsReached,
-    orderedSet,
-    PagedList,
-    parse_filesize,
-    PerRequestProxyHandler,
-    platform_name,
-    PostProcessingError,
-    preferredencoding,
-    prepend_extension,
-    process_communicate_or_kill,
-    register_socks_protocols,
-    render_table,
-    replace_extension,
-    SameFileError,
-    sanitize_filename,
-    sanitize_path,
-    sanitize_url,
-    sanitized_Request,
-    std_headers,
-    str_or_none,
-    subtitles_filename,
-    traverse_obj,
-    UnavailableVideoError,
-    url_basename,
-    version_tuple,
-    write_json_file,
-    write_string,
-    YoutubeDLCookieJar,
-    YoutubeDLCookieProcessor,
-    YoutubeDLHandler,
-    YoutubeDLRedirectHandler,
-    ytdl_is_updateable,
-)
 from .cache import Cache
-from .extractor import get_info_extractor, gen_extractor_classes, _LAZY_LOADER
+from .compat import compat_basestring
+from .compat import compat_collections_chain_map as ChainMap
+from .compat import compat_filter as filter
+from .compat import compat_http_client
+from .compat import compat_http_cookiejar_Cookie
+from .compat import compat_http_cookies_SimpleCookie
+from .compat import compat_integer_types
+from .compat import compat_kwargs
+from .compat import compat_map as map
+from .compat import compat_numeric_types
+from .compat import compat_open as open
+from .compat import compat_os_name
+from .compat import compat_str
+from .compat import compat_tokenize_tokenize
+from .compat import compat_urllib_error
+from .compat import compat_urllib_parse
+from .compat import compat_urllib_request
+from .compat import compat_urllib_request_DataHandler
 from .downloader import get_suitable_downloader
 from .downloader.rtmp import rtmpdump_version
-from .postprocessor import (
-    FFmpegFixupM3u8PP,
-    FFmpegFixupM4aPP,
-    FFmpegFixupStretchedPP,
-    FFmpegMergerPP,
-    FFmpegPostProcessor,
-    get_postprocessor,
-)
+from .extractor import _LAZY_LOADER
+from .extractor import gen_extractor_classes
+from .extractor import get_info_extractor
+from .postprocessor import FFmpegFixupM3u8PP
+from .postprocessor import FFmpegFixupM4aPP
+from .postprocessor import FFmpegFixupStretchedPP
+from .postprocessor import FFmpegMergerPP
+from .postprocessor import FFmpegPostProcessor
+from .postprocessor import get_postprocessor
+from .utils import DEFAULT_OUTTMPL
+from .utils import ContentTooShortError
+from .utils import DateRange
+from .utils import DownloadError
+from .utils import ExtractorError
+from .utils import GeoRestrictedError
+from .utils import ISO3166Utils
+from .utils import LazyList
+from .utils import MaxDownloadsReached
+from .utils import PagedList
+from .utils import PerRequestProxyHandler
+from .utils import PostProcessingError
+from .utils import SameFileError
+from .utils import UnavailableVideoError
+from .utils import YoutubeDLCookieJar
+from .utils import YoutubeDLCookieProcessor
+from .utils import YoutubeDLHandler
+from .utils import YoutubeDLRedirectHandler
+from .utils import _UnsafeExtensionError
+from .utils import age_restricted
+from .utils import args_to_str
+from .utils import bug_reports_message
+from .utils import date_from_str
+from .utils import determine_ext
+from .utils import determine_protocol
+from .utils import encode_compat_str
+from .utils import encodeFilename
+from .utils import error_to_compat_str
+from .utils import expand_path
+from .utils import format_bytes
+from .utils import formatSeconds
+from .utils import int_or_none
+from .utils import join_nonempty
+from .utils import locked_file
+from .utils import make_HTTPS_handler
+from .utils import orderedSet
+from .utils import parse_filesize
+from .utils import platform_name
+from .utils import preferredencoding
+from .utils import prepend_extension
+from .utils import process_communicate_or_kill
+from .utils import register_socks_protocols
+from .utils import render_table
+from .utils import replace_extension
+from .utils import sanitize_filename
+from .utils import sanitize_path
+from .utils import sanitize_url
+from .utils import sanitized_Request
+from .utils import std_headers
+from .utils import str_or_none
+from .utils import subtitles_filename
+from .utils import traverse_obj
+from .utils import url_basename
+from .utils import version_tuple
+from .utils import write_json_file
+from .utils import write_string
+from .utils import ytdl_is_updateable
 from .version import __version__
 
 if compat_os_name == 'nt':
-    import ctypes
+    pass
 
 logger = logging.getLogger('soundcloudutil.downloader')
 
@@ -151,7 +143,7 @@ def _catch_unsafe_file_extension(func):
     return wrapper
 
 
-class YoutubeDL(object):
+class YoutubeDL:
     """YoutubeDL class.
 
     YoutubeDL objects are the ones responsible of downloading the
@@ -449,7 +441,7 @@ class YoutubeDL(object):
 
         register_socks_protocols()
 
-    def __enter__(self) -> 'YoutubeDL':
+    def __enter__(self) -> YoutubeDL:
          return self
 
     def __exit__(self, *args: Any) -> None:
@@ -536,7 +528,7 @@ class YoutubeDL(object):
         quiet = check_quiet and self.params.get('quiet', False)
 
         debug: bool
-        if message.startswith(f'[debug]'):
+        if message.startswith('[debug]'):
             debug = True
             message = message.removeprefix('[debug]').lstrip()
         elif message.startswith('[info]'):
@@ -636,7 +628,7 @@ class YoutubeDL(object):
         '''Log debug message or Print message to stderr'''
         if not self.params.get('verbose', False):
             return
-        message = '[debug] {0}'.format(message)
+        message = f'[debug] {message}'
         if self.params.get('logger'):
             self.params['logger'].debug(message)
         else:
@@ -723,14 +715,14 @@ class YoutubeDL(object):
                     '''
                     outtmpl = re.sub(
                         FORMAT_RE.format(numeric_field),
-                        r'%({0})s'.format(numeric_field), outtmpl)
+                        rf'%({numeric_field})s', outtmpl)
 
             # expand_path translates '%%' into '%' and '$$' into '$'
             # correspondingly that is not what we want since we need to keep
             # '%%' intact for template dict substitution step. Working around
             # with boundary-alike separator hack.
             sep = ''.join([random.choice(ascii_letters) for _ in range(32)])
-            outtmpl = outtmpl.replace('%%', '%{0}%'.format(sep)).replace('$$', '${0}$'.format(sep))
+            outtmpl = outtmpl.replace('%%', f'%{sep}%').replace('$$', f'${sep}$')
 
             # outtmpl should be expand_path'ed before template dict substitution
             # because meta fields may contain env variables we don't want to
@@ -1001,8 +993,7 @@ class YoutubeDL(object):
             force_properties = dict(
                 (k, v) for k, v in ie_result.items() if v is not None)
             for f in ('_type', 'url', 'id', 'extractor', 'extractor_key', 'ie_key'):
-                if f in force_properties:
-                    del force_properties[f]
+                force_properties.pop(f, None)
             new_result = info.copy()
             new_result.update(force_properties)
 
@@ -1370,7 +1361,7 @@ class YoutubeDL(object):
                             raise syntax_error('"+" must be between two format selectors', start)
                         current_selector = FormatSelector(MERGE, (video_selector, audio_selector), [])
                     else:
-                        raise syntax_error('Operator not recognized: "{0}"'.format(string), start)
+                        raise syntax_error(f'Operator not recognized: "{string}"', start)
                 elif type == tokenize.ENDMARKER:
                     break
             if current_selector:
@@ -1510,7 +1501,7 @@ class YoutubeDL(object):
         except tokenize.TokenError:
             raise syntax_error('Missing closing/opening brackets or parenthesis', (0, len(format_spec)))
 
-        class TokenIterator(object):
+        class TokenIterator:
             def __init__(self, tokens):
                 self.tokens = tokens
                 self.counter = 0
@@ -1837,8 +1828,8 @@ class YoutubeDL(object):
                 if lang not in available_subs:
                     available_subs[lang] = cap_info
 
-        if (not self.params.get('writesubtitles') and not
-                self.params.get('writeautomaticsub') or not
+        if ((not self.params.get('writesubtitles') and not
+                self.params.get('writeautomaticsub')) or not
                 available_subs):
             return None
 
@@ -1947,7 +1938,7 @@ class YoutubeDL(object):
                 if dn and not os.path.exists(dn):
                     os.makedirs(dn)
                 return True
-            except (OSError, IOError) as err:
+            except OSError as err:
                 if isinstance(err, OSError) and err.errno == errno.EEXIST:
                     return True
                 self.report_error('unable to create directory ' + error_to_compat_str(err))
@@ -1967,7 +1958,7 @@ class YoutubeDL(object):
                     self.to_screen('[info] Writing video description to: ' + descfn)
                     with open(encodeFilename(descfn), 'w', encoding='utf-8') as descfile:
                         descfile.write(info_dict['description'])
-                except (OSError, IOError):
+                except OSError:
                     self.report_error('Cannot write description file ' + descfn)
                     return
 
@@ -1984,7 +1975,7 @@ class YoutubeDL(object):
                         annofile.write(info_dict['annotations'])
                 except (KeyError, TypeError):
                     self.report_warning('There are no annotations to write.')
-                except (OSError, IOError):
+                except OSError:
                     self.report_error('Cannot write annotations file: ' + annofn)
                     return
 
@@ -2009,7 +2000,7 @@ class YoutubeDL(object):
                             # See https://github.com/ytdl-org/youtube-dl/issues/10268
                             with open(encodeFilename(sub_filename), 'w', encoding='utf-8', newline='') as subfile:
                                 subfile.write(sub_info['data'])
-                        except (OSError, IOError):
+                        except OSError:
                             self.report_error('Cannot write subtitles file ' + sub_filename)
                             return
                     else:
@@ -2018,7 +2009,7 @@ class YoutubeDL(object):
                                 sub_info['url'], info_dict['id'], note=False).read()
                             with open(encodeFilename(sub_filename), 'wb') as subfile:
                                 subfile.write(sub_data)
-                        except (ExtractorError, IOError, OSError, ValueError) as err:
+                        except (ExtractorError, OSError, ValueError) as err:
                             self.report_warning('Unable to download subtitle for "%s": %s' %
                                                 (sub_lang, error_to_compat_str(err)))
                             continue
@@ -2121,10 +2112,10 @@ class YoutubeDL(object):
                 else:
                     # Just a single file
                     success = dl(filename, info_dict)
-            except (compat_urllib_error.URLError, compat_http_client.HTTPException, socket.error) as err:
+            except (OSError, compat_urllib_error.URLError, compat_http_client.HTTPException) as err:
                 self.report_error('unable to download video data: %s' % error_to_compat_str(err))
                 return
-            except (OSError, IOError) as err:
+            except OSError as err:
                 raise UnavailableVideoError(err)
             except (ContentTooShortError, ) as err:
                 self.report_error('content too short (expected %s bytes and served %s)' % (err.expected, err.downloaded))
@@ -2176,8 +2167,8 @@ class YoutubeDL(object):
                         assert fixup_policy in ('ignore', 'never')
 
                 if (info_dict.get('protocol') == 'm3u8_native'
-                        or info_dict.get('protocol') == 'm3u8'
-                        and self.params.get('hls_prefer_native')):
+                        or (info_dict.get('protocol') == 'm3u8'
+                        and self.params.get('hls_prefer_native'))):
                     if fixup_policy == 'warn':
                         self.report_warning('%s: malformed AAC bitstream detected.' % (
                             info_dict['id']))
@@ -2293,7 +2284,7 @@ class YoutubeDL(object):
                     self.to_screen('Deleting original file %s (pass -k to keep)' % old_filename)
                     try:
                         os.remove(encodeFilename(old_filename))
-                    except (IOError, OSError):
+                    except OSError:
                         self.report_warning('Unable to remove downloaded original file')
 
     def _make_archive_id(self, info_dict):
@@ -2330,7 +2321,7 @@ class YoutubeDL(object):
                 for line in archive_file:
                     if line.strip() == vid_id:
                         return True
-        except IOError as ioe:
+        except OSError as ioe:
             if ioe.errno != errno.ENOENT:
                 raise
         return False
@@ -2464,7 +2455,7 @@ class YoutubeDL(object):
         if not self.params.get('verbose'):
             return
 
-        if type('') is not compat_str:
+        if str is not compat_str:
             # Python 2.6 on SLES11 SP1 (https://github.com/ytdl-org/youtube-dl/issues/3326)
             self.report_warning(
                 'Your Python is broken! Update to a newer and supported version')
@@ -2644,7 +2635,7 @@ class YoutubeDL(object):
             try:
                 write_json_file(self.filter_requested_info(info_dict), infofn)
                 return True
-            except (OSError, IOError):
+            except OSError:
                 self.report_error(msg('Cannot write %s to JSON file ', label) + infofn)
                 return None
 
@@ -2680,6 +2671,6 @@ class YoutubeDL(object):
                         shutil.copyfileobj(uf, thumbf)
                     self.to_screen('[%s] %s: Writing thumbnail %sto: %s' %
                                    (info_dict['extractor'], info_dict['id'], thumb_display_id, thumb_filename))
-                except (compat_urllib_error.URLError, compat_http_client.HTTPException, socket.error) as err:
+                except (OSError, compat_urllib_error.URLError, compat_http_client.HTTPException) as err:
                     self.report_warning('Unable to download thumbnail "%s": %s' %
                                         (t['url'], error_to_compat_str(err)))

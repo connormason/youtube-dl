@@ -1,5 +1,4 @@
-# coding: utf-8
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import base64
 import collections
@@ -7,6 +6,7 @@ import datetime
 import functools
 import hashlib
 import json
+import math
 import netrc
 import os
 import random
@@ -15,87 +15,80 @@ import socket
 import ssl
 import sys
 import time
-import math
 
-from ..compat import (
-    compat_cookiejar_Cookie,
-    compat_cookies_SimpleCookie,
-    compat_etree_Element,
-    compat_etree_fromstring,
-    compat_getpass,
-    compat_integer_types,
-    compat_http_client,
-    compat_kwargs,
-    compat_map as map,
-    compat_open as open,
-    compat_os_name,
-    compat_str,
-    compat_urllib_error,
-    compat_urllib_parse_unquote,
-    compat_urllib_parse_urlencode,
-    compat_urllib_request,
-    compat_urlparse,
-    compat_xml_parse_error,
-    compat_zip as zip,
-)
-from ..downloader.f4m import (
-    get_base_url,
-    remove_encrypted_media,
-)
-from ..utils import (
-    NO_DEFAULT,
-    age_restricted,
-    base_url,
-    bug_reports_message,
-    clean_html,
-    compiled_regex_type,
-    determine_ext,
-    determine_protocol,
-    dict_get,
-    error_to_compat_str,
-    ExtractorError,
-    extract_attributes,
-    fix_xml_ampersands,
-    float_or_none,
-    GeoRestrictedError,
-    GeoUtils,
-    int_or_none,
-    join_nonempty,
-    js_to_json,
-    JSON_LD_RE,
-    mimetype2ext,
-    orderedSet,
-    parse_bitrate,
-    parse_codecs,
-    parse_duration,
-    parse_iso8601,
-    parse_m3u8_attributes,
-    parse_resolution,
-    RegexNotFoundError,
-    sanitized_Request,
-    sanitize_filename,
-    str_or_none,
-    str_to_int,
-    strip_or_none,
-    T,
-    traverse_obj,
-    try_get,
-    unescapeHTML,
-    unified_strdate,
-    unified_timestamp,
-    update_Request,
-    update_url_query,
-    urljoin,
-    url_basename,
-    url_or_none,
-    variadic,
-    xpath_element,
-    xpath_text,
-    xpath_with_ns,
-)
+from ..compat import compat_cookiejar_Cookie
+from ..compat import compat_cookies_SimpleCookie
+from ..compat import compat_etree_Element
+from ..compat import compat_etree_fromstring
+from ..compat import compat_getpass
+from ..compat import compat_http_client
+from ..compat import compat_integer_types
+from ..compat import compat_kwargs
+from ..compat import compat_map as map
+from ..compat import compat_open as open
+from ..compat import compat_os_name
+from ..compat import compat_str
+from ..compat import compat_urllib_error
+from ..compat import compat_urllib_parse_unquote
+from ..compat import compat_urllib_parse_urlencode
+from ..compat import compat_urllib_request
+from ..compat import compat_urlparse
+from ..compat import compat_xml_parse_error
+from ..compat import compat_zip as zip
+from ..downloader.f4m import get_base_url
+from ..downloader.f4m import remove_encrypted_media
+from ..utils import JSON_LD_RE
+from ..utils import NO_DEFAULT
+from ..utils import ExtractorError
+from ..utils import GeoRestrictedError
+from ..utils import GeoUtils
+from ..utils import RegexNotFoundError
+from ..utils import T
+from ..utils import age_restricted
+from ..utils import base_url
+from ..utils import bug_reports_message
+from ..utils import clean_html
+from ..utils import compiled_regex_type
+from ..utils import determine_ext
+from ..utils import determine_protocol
+from ..utils import dict_get
+from ..utils import error_to_compat_str
+from ..utils import extract_attributes
+from ..utils import fix_xml_ampersands
+from ..utils import float_or_none
+from ..utils import int_or_none
+from ..utils import join_nonempty
+from ..utils import js_to_json
+from ..utils import mimetype2ext
+from ..utils import orderedSet
+from ..utils import parse_bitrate
+from ..utils import parse_codecs
+from ..utils import parse_duration
+from ..utils import parse_iso8601
+from ..utils import parse_m3u8_attributes
+from ..utils import parse_resolution
+from ..utils import sanitize_filename
+from ..utils import sanitized_Request
+from ..utils import str_or_none
+from ..utils import str_to_int
+from ..utils import strip_or_none
+from ..utils import traverse_obj
+from ..utils import try_get
+from ..utils import unescapeHTML
+from ..utils import unified_strdate
+from ..utils import unified_timestamp
+from ..utils import update_Request
+from ..utils import update_url_query
+from ..utils import url_basename
+from ..utils import url_or_none
+from ..utils import urljoin
+from ..utils import variadic
+from ..utils import xpath_element
+from ..utils import xpath_text
+from ..utils import xpath_with_ns
 
 
-class InfoExtractor(object):
+class InfoExtractor:
     """Information Extractor class.
 
     Information extractors are the classes that, given a URL, extract
@@ -1113,8 +1106,7 @@ class InfoExtractor(object):
             fatal, has_default = False, True
 
         json_string = self._search_regex(
-            r'(?:{0})\s*(?P<json>{1})\s*(?:{2})'.format(
-                start_pattern, contains_pattern, end_pattern),
+            rf'(?:{start_pattern})\s*(?P<json>{contains_pattern})\s*(?:{end_pattern})',
             string, name, group='json', fatal=fatal, default=None if has_default else NO_DEFAULT)
         if not json_string:
             return default
@@ -1141,12 +1133,12 @@ class InfoExtractor(object):
                 if end is not None:
                     json_string = json_string[:end]
                     continue
-                msg = 'Unable to extract {0} - Failed to parse JSON'.format(name)
+                msg = f'Unable to extract {name} - Failed to parse JSON'
                 if fatal:
                     raise ExtractorError(msg, cause=e.cause, video_id=video_id)
                 elif not has_default:
                     self.report_warning(
-                        '{0}: {1}'.format(msg, error_to_compat_str(e)), video_id=video_id)
+                        f'{msg}: {error_to_compat_str(e)}', video_id=video_id)
             return default
 
     def _html_search_regex(self, pattern, string, name, default=NO_DEFAULT, fatal=True, flags=0, group=None):
@@ -1172,7 +1164,7 @@ class InfoExtractor(object):
                 else:
                     raise netrc.NetrcParseError(
                         'No authenticators for %s' % netrc_machine)
-            except (AttributeError, IOError, netrc.NetrcParseError) as err:
+            except (OSError, AttributeError, netrc.NetrcParseError) as err:
                 self.report_warning(
                     'parsing .netrc: %s' % error_to_compat_str(err))
 
@@ -1518,7 +1510,7 @@ class InfoExtractor(object):
             return {}
 
         args = dict(zip(arg_keys.split(','), map(json.dumps, self._parse_json(
-            '[{0}]'.format(arg_vals), video_id, transform_source=js_to_json, fatal=fatal) or ())))
+            f'[{arg_vals}]', video_id, transform_source=js_to_json, fatal=fatal) or ())))
 
         ret = self._parse_json(js, video_id, transform_source=functools.partial(js_to_json, vars=args), fatal=fatal)
         return traverse_obj(ret, traverse) or {}
@@ -1809,8 +1801,8 @@ class InfoExtractor(object):
 
     def _report_ignoring_subs(self, name):
         self.report_warning(bug_reports_message(
-            'Ignoring subtitle tracks found in the {0} manifest; '
-            'if any subtitle tracks are missing,'.format(name)
+            f'Ignoring subtitle tracks found in the {name} manifest; '
+            'if any subtitle tracks are missing,'
         ), only_once=True)
 
     def _extract_m3u8_formats(self, m3u8_url, video_id, ext=None,
@@ -2321,7 +2313,7 @@ class InfoExtractor(object):
             b_url = traverse_obj(element, (
                 T(lambda e: e.find(_add_ns('BaseURL')).text)))
             if parent_base_url and b_url:
-                if not parent_base_url[-1] in ('/', ':'):
+                if parent_base_url[-1] not in ('/', ':'):
                     parent_base_url += '/'
                 b_url = compat_urlparse.urljoin(parent_base_url, b_url)
             if b_url:
@@ -3353,7 +3345,7 @@ class InfoExtractor(object):
         video_id = '' if video_id is True else ' ' + video_id
         noplaylist = self.get_param('noplaylist')
         self.to_screen(
-            'Downloading just the {0}{1} because of --no-playlist'.format(video_label, video_id)
+            f'Downloading just the {video_label}{video_id} because of --no-playlist'
             if noplaylist else
             'Downloading {0}{1} - add --no-playlist to download just the {2}{3}'.format(
                 playlist_label, '' if playlist_id is True else ' ' + playlist_id,

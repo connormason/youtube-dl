@@ -1,16 +1,13 @@
-# coding: utf-8
-from __future__ import unicode_literals
+from __future__ import annotations
 
+from ..utils import clean_html
+from ..utils import clean_podcast_url
+from ..utils import get_element_by_class
+from ..utils import int_or_none
+from ..utils import parse_codecs
+from ..utils import parse_iso8601
+from ..utils import try_get
 from .common import InfoExtractor
-from ..utils import (
-    clean_html,
-    clean_podcast_url,
-    get_element_by_class,
-    int_or_none,
-    parse_codecs,
-    parse_iso8601,
-    try_get,
-)
 
 
 class ApplePodcastsIE(InfoExtractor):

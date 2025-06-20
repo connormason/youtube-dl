@@ -1,21 +1,17 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
+from ..compat import compat_b64decode
+from ..compat import compat_urllib_parse_unquote_plus
+from ..utils import KNOWN_EXTENSIONS
+from ..utils import ExtractorError
+from ..utils import determine_ext
+from ..utils import int_or_none
+from ..utils import js_to_json
+from ..utils import parse_filesize
+from ..utils import rot47
+from ..utils import url_or_none
+from ..utils import urlencode_postdata
 from .common import InfoExtractor
-from ..compat import (
-    compat_b64decode,
-    compat_urllib_parse_unquote_plus,
-)
-from ..utils import (
-    determine_ext,
-    ExtractorError,
-    int_or_none,
-    js_to_json,
-    KNOWN_EXTENSIONS,
-    parse_filesize,
-    rot47,
-    url_or_none,
-    urlencode_postdata,
-)
 
 
 class SharedBaseIE(InfoExtractor):

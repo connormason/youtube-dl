@@ -1,11 +1,10 @@
-# coding: utf-8
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import re
 
-from .common import InfoExtractor
-from ..utils import ExtractorError
 from ..compat import compat_urlparse
+from ..utils import ExtractorError
+from .common import InfoExtractor
 
 
 class TuneInBaseIE(InfoExtractor):

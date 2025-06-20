@@ -1,9 +1,9 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import sys
 
-from .common import InfoExtractor
 from ..utils import ExtractorError
+from .common import InfoExtractor
 
 
 class CommonMistakesIE(InfoExtractor):

@@ -1,34 +1,27 @@
-# coding: utf-8
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import itertools
 import re
 
-from .common import (
-    InfoExtractor,
-    SearchInfoExtractor
-)
-from ..compat import (
-    compat_HTTPError,
-    compat_kwargs,
-    compat_str,
-    compat_urlparse,
-)
-from ..utils import (
-    error_to_compat_str,
-    ExtractorError,
-    float_or_none,
-    HEADRequest,
-    int_or_none,
-    KNOWN_EXTENSIONS,
-    mimetype2ext,
-    str_or_none,
-    try_get,
-    unified_timestamp,
-    update_url_query,
-    url_or_none,
-    urlhandle_detect_ext,
-)
+from ..compat import compat_HTTPError
+from ..compat import compat_kwargs
+from ..compat import compat_str
+from ..compat import compat_urlparse
+from ..utils import KNOWN_EXTENSIONS
+from ..utils import ExtractorError
+from ..utils import HEADRequest
+from ..utils import error_to_compat_str
+from ..utils import float_or_none
+from ..utils import int_or_none
+from ..utils import mimetype2ext
+from ..utils import str_or_none
+from ..utils import try_get
+from ..utils import unified_timestamp
+from ..utils import update_url_query
+from ..utils import url_or_none
+from ..utils import urlhandle_detect_ext
+from .common import InfoExtractor
+from .common import SearchInfoExtractor
 
 
 class SoundcloudEmbedIE(InfoExtractor):
@@ -790,7 +783,7 @@ class SoundcloudSearchIE(SearchInfoExtractor, SoundcloudIE):
 
         for i in itertools.count(1):
             response = self._download_json(
-                next_url, collection_id, 'Downloading page {0}'.format(i),
+                next_url, collection_id, f'Downloading page {i}',
                 'Unable to download API page')
 
             collection = response.get('collection', [])

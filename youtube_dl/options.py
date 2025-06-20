@@ -1,23 +1,19 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
-import os.path
 import optparse
+import os.path
 import re
 import sys
 
+from .compat import compat_expanduser
+from .compat import compat_get_terminal_size
+from .compat import compat_getenv
+from .compat import compat_kwargs
+from .compat import compat_open as open
+from .compat import compat_shlex_split
 from .downloader.external import list_external_downloaders
-from .compat import (
-    compat_expanduser,
-    compat_get_terminal_size,
-    compat_getenv,
-    compat_kwargs,
-    compat_open as open,
-    compat_shlex_split,
-)
-from .utils import (
-    preferredencoding,
-    write_string,
-)
+from .utils import preferredencoding
+from .utils import write_string
 from .version import __version__
 
 
@@ -43,7 +39,7 @@ def parseOpts(overrideArguments=None):
     def _readOptions(filename_bytes, default=[]):
         try:
             optionf = open(filename_bytes, encoding=preferredencoding())
-        except IOError:
+        except OSError:
             return default  # silently skip if file is not present
         try:
             contents = optionf.read()

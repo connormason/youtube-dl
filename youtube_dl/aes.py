@@ -1,9 +1,10 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
 from math import ceil
 
 from .compat import compat_b64decode
-from .utils import bytes_to_intlist, intlist_to_bytes
+from .utils import bytes_to_intlist
+from .utils import intlist_to_bytes
 
 BLOCK_SIZE_BYTES = 16
 
@@ -222,7 +223,7 @@ def aes_decrypt_text(data, password, key_size_bytes):
     nonce = data[:NONCE_LENGTH_BYTES]
     cipher = data[NONCE_LENGTH_BYTES:]
 
-    class Counter(object):
+    class Counter:
         __value = nonce + [0] * (BLOCK_SIZE_BYTES - NONCE_LENGTH_BYTES)
 
         def next_value(self):

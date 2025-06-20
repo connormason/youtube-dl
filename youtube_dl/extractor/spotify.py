@@ -1,18 +1,15 @@
-# coding: utf-8
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import json
 import re
 
+from ..utils import clean_podcast_url
+from ..utils import float_or_none
+from ..utils import int_or_none
+from ..utils import strip_or_none
+from ..utils import try_get
+from ..utils import unified_strdate
 from .common import InfoExtractor
-from ..utils import (
-    clean_podcast_url,
-    float_or_none,
-    int_or_none,
-    strip_or_none,
-    try_get,
-    unified_strdate,
-)
 
 
 class SpotifyBaseIE(InfoExtractor):

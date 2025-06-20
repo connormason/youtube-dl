@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-# coding: utf-8
-
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import base64
 import binascii
@@ -11,8 +9,8 @@ import collections
 import contextlib
 import ctypes
 import datetime
-import email.utils
 import email.header
+import email.utils
 import errno
 import functools
 import inspect
@@ -37,51 +35,46 @@ import unicodedata
 import xml.etree.ElementTree
 import zlib
 
-from .compat import (
-    compat_HTMLParseError,
-    compat_HTMLParser,
-    compat_basestring,
-    compat_brotli as brotli,
-    compat_casefold,
-    compat_chr,
-    compat_collections_abc,
-    compat_contextlib_suppress,
-    compat_cookiejar,
-    compat_ctypes_WINFUNCTYPE,
-    compat_datetime_timedelta_total_seconds,
-    compat_etree_Element,
-    compat_etree_fromstring,
-    compat_etree_iterfind,
-    compat_expanduser,
-    compat_html_entities,
-    compat_html_entities_html5,
-    compat_http_client,
-    compat_http_cookies,
-    compat_integer_types,
-    compat_kwargs,
-    compat_ncompress as ncompress,
-    compat_os_name,
-    compat_re_Match,
-    compat_re_Pattern,
-    compat_shlex_quote,
-    compat_str,
-    compat_struct_pack,
-    compat_struct_unpack,
-    compat_urllib_error,
-    compat_urllib_HTTPError,
-    compat_urllib_parse,
-    compat_urllib_parse_parse_qs as compat_parse_qs,
-    compat_urllib_parse_urlencode,
-    compat_urllib_parse_urlparse,
-    compat_urllib_parse_unquote_plus,
-    compat_urllib_request,
-    compat_xpath,
-)
-
-from .socks import (
-    ProxyType,
-    sockssocket,
-)
+from .compat import compat_basestring
+from .compat import compat_brotli as brotli
+from .compat import compat_casefold
+from .compat import compat_chr
+from .compat import compat_collections_abc
+from .compat import compat_contextlib_suppress
+from .compat import compat_cookiejar
+from .compat import compat_ctypes_WINFUNCTYPE
+from .compat import compat_datetime_timedelta_total_seconds
+from .compat import compat_etree_Element
+from .compat import compat_etree_fromstring
+from .compat import compat_etree_iterfind
+from .compat import compat_expanduser
+from .compat import compat_html_entities
+from .compat import compat_html_entities_html5
+from .compat import compat_HTMLParseError
+from .compat import compat_HTMLParser
+from .compat import compat_http_client
+from .compat import compat_http_cookies
+from .compat import compat_integer_types
+from .compat import compat_kwargs
+from .compat import compat_ncompress as ncompress
+from .compat import compat_os_name
+from .compat import compat_re_Match
+from .compat import compat_re_Pattern
+from .compat import compat_shlex_quote
+from .compat import compat_str
+from .compat import compat_struct_pack
+from .compat import compat_struct_unpack
+from .compat import compat_urllib_error
+from .compat import compat_urllib_HTTPError
+from .compat import compat_urllib_parse
+from .compat import compat_urllib_parse_parse_qs as compat_parse_qs
+from .compat import compat_urllib_parse_unquote_plus
+from .compat import compat_urllib_parse_urlencode
+from .compat import compat_urllib_parse_urlparse
+from .compat import compat_urllib_request
+from .compat import compat_xpath
+from .socks import ProxyType
+from .socks import sockssocket
 
 
 def register_socks_protocols():
@@ -2059,7 +2052,7 @@ def sanitize_open(filename, open_mode):
             return (sys.stdout.buffer if hasattr(sys.stdout, 'buffer') else sys.stdout, filename)
         stream = open(encodeFilename(filename), open_mode)
         return (stream, filename)
-    except (IOError, OSError) as err:
+    except OSError as err:
         if err.errno in (errno.EACCES,):
             raise
 
@@ -2496,7 +2489,7 @@ class ContentTooShortError(YoutubeDLError):
 
     def __init__(self, downloaded, expected):
         super(ContentTooShortError, self).__init__(
-            'Downloaded {0} bytes, expected {1} bytes'.format(downloaded, expected)
+            f'Downloaded {downloaded} bytes, expected {expected} bytes'
         )
         # Both in bytes
         self.downloaded = downloaded
@@ -2546,7 +2539,7 @@ def _create_http_connection(ydl_handler, http_class, is_https, *args, **kwargs):
             ip_addrs = [addr for addr in addrs if addr[0] == af]
             if addrs and not ip_addrs:
                 ip_version = 'v4' if af == socket.AF_INET else 'v6'
-                raise socket.error(
+                raise OSError(
                     "No remote IP%s addresses available for connect, can't use '%s' as source address"
                     % (ip_version, source_address[0]))
             for res in ip_addrs:
@@ -2560,14 +2553,14 @@ def _create_http_connection(ydl_handler, http_class, is_https, *args, **kwargs):
                     sock.connect(sa)
                     err = None  # Explicitly break reference cycle
                     return sock
-                except socket.error as _:
+                except OSError as _:
                     err = _
                     if sock is not None:
                         sock.close()
             if err is not None:
                 raise err
             else:
-                raise socket.error('getaddrinfo returns an empty list')
+                raise OSError('getaddrinfo returns an empty list')
         if hasattr(hc, '_create_connection'):
             hc._create_connection = _create_connection
         sa = (source_address, 0)
@@ -2654,13 +2647,13 @@ class YoutubeDLHandler(compat_urllib_request.HTTPHandler):
 
         try:
             return _gzip(data)
-        except IOError as original_ioerror:
+        except OSError as original_ioerror:
             # There may be junk at the end of the file
             # See http://stackoverflow.com/q/4928560/35070 for details
             for i in range(1, 1024):
                 try:
                     return _gzip(data[:-i])
-                except IOError:
+                except OSError:
                     continue
             else:
                 raise original_ioerror
@@ -2932,7 +2925,7 @@ class YoutubeDLCookieJar(compat_cookiejar.MozillaCookieJar):
             if cookie.expires is None:
                 cookie.expires = 0
 
-        with io.open(filename, 'w', encoding='utf-8') as f:
+        with open(filename, 'w', encoding='utf-8') as f:
             f.write(self._HEADER)
             now = time.time()
             for cookie in self:
@@ -2988,7 +2981,7 @@ class YoutubeDLCookieJar(compat_cookiejar.MozillaCookieJar):
             return line
 
         cf = io.StringIO()
-        with io.open(filename, encoding='utf-8') as f:
+        with open(filename, encoding='utf-8') as f:
             for line in f:
                 try:
                     cf.write(prepare_line(line))
@@ -3164,7 +3157,7 @@ def parse_iso8601(date_str, delimiter='T', timezone=None):
         timezone, date_str = extract_timezone(date_str)
 
     with compat_contextlib_suppress(ValueError):
-        date_format = '%Y-%m-%d{0}%H:%M:%S'.format(delimiter)
+        date_format = f'%Y-%m-%d{delimiter}%H:%M:%S'
         dt = datetime.datetime.strptime(date_str, date_format) - timezone
         return calendar.timegm(dt.timetuple())
 
@@ -3285,7 +3278,7 @@ def hyphenate_date(date_str):
         return date_str
 
 
-class DateRange(object):
+class DateRange:
     """Represents a time interval between two dates"""
 
     def __init__(self, start=None, end=None):
@@ -3507,23 +3500,23 @@ else:
         UNSUPPORTED_MSG = 'file locking is not supported on this platform'
 
         def _lock_file(f, exclusive):
-            raise IOError(UNSUPPORTED_MSG)
+            raise OSError(UNSUPPORTED_MSG)
 
         def _unlock_file(f):
-            raise IOError(UNSUPPORTED_MSG)
+            raise OSError(UNSUPPORTED_MSG)
 
 
-class locked_file(object):
+class locked_file:
     def __init__(self, filename, mode, encoding=None):
         assert mode in ['r', 'a', 'w']
-        self.f = io.open(filename, mode, encoding=encoding)
+        self.f = open(filename, mode, encoding=encoding)
         self.mode = mode
 
     def __enter__(self):
         exclusive = self.mode != 'r'
         try:
             _lock_file(self.f, exclusive)
-        except IOError:
+        except OSError:
             self.f.close()
             raise
         return self
@@ -3792,7 +3785,7 @@ def remove_end(s, end):
 def remove_quotes(s):
     if s is None or len(s) < 2:
         return s
-    for quote in ('"', "'", ):
+    for quote in ('"', "'" ):
         if s[0] == quote and s[-1] == quote:
             return s[1:-1]
     return s
@@ -4101,7 +4094,7 @@ class LazyList(compat_collections_abc.Iterable):
         return repr(self.exhaust())
 
 
-class PagedList(object):
+class PagedList:
     def __len__(self):
         # This is only useful for tests
         return len(self.getslice())
@@ -4506,13 +4499,13 @@ def js_to_json(code, *args, **kwargs):
     strict = kwargs.get('strict', False)
 
     STRING_QUOTES = '\'"`'
-    STRING_RE = '|'.join(r'{0}(?:\\.|[^\\{0}])*{0}'.format(q) for q in STRING_QUOTES)
+    STRING_RE = '|'.join(rf'{q}(?:\\.|[^\\{q}])*{q}' for q in STRING_QUOTES)
     COMMENT_RE = r'/\*(?:(?!\*/).)*?\*/|//[^\n]*\n'
-    SKIP_RE = r'\s*(?:{comment})?\s*'.format(comment=COMMENT_RE)
+    SKIP_RE = rf'\s*(?:{COMMENT_RE})?\s*'
     INTEGER_TABLE = (
-        (r'(?s)^(0[xX][0-9a-fA-F]+){skip}:?$'.format(skip=SKIP_RE), 16),
-        (r'(?s)^(0+[0-7]+){skip}:?$'.format(skip=SKIP_RE), 8),
-        (r'(?s)^(\d+){skip}:?$'.format(skip=SKIP_RE), 10),
+        (rf'(?s)^(0[xX][0-9a-fA-F]+){SKIP_RE}:?$', 16),
+        (rf'(?s)^(0+[0-7]+){SKIP_RE}:?$', 8),
+        (rf'(?s)^(\d+){SKIP_RE}:?$', 10),
     )
     # compat candidate
     JSONDecodeError = json.JSONDecodeError if 'JSONDecodeError' in dir(json) else ValueError
@@ -4544,7 +4537,7 @@ def js_to_json(code, *args, **kwargs):
         if v[0] in STRING_QUOTES:
             v = re.sub(r'(?s)\${([^}]+)}', template_substitute, v[1:-1]) if v[0] == '`' else v[1:-1]
             escaped = re.sub(r'(?s)(")|\\(.)', process_escape, v)
-            return '"{0}"'.format(escaped)
+            return f'"{escaped}"'
 
         inv = IDENTITY
         im = re.split(r'^!+', v)
@@ -4576,7 +4569,7 @@ def js_to_json(code, *args, **kwargs):
             v = try_call(inv, args=(v,), default=v)
             if v in ('true', 'false'):
                 return v
-            return '"{0}"'.format(v)
+            return f'"{v}"'
 
         raise ValueError('Unknown value: ' + v)
 
@@ -4590,17 +4583,17 @@ def js_to_json(code, *args, **kwargs):
         code = re.sub(r'parseInt\([^\d]+(\d+)[^\d]+\)', r'\1', code)
         code = re.sub(r'\(function\([^)]*\)\s*\{[^}]*\}\s*\)\s*\(\s*(["\'][^)]*["\'])\s*\)', r'\1', code)
 
-    return re.sub(r'''(?sx)
-        {str_}|
-        {comment}|
-        ,(?={skip}[\]}}])|
+    return re.sub(rf'''(?sx)
+        {STRING_RE}|
+        {COMMENT_RE}|
+        ,(?={SKIP_RE}[\]}}])|
         void\s0|
         !*(?:(?<!\d)[eE]|[a-df-zA-DF-Z_$])[.a-zA-Z_$0-9]*|
-        (?:\b|!+)0(?:[xX][\da-fA-F]+|[0-7]+)(?:{skip}:)?|
-        !+\d+(?:\.\d*)?(?:{skip}:)?|
-        [0-9]+(?:{skip}:)|
+        (?:\b|!+)0(?:[xX][\da-fA-F]+|[0-7]+)(?:{SKIP_RE}:)?|
+        !+\d+(?:\.\d*)?(?:{SKIP_RE}:)?|
+        [0-9]+(?:{SKIP_RE}:)|
         !+
-        '''.format(comment=COMMENT_RE, skip=SKIP_RE, str_=STRING_RE), fix_kv, code)
+        ''', fix_kv, code)
 
 
 def qualities(quality_ids):
@@ -4831,8 +4824,8 @@ def _match_one(filter_part, dct):
             # a number we should respect the origin of the original field
             # and process comparison value as a string (see
             # https://github.com/ytdl-org/youtube-dl/issues/11082).
-            or actual_value is not None and m.group('intval') is not None
-                and isinstance(actual_value, compat_str)):
+            or (actual_value is not None and m.group('intval') is not None
+                and isinstance(actual_value, compat_str))):
             if m.group('op') not in ('=', '!='):
                 raise ValueError(
                     'Operator %s does not support string values!' % m.group('op'))
@@ -4940,7 +4933,7 @@ def dfxp2srt(dfxp_data):
     styles = {}
     default_style = {}
 
-    class TTMLPElementParser(object):
+    class TTMLPElementParser:
         _out = ''
         _unclosed_elements = []
         _applied_styles = []
@@ -5100,7 +5093,7 @@ def cli_configuration_args(params, param, default=[]):
     return ex_args
 
 
-class ISO639Utils(object):
+class ISO639Utils:
     # See http://www.loc.gov/standards/iso639-2/ISO-639-2_utf-8.txt
     _lang_map = {
         'aa': 'aar',
@@ -5305,7 +5298,7 @@ class ISO639Utils(object):
                 return short_name
 
 
-class ISO3166Utils(object):
+class ISO3166Utils:
     # From http://data.okfn.org/data/core/country-list
     _country_map = {
         'AF': 'Afghanistan',
@@ -5565,7 +5558,7 @@ class ISO3166Utils(object):
         return cls._country_map.get(code.upper())
 
 
-class GeoUtils(object):
+class GeoUtils:
     # Major IPv4 address blocks per country
     _country_ip_map = {
         'AD': '46.172.224.0/19',
@@ -6002,7 +5995,7 @@ def decode_png(png_data):
     header = png_data[8:]
 
     if png_data[:8] != b'\x89PNG\x0d\x0a\x1a\x0a' or header[4:8] != b'IHDR':
-        raise IOError('Not a valid PNG file.')
+        raise OSError('Not a valid PNG file.')
 
     int_map = {1: '>B', 2: '>H', 4: '>I'}
     unpack_integer = lambda x: compat_struct_unpack(int_map[len(x)], x)[0]
@@ -6039,7 +6032,7 @@ def decode_png(png_data):
             idat += chunk['data']
 
     if not idat:
-        raise IOError('Unable to read PNG data.')
+        raise OSError('Unable to read PNG data.')
 
     decompressed_data = bytearray(zlib.decompress(idat))
 
@@ -6127,7 +6120,7 @@ def write_xattr(path, key, value):
 
         try:
             setxattr(path, key, value)
-        except EnvironmentError as e:
+        except OSError as e:
             raise XAttrMetadataError(e.errno, e.strerror)
 
     except ImportError:
@@ -6141,7 +6134,7 @@ def write_xattr(path, key, value):
             try:
                 with open(ads_fn, 'wb') as f:
                     f.write(value)
-            except EnvironmentError as e:
+            except OSError as e:
                 raise XAttrMetadataError(e.errno, e.strerror)
         else:
             user_has_setfattr = check_executable('setfattr', ['--version'])
@@ -6164,7 +6157,7 @@ def write_xattr(path, key, value):
                 try:
                     p = subprocess.Popen(
                         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-                except EnvironmentError as e:
+                except OSError as e:
                     raise XAttrMetadataError(e.errno, e.strerror)
                 stdout, stderr = process_communicate_or_kill(p)
                 stderr = stderr.decode('utf-8', 'replace')
@@ -6232,7 +6225,7 @@ if __debug__:
             if not fn_args.keywords:
                 for k in kwargs:
                     if k not in (fn_args.args or []):
-                        raise TypeError("got an unexpected keyword argument: '{0}'".format(k))
+                        raise TypeError(f"got an unexpected keyword argument: '{k}'")
             if not fn_args.varargs:
                 args_to_bind = len(args)
                 bindable = len(fn_args.args or [])
@@ -6243,7 +6236,7 @@ if __debug__:
                     if kwargs:
                         bindable -= len(set(fn_args.args or []) & set(kwargs))
                     if bindable > args_to_bind:
-                        raise TypeError("missing a required argument: '{0}'".format(fn_args.args[args_to_bind]))
+                        raise TypeError(f"missing a required argument: '{fn_args.args[args_to_bind]}'")
 
 
 def traverse_obj(obj, *paths, **kwargs):
@@ -6458,7 +6451,7 @@ def traverse_obj(obj, *paths, **kwargs):
                         return try_call(element.attrib.get, args=(special[1:],))
                     if special == 'text()':
                         return element.text
-                    raise SyntaxError('apply_specials is missing case for {0!r}'.format(special))
+                    raise SyntaxError(f'apply_specials is missing case for {special!r}')
 
                 if xpath:
                     result = list(map(apply_specials, compat_etree_iterfind(obj, xpath)))
@@ -6555,7 +6548,7 @@ def join_nonempty(*values, **kwargs):
     return delim.join(map(compat_str, filter(None, values)))
 
 
-class Namespace(object):
+class Namespace:
     """Immutable namespace"""
 
     def __init__(self, **kw_attr):
@@ -6697,7 +6690,7 @@ class _UnsafeExtensionError(Exception):
         )))
 
     def __init__(self, extension):
-        super(_UnsafeExtensionError, self).__init__('unsafe file extension: {0!r}'.format(extension))
+        super(_UnsafeExtensionError, self).__init__(f'unsafe file extension: {extension!r}')
         self.extension = extension
 
     # support --no-check-extensions

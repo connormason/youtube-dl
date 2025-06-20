@@ -1,6 +1,4 @@
-# coding: utf-8
-
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import collections
 import hashlib
@@ -13,62 +11,59 @@ import string
 import time
 import traceback
 
-from .common import InfoExtractor, SearchInfoExtractor
-from ..compat import (
-    compat_chr,
-    compat_HTTPError,
-    compat_map as map,
-    compat_str,
-    compat_urllib_parse,
-    compat_urllib_parse_parse_qs as compat_parse_qs,
-    compat_urllib_parse_unquote_plus,
-    compat_urllib_parse_urlparse,
-    compat_zip as zip,
-)
+from ..compat import compat_chr
+from ..compat import compat_HTTPError
+from ..compat import compat_map as map
+from ..compat import compat_str
+from ..compat import compat_urllib_parse
+from ..compat import compat_urllib_parse_parse_qs as compat_parse_qs
+from ..compat import compat_urllib_parse_unquote_plus
+from ..compat import compat_urllib_parse_urlparse
+from ..compat import compat_zip as zip
 from ..jsinterp import JSInterpreter
-from ..utils import (
-    bug_reports_message,
-    clean_html,
-    dict_get,
-    error_to_compat_str,
-    ExtractorError,
-    filter_dict,
-    float_or_none,
-    get_first,
-    extract_attributes,
-    get_element_by_attribute,
-    int_or_none,
-    join_nonempty,
-    js_to_json,
-    LazyList,
-    merge_dicts,
-    mimetype2ext,
-    NO_DEFAULT,
-    parse_codecs,
-    parse_count,
-    parse_duration,
-    parse_qs,
-    qualities,
-    remove_end,
-    remove_start,
-    smuggle_url,
-    str_or_none,
-    str_to_int,
-    T,
-    traverse_obj,
-    try_call,
-    try_get,
-    txt_or_none,
-    unescapeHTML,
-    unified_strdate,
-    unsmuggle_url,
-    update_url,
-    update_url_query,
-    url_or_none,
-    urlencode_postdata,
-    urljoin,
-    variadic,
-)
+from ..utils import NO_DEFAULT
+from ..utils import ExtractorError
+from ..utils import LazyList
+from ..utils import T
+from ..utils import bug_reports_message
+from ..utils import clean_html
+from ..utils import dict_get
+from ..utils import error_to_compat_str
+from ..utils import extract_attributes
+from ..utils import filter_dict
+from ..utils import float_or_none
+from ..utils import get_element_by_attribute
+from ..utils import get_first
+from ..utils import int_or_none
+from ..utils import join_nonempty
+from ..utils import js_to_json
+from ..utils import merge_dicts
+from ..utils import mimetype2ext
+from ..utils import parse_codecs
+from ..utils import parse_count
+from ..utils import parse_duration
+from ..utils import parse_qs
+from ..utils import qualities
+from ..utils import remove_end
+from ..utils import remove_start
+from ..utils import smuggle_url
+from ..utils import str_or_none
+from ..utils import str_to_int
+from ..utils import traverse_obj
+from ..utils import try_call
+from ..utils import try_get
+from ..utils import txt_or_none
+from ..utils import unescapeHTML
+from ..utils import unified_strdate
+from ..utils import unsmuggle_url
+from ..utils import update_url
+from ..utils import update_url_query
+from ..utils import url_or_none
+from ..utils import urlencode_postdata
+from ..utils import urljoin
+from ..utils import variadic
+from .common import InfoExtractor
+from .common import SearchInfoExtractor
 
 
 class YoutubeBaseInfoExtractor(InfoExtractor):
@@ -373,8 +368,8 @@ class YoutubeBaseInfoExtractor(InfoExtractor):
             return None
         # SAPISIDHASH algorithm from https://stackoverflow.com/a/32065323
         sapisidhash = hashlib.sha1(
-            '{0} {1} {2}'.format(time_now, self._SAPISID, origin).encode('utf-8')).hexdigest()
-        return 'SAPISIDHASH {0}_{1}'.format(time_now, sapisidhash)
+            f'{time_now} {self._SAPISID} {origin}'.encode()).hexdigest()
+        return f'SAPISIDHASH {time_now}_{sapisidhash}'
 
     def _call_api(self, ep, query, video_id, fatal=True, headers=None,
                   note='Downloading API JSON'):
@@ -1627,7 +1622,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             r'player\\?/([0-9a-fA-F]{8})\\?/', res or '', 'player version', fatal=fatal,
             default=NO_DEFAULT if res else None)
         if player_version:
-            return 'https://www.youtube.com/s/player/{0}/player_ias.vflset/en_US/base.js'.format(player_version)
+            return f'https://www.youtube.com/s/player/{player_version}/player_ias.vflset/en_US/base.js'
 
     def _signature_cache_id(self, example_sig):
         """ Return a string representation of a signature """
@@ -1646,7 +1641,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             player_id = self._extract_player_info(player_url)
             player_path = remove_start(
                 compat_urllib_parse.urlparse(player_url).path,
-                '/s/player/{0}/'.format(player_id))
+                f'/s/player/{player_id}/')
             variant = next((k for k, v in self._PLAYER_JS_VARIANT_MAP
                            if v == player_path), None)
             if not variant:
@@ -1657,7 +1652,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             if not variant:
                 self.write_debug(
                     'Unable to determine player JS variant\n'
-                    '        player = {0}'.format(player_url), only_once=True)
+                    f'        player = {player_url}', only_once=True)
                 variant = re.sub(r'[^a-zA-Z0-9]', '_', remove_end(player_path, '.js'))
             _cache[player_url] = join_nonempty(player_id, variant)
 
@@ -1672,14 +1667,14 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
         if player_js_key not in self._code_cache:
             code = self._download_webpage(
                 player_url, video_id, fatal=fatal,
-                note='Downloading player {0}'.format(player_js_key),
-                errnote='Download of {0} failed'.format(player_url))
+                note=f'Downloading player {player_js_key}',
+                errnote=f'Download of {player_url} failed')
             if code:
                 self._code_cache[player_js_key] = code
         return self._code_cache.get(player_js_key)
 
     def _load_player_data_from_cache(self, name, player_url, extra_id=None):
-        cache_id = ('youtube-{0}'.format(name), self._player_js_cache_key(player_url, extra_id))
+        cache_id = (f'youtube-{name}', self._player_js_cache_key(player_url, extra_id))
         data = self._player_cache.get(cache_id)
         if data:
             return data
@@ -1690,14 +1685,14 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
         return data
 
     def _store_player_data_to_cache(self, name, player_url, data, extra_id=None):
-        cache_id = ('youtube-{0}'.format(name), self._player_js_cache_key(player_url, extra_id))
+        cache_id = (f'youtube-{name}', self._player_js_cache_key(player_url, extra_id))
 
         if cache_id not in self._player_cache:
             self.cache.store(cache_id[0], cache_id[1], data)
             self._player_cache[cache_id] = data
 
     def _remove_player_data_from_cache(self, name, player_url, extra_id=None):
-        cache_id = ('youtube-{0}'.format(name), self._player_js_cache_key(player_url, extra_id))
+        cache_id = (f'youtube-{name}', self._player_js_cache_key(player_url, extra_id))
 
         if cache_id in self._player_cache:
             self.cache.clear(*cache_id)
@@ -1708,7 +1703,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
 
         # Read from filesystem cache
         extra_id = self._signature_cache_id(example_sig)
-        self.write_debug('Extracting signature function {0}-{1}'.format(player_url, extra_id))
+        self.write_debug(f'Extracting signature function {player_url}-{extra_id}')
         cache_spec, code = self._load_player_data_from_cache(
             'sigfuncs', player_url, extra_id=extra_id), None
 
@@ -1722,8 +1717,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
                     'sigfuncs', player_url, cache_spec, extra_id=extra_id)
             else:
                 self.report_warning(
-                    'Failed to compute signature function {0}-{1}'.format(
-                        player_url, extra_id))
+                    f'Failed to compute signature function {player_url}-{extra_id}')
 
         return lambda s: ''.join(s[i] for i in cache_spec)
 
@@ -1736,7 +1730,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
                 starts = '' if start == 0 else str(start)
                 ends = (':%d' % (end + step)) if end + step >= 0 else ':'
                 steps = '' if step == 1 else (':%d' % step)
-                return 's[{0}{1}{2}]'.format(starts, ends, steps)
+                return f's[{starts}{ends}{steps}]'
 
             step = None
             # Quelch pyflakes warnings - start will be set when step is set
@@ -1857,8 +1851,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
         except ExtractorError as e:
             raise ExtractorError('Unable to extract nsig function code', cause=e)
         if self.get_param('youtube_print_sig_code'):
-            self.to_screen('Extracted nsig function from {0}:\n{1}\n'.format(
-                player_id, func_code[1]))
+            self.to_screen(f'Extracted nsig function from {player_id}:\n{func_code[1]}\n')
 
         try:
             extract_nsig = self._cached(self._extract_n_function_from_code, 'nsig func', player_url)
@@ -1872,7 +1865,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
                 video_id=video_id)
             return
 
-        self.write_debug('Decrypted nsig {0} => {1}'.format(n, ret))
+        self.write_debug(f'Decrypted nsig {n} => {ret}')
         return ret
 
     def _extract_n_function_name(self, jscode):
@@ -1951,8 +1944,8 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             return func_name
 
         return self._search_json(
-            r'(?<![\w-])var\s(?:(?:(?!,).)+,|\s)*?{0}\s*='.format(re.escape(func_name)), jscode,
-            'Initial JS player n function list ({0}.{1})'.format(func_name, idx),
+            rf'(?<![\w-])var\s(?:(?:(?!,).)+,|\s)*?{re.escape(func_name)}\s*=', jscode,
+            f'Initial JS player n function list ({func_name}.{idx})',
             func_name, contains_pattern=r'\[.+\]', end_pattern='[,;]',
             transform_source=js_to_json)[int(idx)]
 
@@ -2518,7 +2511,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
 
             if itag:
                 f['format_id'] = (
-                    '{0}-{1}'.format(itag, proto)
+                    f'{itag}-{proto}'
                     if all_formats or any(p != proto for p, _ in itags[itag])
                     else itag)
 
@@ -2645,7 +2638,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             # Ref: https://github.com/yt-dlp/yt-dlp/issues/2823
             if try_call(lambda x: float(x.pop('_duration_ms')) / duration < 500, args=(f,)):
                 self.report_warning(
-                    '{0}: Some possibly damaged formats will be deprioritized'.format(video_id), only_once=True)
+                    f'{video_id}: Some possibly damaged formats will be deprioritized', only_once=True)
                 # Strictly de-prioritize damaged formats
                 f['preference'] = -10
 
@@ -3430,7 +3423,7 @@ class YoutubeTabIE(YoutubeBaseInfoExtractor):
         content_type = view_model.get('contentType')
         if content_type not in ('LOCKUP_CONTENT_TYPE_PLAYLIST', 'LOCKUP_CONTENT_TYPE_PODCAST'):
             self.report_warning(
-                'Unsupported lockup view model content type "{0}"{1}'.format(content_type, bug_reports_message()), only_once=True)
+                f'Unsupported lockup view model content type "{content_type}"{bug_reports_message()}', only_once=True)
             return
         return merge_dicts(self.url_result(
             update_url_query('https://www.youtube.com/playlist', {'list': content_id}),

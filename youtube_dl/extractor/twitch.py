@@ -1,5 +1,4 @@
-# coding: utf-8
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import collections
 import itertools
@@ -7,29 +6,25 @@ import json
 import random
 import re
 
+from ..compat import compat_parse_qs
+from ..compat import compat_str
+from ..compat import compat_urllib_parse_urlencode
+from ..compat import compat_urllib_parse_urlparse
+from ..compat import compat_urlparse
+from ..utils import ExtractorError
+from ..utils import clean_html
+from ..utils import dict_get
+from ..utils import float_or_none
+from ..utils import int_or_none
+from ..utils import parse_duration
+from ..utils import parse_iso8601
+from ..utils import qualities
+from ..utils import try_get
+from ..utils import unified_timestamp
+from ..utils import update_url_query
+from ..utils import url_or_none
+from ..utils import urljoin
 from .common import InfoExtractor
-from ..compat import (
-    compat_parse_qs,
-    compat_str,
-    compat_urlparse,
-    compat_urllib_parse_urlencode,
-    compat_urllib_parse_urlparse,
-)
-from ..utils import (
-    clean_html,
-    dict_get,
-    ExtractorError,
-    float_or_none,
-    int_or_none,
-    parse_duration,
-    parse_iso8601,
-    qualities,
-    try_get,
-    unified_timestamp,
-    update_url_query,
-    url_or_none,
-    urljoin,
-)
 
 
 class TwitchBaseIE(InfoExtractor):

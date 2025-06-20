@@ -1,11 +1,10 @@
-# coding: utf-8
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import re
 
-from .common import InfoExtractor
 from ..compat import compat_str
 from ..utils import int_or_none
+from .common import InfoExtractor
 
 
 class BeatportIE(InfoExtractor):
@@ -54,7 +53,7 @@ class BeatportIE(InfoExtractor):
 
         track = next(t for t in playables['tracks'] if t['id'] == int(track_id))
 
-        title = ', '.join((a['name'] for a in track['artists'])) + ' - ' + track['name']
+        title = ', '.join(a['name'] for a in track['artists']) + ' - ' + track['name']
         if track['mix']:
             title += ' (' + track['mix'] + ')'
 

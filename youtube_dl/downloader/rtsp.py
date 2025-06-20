@@ -1,13 +1,11 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
 import subprocess
 
+from ..utils import check_executable
+from ..utils import encodeFilename
 from .common import FileDownloader
-from ..utils import (
-    check_executable,
-    encodeFilename,
-)
 
 
 class RtspFD(FileDownloader):

@@ -1,40 +1,35 @@
-# coding: utf-8
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import base64
 import functools
-import re
 import itertools
+import re
 
+from ..compat import compat_HTTPError
+from ..compat import compat_kwargs
+from ..compat import compat_str
+from ..compat import compat_urlparse
+from ..utils import ExtractorError
+from ..utils import OnDemandPagedList
+from ..utils import clean_html
+from ..utils import determine_ext
+from ..utils import get_element_by_class
+from ..utils import int_or_none
+from ..utils import js_to_json
+from ..utils import merge_dicts
+from ..utils import parse_filesize
+from ..utils import parse_iso8601
+from ..utils import sanitized_Request
+from ..utils import smuggle_url
+from ..utils import std_headers
+from ..utils import str_or_none
+from ..utils import try_get
+from ..utils import unescapeHTML
+from ..utils import unified_timestamp
+from ..utils import unsmuggle_url
+from ..utils import urlencode_postdata
+from ..utils import urljoin
 from .common import InfoExtractor
-from ..compat import (
-    compat_kwargs,
-    compat_HTTPError,
-    compat_str,
-    compat_urlparse,
-)
-from ..utils import (
-    clean_html,
-    determine_ext,
-    ExtractorError,
-    get_element_by_class,
-    js_to_json,
-    int_or_none,
-    merge_dicts,
-    OnDemandPagedList,
-    parse_filesize,
-    parse_iso8601,
-    sanitized_Request,
-    smuggle_url,
-    std_headers,
-    str_or_none,
-    try_get,
-    unified_timestamp,
-    unsmuggle_url,
-    urlencode_postdata,
-    urljoin,
-    unescapeHTML,
-)
 
 
 class VimeoBaseInfoExtractor(InfoExtractor):

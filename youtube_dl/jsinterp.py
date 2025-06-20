@@ -1,5 +1,4 @@
-# coding: utf-8
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import calendar
 import itertools
@@ -7,38 +6,34 @@ import json
 import operator
 import re
 import time
+from functools import update_wrapper
+from functools import wraps
 
-from functools import update_wrapper, wraps
-
-from .utils import (
-    error_to_compat_str,
-    ExtractorError,
-    float_or_none,
-    int_or_none,
-    js_to_json,
-    remove_quotes,
-    str_or_none,
-    unified_timestamp,
-    variadic,
-    write_string,
-)
-from .compat import (
-    compat_basestring,
-    compat_chr,
-    compat_collections_chain_map as ChainMap,
-    compat_contextlib_suppress,
-    compat_filter as filter,
-    compat_int,
-    compat_integer_types,
-    compat_itertools_zip_longest as zip_longest,
-    compat_map as map,
-    compat_numeric_types,
-    compat_str,
-)
+from .compat import compat_basestring
+from .compat import compat_chr
+from .compat import compat_collections_chain_map as ChainMap
+from .compat import compat_contextlib_suppress
+from .compat import compat_filter as filter
+from .compat import compat_int
+from .compat import compat_integer_types
+from .compat import compat_itertools_zip_longest as zip_longest
+from .compat import compat_map as map
+from .compat import compat_numeric_types
+from .compat import compat_str
+from .utils import ExtractorError
+from .utils import error_to_compat_str
+from .utils import float_or_none
+from .utils import int_or_none
+from .utils import js_to_json
+from .utils import remove_quotes
+from .utils import str_or_none
+from .utils import unified_timestamp
+from .utils import variadic
+from .utils import write_string
 
 
 # name JS functions
-class function_with_repr(object):
+class function_with_repr:
     # from yt_dlp/utils.py, but in this module
     # repr_ is always set
     def __init__(self, func, repr_):
@@ -58,7 +53,7 @@ def wraps_op(op):
     def update_and_rename_wrapper(w):
         f = update_wrapper(w, op)
         # fn names are str in both Py 2/3
-        f.__name__ = str('JS_') + f.__name__
+        f.__name__ = 'JS_' + f.__name__
         return f
 
     return update_and_rename_wrapper
@@ -72,7 +67,7 @@ _NaN = float('nan')
 _Infinity = float('inf')
 
 
-class JS_Undefined(object):
+class JS_Undefined:
     pass
 
 
@@ -163,7 +158,7 @@ def _js_toString(v):
         else 'null' if v is None
         # bool <= int: do this first
         else ('false', 'true')[v] if isinstance(v, bool)
-        else re.sub(r'(?<=\d)\.?0*$', '', '{0:.7f}'.format(v)) if isinstance(v, compat_numeric_types)
+        else re.sub(r'(?<=\d)\.?0*$', '', f'{v:.7f}') if isinstance(v, compat_numeric_types)
         else _js_to_primitive(v))
 
 
@@ -356,10 +351,10 @@ class LocalNameSpace(ChainMap):
         raise NotImplementedError('Deleting is not supported')
 
     def __repr__(self):
-        return 'LocalNameSpace({0!r})'.format(self.maps)
+        return f'LocalNameSpace({self.maps!r})'
 
 
-class Debugger(object):
+class Debugger:
     ENABLED = False
 
     @staticmethod
@@ -399,7 +394,7 @@ class Debugger(object):
         return interpret_statement
 
 
-class JSInterpreter(object):
+class JSInterpreter:
     __named_object_counter = 0
 
     _OBJ_NAME = '__youtube_dl_jsinterp_obj'
@@ -417,10 +412,10 @@ class JSInterpreter(object):
             expr = kwargs.pop('expr', None)
             msg = str_or_none(msg, default='"None"')
             if expr is not None:
-                msg = '{0} in: {1!r:.100}'.format(msg.rstrip(), expr)
+                msg = f'{msg.rstrip()} in: {expr!r:.100}'
             super(JSInterpreter.Exception, self).__init__(msg, *args, **kwargs)
 
-    class JS_Object(object):
+    class JS_Object:
         def __getitem__(self, key):
             if hasattr(self, key):
                 return getattr(self, key)
@@ -512,7 +507,7 @@ class JSInterpreter(object):
                             (c if self.RE_FLAGS[c] & self.__flags else '')
                             for _, c in flag_attrs)
 
-            raise AttributeError('{0} has no attribute named {1}'.format(self, name))
+            raise AttributeError(f'{self} has no attribute named {name}')
 
         @classmethod
         def regex_flags(cls, expr):
@@ -602,7 +597,7 @@ class JSInterpreter(object):
             return _NaN if self._t is None else self._t
 
         def dump(self):
-            return '(new Date({0}))'.format(self.toString())
+            return f'(new Date({self.toString()}))'
 
     @classmethod
     def __op_chars(cls):
@@ -1195,7 +1190,7 @@ class JSInterpreter(object):
             def eval_method(variable, member):
                 if (variable, member) == ('console', 'debug'):
                     if Debugger.ENABLED:
-                        Debugger.write(self.interpret_expression('[{0}]'.format(arg_str), local_vars, allow_recursion))
+                        Debugger.write(self.interpret_expression(f'[{arg_str}]', local_vars, allow_recursion))
                     return
                 types = {
                     'String': compat_str,
@@ -1235,7 +1230,7 @@ class JSInterpreter(object):
                     if new_member == 'prototype':
                         new_member, func_prototype = rest.partition('.')[0::2]
                         assertion(argvals, 'takes one or more arguments')
-                        assertion(isinstance(argvals[0], obj), 'must bind to type {0}'.format(obj))
+                        assertion(isinstance(argvals[0], obj), f'must bind to type {obj}')
                         if func_prototype == 'call':
                             obj = argvals.pop(0)
                         elif func_prototype == 'apply':
@@ -1408,7 +1403,7 @@ class JSInterpreter(object):
             yield self.interpret_expression(v, local_vars, allow_recursion)
 
     def extract_object(self, objname, *global_stack):
-        _FUNC_NAME_RE = r'''(?:{n}|"{n}"|'{n}')'''.format(n=_NAME_RE)
+        _FUNC_NAME_RE = rf'''(?:{_NAME_RE}|"{_NAME_RE}"|'{_NAME_RE}')'''
         obj = {}
         fields = next(filter(None, (
             obj_m.group('fields') for obj_m in re.finditer(
@@ -1429,7 +1424,7 @@ class JSInterpreter(object):
             argnames = self.build_arglist(f.group('args'))
             name = remove_quotes(f.group('key'))
             obj[name] = function_with_repr(
-                self.build_function(argnames, f.group('code'), *global_stack), 'F<{0}>'.format(name))
+                self.build_function(argnames, f.group('code'), *global_stack), f'F<{name}>')
 
         return obj
 

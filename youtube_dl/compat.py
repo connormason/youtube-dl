@@ -1,6 +1,4 @@
-# coding: utf-8
-from __future__ import unicode_literals
-from __future__ import division
+from __future__ import annotations
 
 import base64
 import binascii
@@ -100,6 +98,7 @@ try:
     import urllib.parse as compat_urllib_parse
 except ImportError:  # Python 2
     import urllib as compat_urllib_parse
+
     import urlparse as _urlparse
     for a in dir(_urlparse):
         if not hasattr(compat_urllib_parse, a):
@@ -2453,9 +2452,8 @@ compat_urllib_request_urlretrieve = compat_urlretrieve
 
 # compat_html_parser_HTMLParser, compat_html_parser_HTMLParseError
 try:
-    from HTMLParser import (
-        HTMLParser as compat_HTMLParser,
-        HTMLParseError as compat_HTMLParseError)
+    from HTMLParser import HTMLParseError as compat_HTMLParseError
+    from HTMLParser import HTMLParser as compat_HTMLParser
 except ImportError:  # Python 3
     from html.parser import HTMLParser as compat_HTMLParser
     try:
@@ -2492,11 +2490,11 @@ except ImportError:
 # compat_urllib_parse_urlencode,
 # compat_urllib_parse_parse_qs
 try:
-    from urllib.parse import unquote_to_bytes as compat_urllib_parse_unquote_to_bytes
+    from urllib.parse import parse_qs as compat_parse_qs
     from urllib.parse import unquote as compat_urllib_parse_unquote
     from urllib.parse import unquote_plus as compat_urllib_parse_unquote_plus
+    from urllib.parse import unquote_to_bytes as compat_urllib_parse_unquote_to_bytes
     from urllib.parse import urlencode as compat_urllib_parse_urlencode
-    from urllib.parse import parse_qs as compat_parse_qs
 except ImportError:  # Python 2
     _asciire = getattr(compat_urllib_parse, '_asciire', None) or re.compile(r'([\x00-\x7f]+)')
 
@@ -2571,7 +2569,7 @@ except ImportError:  # Python 2
         def encode_elem(e):
             if isinstance(e, dict):
                 e = encode_dict(e)
-            elif isinstance(e, (list, tuple,)):
+            elif isinstance(e, (list, tuple)):
                 e = type(e)(encode_elem(el) for el in e)
             elif isinstance(e, compat_str):
                 e = e.encode(encoding, errors)
@@ -3270,14 +3268,14 @@ if sys.version_info < (2, 7):
                     sock.bind(source_address)
                 sock.connect(sa)
                 return sock
-            except socket.error as _:
+            except OSError as _:
                 err = _
                 if sock is not None:
                     sock.close()
         if err is not None:
             raise err
         else:
-            raise socket.error('getaddrinfo returns an empty list')
+            raise OSError('getaddrinfo returns an empty list')
 else:
     compat_socket_create_connection = socket.create_connection
 
@@ -3286,7 +3284,7 @@ else:
 try:
     from contextlib import suppress as compat_contextlib_suppress
 except ImportError:
-    class compat_contextlib_suppress(object):
+    class compat_contextlib_suppress:
         _exceptions = None
 
         def __init__(self, *exceptions):
@@ -3587,7 +3585,7 @@ if sys.version_info < (3, 0):
     def compat_open(file_, *args, **kwargs):
         if len(args) > 6 or 'opener' in kwargs:
             raise ValueError('open: unsupported argument "opener"')
-        return io.open(file_, *args, **kwargs)
+        return open(file_, *args, **kwargs)
 else:
     compat_open = open
 
@@ -3596,7 +3594,8 @@ else:
 def compat_register_utf8():
     if sys.platform == 'win32':
         # https://github.com/ytdl-org/youtube-dl/issues/820
-        from codecs import register, lookup
+        from codecs import lookup
+        from codecs import register
         register(
             lambda name: lookup('utf-8') if name == 'cp65001' else None)
 

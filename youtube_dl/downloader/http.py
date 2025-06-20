@@ -1,27 +1,23 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import errno
 import os
-import socket
-import time
 import random
 import re
+import socket
+import time
 
+from ..compat import compat_str
+from ..compat import compat_urllib_error
+from ..utils import ContentTooShortError
+from ..utils import XAttrMetadataError
+from ..utils import XAttrUnavailableError
+from ..utils import encodeFilename
+from ..utils import int_or_none
+from ..utils import sanitize_open
+from ..utils import sanitized_Request
+from ..utils import write_xattr
 from .common import FileDownloader
-from ..compat import (
-    compat_str,
-    compat_urllib_error,
-)
-from ..utils import (
-    ContentTooShortError,
-    encodeFilename,
-    int_or_none,
-    sanitize_open,
-    sanitized_Request,
-    write_xattr,
-    XAttrMetadataError,
-    XAttrUnavailableError,
-)
 
 
 class HttpFD(FileDownloader):
@@ -188,7 +184,7 @@ class HttpFD(FileDownloader):
                     # Unexpected HTTP error
                     raise
                 raise RetryDownload(err)
-            except socket.error as err:
+            except OSError as err:
                 if err.errno != errno.ECONNRESET:
                     # Connection reset is no problem, just retry
                     raise
@@ -241,7 +237,7 @@ class HttpFD(FileDownloader):
                 # errno set
                 except socket.timeout as e:
                     retry(e)
-                except socket.error as e:
+                except OSError as e:
                     # SSLError on python 2 (inherits socket.error) may have
                     # no errno set but this error message
                     if e.errno in (errno.ECONNRESET, errno.ETIMEDOUT) or getattr(e, 'message', None) == 'The read operation timed out':
@@ -262,7 +258,7 @@ class HttpFD(FileDownloader):
                         assert ctx.stream is not None
                         ctx.filename = self.undo_temp_name(ctx.tmpfilename)
                         self.report_destination(ctx.filename)
-                    except (OSError, IOError) as err:
+                    except OSError as err:
                         self.report_error('unable to open for writing: %s' % str(err))
                         return False
 
@@ -274,7 +270,7 @@ class HttpFD(FileDownloader):
 
                 try:
                     ctx.stream.write(data_block)
-                except (IOError, OSError) as err:
+                except OSError as err:
                     self.to_stderr('\n')
                     self.report_error('unable to write data: %s' % str(err))
                     return False

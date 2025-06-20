@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import logging
 import os
@@ -8,32 +8,29 @@ import sys
 import tempfile
 import time
 
+from ..compat import compat_setenv
+from ..compat import compat_str
+from ..compat import compat_subprocess_Popen
 from .common import FileDownloader
-from ..compat import (
-    compat_setenv,
-    compat_str,
-    compat_subprocess_Popen,
-)
 
 try:
-    from ..postprocessor.ffmpeg import FFmpegPostProcessor, EXT_TO_OUT_FORMATS
+    from ..postprocessor.ffmpeg import EXT_TO_OUT_FORMATS
+    from ..postprocessor.ffmpeg import FFmpegPostProcessor
 except ImportError:
     FFmpegPostProcessor = None
 
-from ..utils import (
-    cli_option,
-    cli_valueless_option,
-    cli_bool_option,
-    cli_configuration_args,
-    encodeFilename,
-    encodeArgument,
-    handle_youtubedl_headers,
-    check_executable,
-    is_outdated_version,
-    process_communicate_or_kill,
-    T,
-    traverse_obj,
-)
+from ..utils import T
+from ..utils import check_executable
+from ..utils import cli_bool_option
+from ..utils import cli_configuration_args
+from ..utils import cli_option
+from ..utils import cli_valueless_option
+from ..utils import encodeArgument
+from ..utils import encodeFilename
+from ..utils import handle_youtubedl_headers
+from ..utils import is_outdated_version
+from ..utils import process_communicate_or_kill
+from ..utils import traverse_obj
 
 
 class ExternalFD(FileDownloader):
@@ -59,7 +56,7 @@ class ExternalFD(FileDownloader):
                     os.remove(self._cookies_tempfile)
                 except OSError:
                     self.report_warning(
-                        'Unable to delete temporary cookies file "{0}"'.format(self._cookies_tempfile))
+                        f'Unable to delete temporary cookies file "{self._cookies_tempfile}"')
 
         if retval == 0:
             status = {
@@ -120,7 +117,7 @@ class ExternalFD(FileDownloader):
             tmp_cookies = tempfile.NamedTemporaryFile(suffix='.cookies', delete=False)
             tmp_cookies.close()
             self._cookies_tempfile = tmp_cookies.name
-            self.to_screen('[download] Writing temporary cookies file to "{0}"'.format(self._cookies_tempfile))
+            self.to_screen(f'[download] Writing temporary cookies file to "{self._cookies_tempfile}"')
         # real_download resets _cookies_tempfile; if it's None, save() will write to cookiejar.filename
         self.ydl.cookiejar.save(self._cookies_tempfile, ignore_discard=True, ignore_expires=True)
         return self.ydl.cookiejar.filename or self._cookies_tempfile
@@ -191,7 +188,7 @@ class AxelFD(ExternalFD):
             cmd += ['-H', '%s: %s' % (key, val)]
         cookie_header = self.ydl.cookiejar.get_cookie_header(info_dict['url'])
         if cookie_header:
-            cmd += ['-H', 'Cookie: {0}'.format(cookie_header), '--max-redirect=0']
+            cmd += ['-H', f'Cookie: {cookie_header}', '--max-redirect=0']
         cmd += self._configuration_args()
         cmd += ['--', info_dict['url']]
         return cmd
@@ -240,7 +237,7 @@ class Aria2cFD(ExternalFD):
             cmd += ['--min-split-size', '1M']
 
         if self.ydl.cookiejar.get_cookie_header(info_dict['url']):
-            cmd += ['--load-cookies={0}'.format(self._write_cookies())]
+            cmd += [f'--load-cookies={self._write_cookies()}']
         for key, val in self._header_items(info_dict):
             cmd += ['--header', '%s: %s' % (key, val)]
         cmd += self._configuration_args(['--max-connection-per-server', '4'])
@@ -320,7 +317,7 @@ class Aria2pFD(ExternalFD):
             options['load-cookies'] = self._write_cookies()
         options['header'] = []
         for key, val in self._header_items(info_dict):
-            options['header'].append('{0}: {1}'.format(key, val))
+            options['header'].append(f'{key}: {val}')
         download = aria2.add_uris([info_dict['url']], options)
         status = {
             'status': 'downloading',
@@ -408,8 +405,7 @@ class FFmpegFD(ExternalFD):
         cookies = self.ydl.cookiejar.get_cookies_for_url(url)
         if cookies:
             args.extend(['-cookies', ''.join(
-                '{0}={1}; path={2}; domain={3};\r\n'.format(
-                    cookie.name, cookie.value, cookie.path, cookie.domain)
+                f'{cookie.name}={cookie.value}; path={cookie.path}; domain={cookie.domain};\r\n'
                 for cookie in cookies)])
 
         if info_dict.get('http_headers') and re.match(r'^https?://', url):

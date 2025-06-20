@@ -1,10 +1,7 @@
-# coding: utf-8
-from __future__ import unicode_literals
+from __future__ import annotations
 
-from .compat import (
-    compat_str,
-    compat_chr,
-)
+from .compat import compat_chr
+from .compat import compat_str
 
 # Below is included the text of icu/CaseFolding.txt retrieved from
 # https://github.com/unicode-org/icu/blob/main/icu4c/source/data/unidata/CaseFolding.txt
@@ -1660,4 +1657,4 @@ del _map_str
 
 def _casefold(s):
     assert isinstance(s, compat_str)
-    return ''.join((_map.get(c, c) for c in s))
+    return ''.join(_map.get(c, c) for c in s)

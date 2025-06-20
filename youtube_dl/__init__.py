@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-# coding: utf-8
-
-from __future__ import unicode_literals
+from __future__ import annotations
 
 __license__ = 'Public Domain'
 
@@ -10,37 +8,29 @@ import os
 import random
 import sys
 
-
-from .options import (
-    parseOpts,
-)
-from .compat import (
-    compat_getpass,
-    compat_register_utf8,
-    compat_shlex_split,
-    _workaround_optparse_bug9161,
-)
-from .utils import (
-    _UnsafeExtensionError,
-    DateRange,
-    decodeOption,
-    DEFAULT_OUTTMPL,
-    DownloadError,
-    expand_path,
-    match_filter_func,
-    MaxDownloadsReached,
-    preferredencoding,
-    read_batch_urls,
-    SameFileError,
-    setproctitle,
-    std_headers,
-    write_string,
-    render_table,
-)
-from .downloader import (
-    FileDownloader,
-)
-from .extractor import gen_extractors, list_extractors
+from .compat import _workaround_optparse_bug9161
+from .compat import compat_getpass
+from .compat import compat_register_utf8
+from .compat import compat_shlex_split
+from .downloader import FileDownloader
+from .extractor import gen_extractors
+from .extractor import list_extractors
+from .options import parseOpts
+from .utils import DEFAULT_OUTTMPL
+from .utils import DateRange
+from .utils import DownloadError
+from .utils import MaxDownloadsReached
+from .utils import SameFileError
+from .utils import _UnsafeExtensionError
+from .utils import decodeOption
+from .utils import expand_path
+from .utils import match_filter_func
+from .utils import preferredencoding
+from .utils import read_batch_urls
+from .utils import render_table
+from .utils import setproctitle
+from .utils import std_headers
+from .utils import write_string
 from .YoutubeDL import YoutubeDL
 
 
@@ -84,13 +74,12 @@ def _real_main(argv=None):
             if opts.batchfile == '-':
                 batchfd = sys.stdin
             else:
-                batchfd = io.open(
-                    expand_path(opts.batchfile),
-                    'r', encoding='utf-8', errors='ignore')
+                batchfd = open(
+                    expand_path(opts.batchfile), encoding='utf-8', errors='ignore')
             batch_urls = read_batch_urls(batchfd)
             if opts.verbose:
                 write_string('[debug] Batch file urls: ' + repr(batch_urls) + '\n')
-        except IOError:
+        except OSError:
             sys.exit('ERROR: batch file %s could not be read' % opts.batchfile)
     all_urls = batch_urls + [url.strip() for url in args]  # batch_urls are already striped in read_batch_urls
     _enc = preferredencoding()
@@ -234,8 +223,8 @@ def _real_main(argv=None):
                or DEFAULT_OUTTMPL)
     if not os.path.splitext(outtmpl)[1] and opts.extractaudio:
         parser.error('Cannot download a video and extract audio into the same'
-                     ' file! Use "{0}.%(ext)s" instead of "{0}" as the output'
-                     ' template'.format(outtmpl))
+                     f' file! Use "{outtmpl}.%(ext)s" instead of "{outtmpl}" as the output'
+                     ' template')
 
     any_getting = opts.geturl or opts.gettitle or opts.getid or opts.getthumbnail or opts.getdescription or opts.getfilename or opts.getformat or opts.getduration or opts.dumpjson or opts.dump_single_json
     any_printing = opts.print_json

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-from __future__ import unicode_literals
 
 # Execute with
 # $ python youtube_dl/__main__.py (2.6+)
 # $ python -m youtube_dl          (2.7+)
+from __future__ import annotations
 
 import sys
 

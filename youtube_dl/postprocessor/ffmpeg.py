@@ -1,30 +1,27 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
+import re
 import subprocess
 import time
-import re
 from pathlib import Path
 from typing import Any
 
-from .common import AudioConversionError, PostProcessor
-
 from ..compat import compat_open as open
-from ..utils import (
-    encodeArgument,
-    encodeFilename,
-    get_exe_version,
-    is_outdated_version,
-    PostProcessingError,
-    prepend_extension,
-    process_communicate_or_kill,
-    shell_quote,
-    subtitles_filename,
-    dfxp2srt,
-    ISO639Utils,
-    replace_extension,
-)
-
+from ..utils import ISO639Utils
+from ..utils import PostProcessingError
+from ..utils import dfxp2srt
+from ..utils import encodeArgument
+from ..utils import encodeFilename
+from ..utils import get_exe_version
+from ..utils import is_outdated_version
+from ..utils import prepend_extension
+from ..utils import process_communicate_or_kill
+from ..utils import replace_extension
+from ..utils import shell_quote
+from ..utils import subtitles_filename
+from .common import AudioConversionError
+from .common import PostProcessor
 
 EXT_TO_OUT_FORMATS = {
     'aac': 'adts',
@@ -178,7 +175,7 @@ class FFmpegPostProcessor(PostProcessor):
             expected_ret = 0 if self.probe_available else 1
             if handle.wait() != expected_ret:
                 return None
-        except (IOError, OSError):
+        except OSError:
             return None
         output = (stdout_data if self.probe_available else stderr_data).decode('ascii', 'ignore')
         if self.probe_available:
@@ -388,7 +385,7 @@ class FFmpegEmbedSubtitlePP(FFmpegPostProcessor):
 
         for lang, sub_info in subtitles.items():
             sub_ext = sub_info['ext']
-            if ext != 'webm' or ext == 'webm' and sub_ext == 'vtt':
+            if ext != 'webm' or (ext == 'webm' and sub_ext == 'vtt'):
                 sub_langs.append(lang)
                 sub_filenames.append(subtitles_filename(filename, lang, sub_ext, ext))
             else:

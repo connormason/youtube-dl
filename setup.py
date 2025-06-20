@@ -1,17 +1,17 @@
 #!/usr/bin/env python
-# coding: utf-8
-
-from __future__ import print_function
+from __future__ import annotations
 
 import os.path
-import warnings
 import sys
+import warnings
 
 try:
-    from setuptools import setup, Command
+    from setuptools import Command
+    from setuptools import setup
     setuptools_available = True
 except ImportError:
-    from distutils.core import setup, Command
+    from distutils.core import Command
+    from distutils.core import setup
     setuptools_available = False
 from distutils.spawn import spawn
 

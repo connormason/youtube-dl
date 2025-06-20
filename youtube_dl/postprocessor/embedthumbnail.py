@@ -1,26 +1,19 @@
-# coding: utf-8
-from __future__ import unicode_literals
-
+from __future__ import annotations
 
 import logging
 import os
 import subprocess
 
-from .ffmpeg import FFmpegPostProcessor
-
-from ..utils import (
-    check_executable,
-    encodeArgument,
-    encodeFilename,
-    PostProcessingError,
-    prepend_extension,
-    process_communicate_or_kill,
-    replace_extension,
-    shell_quote,
-)
-
 from ..compat import compat_open as open
-
+from ..utils import PostProcessingError
+from ..utils import check_executable
+from ..utils import encodeArgument
+from ..utils import encodeFilename
+from ..utils import prepend_extension
+from ..utils import process_communicate_or_kill
+from ..utils import replace_extension
+from ..utils import shell_quote
+from .ffmpeg import FFmpegPostProcessor
 
 logger = logging.getLogger('soundcloudutil.downloader')
 

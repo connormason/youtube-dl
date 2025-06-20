@@ -1,13 +1,11 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import subprocess
 
-from .common import PostProcessor
 from ..compat import compat_shlex_quote
-from ..utils import (
-    encodeArgument,
-    PostProcessingError,
-)
+from ..utils import PostProcessingError
+from ..utils import encodeArgument
+from .common import PostProcessor
 
 
 class ExecAfterDownloadPP(PostProcessor):

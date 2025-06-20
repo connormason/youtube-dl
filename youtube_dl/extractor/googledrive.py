@@ -1,18 +1,16 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import re
 
-from .common import InfoExtractor
 from ..compat import compat_parse_qs
-from ..utils import (
-    determine_ext,
-    ExtractorError,
-    get_element_by_class,
-    int_or_none,
-    lowercase_escape,
-    try_get,
-    update_url_query,
-)
+from ..utils import ExtractorError
+from ..utils import determine_ext
+from ..utils import get_element_by_class
+from ..utils import int_or_none
+from ..utils import lowercase_escape
+from ..utils import try_get
+from ..utils import update_url_query
+from .common import InfoExtractor
 
 
 class GoogleDriveIE(InfoExtractor):

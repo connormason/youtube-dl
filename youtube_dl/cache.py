@@ -1,5 +1,4 @@
-# coding: utf-8
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import errno
 import json
@@ -8,23 +7,19 @@ import re
 import shutil
 import traceback
 
-from .compat import (
-    compat_getenv,
-    compat_open as open,
-    compat_os_makedirs,
-)
-from .utils import (
-    error_to_compat_str,
-    escape_rfc3986,
-    expand_path,
-    is_outdated_version,
-    traverse_obj,
-    write_json_file,
-)
+from .compat import compat_getenv
+from .compat import compat_open as open
+from .compat import compat_os_makedirs
+from .utils import error_to_compat_str
+from .utils import escape_rfc3986
+from .utils import expand_path
+from .utils import is_outdated_version
+from .utils import traverse_obj
+from .utils import write_json_file
 from .version import __version__
 
 
-class Cache(object):
+class Cache:
 
     _YTDL_DIR = 'youtube-dl'
     _VERSION_KEY = _YTDL_DIR + '_version'
@@ -72,11 +67,11 @@ class Cache(object):
         fn = self._get_cache_fn(section, key, dtype)
         try:
             compat_os_makedirs(os.path.dirname(fn), exist_ok=True)
-            self._write_debug('Saving {section}.{key} to cache'.format(section=section, key=key))
+            self._write_debug(f'Saving {section}.{key} to cache')
             write_json_file({self._VERSION_KEY: __version__, 'data': data}, fn)
         except Exception:
             tb = traceback.format_exc()
-            self._report_warning('Writing cache to {fn!r} failed: {tb}'.format(fn=fn, tb=tb))
+            self._report_warning(f'Writing cache to {fn!r} failed: {tb}')
 
     def clear(self, section, key, dtype='json'):
 
@@ -84,7 +79,7 @@ class Cache(object):
             return
 
         fn = self._get_cache_fn(section, key, dtype)
-        self._write_debug('Clearing {section}.{key} from cache'.format(section=section, key=key))
+        self._write_debug(f'Clearing {section}.{key} from cache')
         try:
             os.remove(fn)
         except Exception as e:
@@ -92,7 +87,7 @@ class Cache(object):
                 # file not found
                 return
             tb = traceback.format_exc()
-            self._report_warning('Clearing cache from {fn!r} failed: {tb}'.format(fn=fn, tb=tb))
+            self._report_warning(f'Clearing cache from {fn!r} failed: {tb}')
 
     def _validate(self, data, min_ver):
         version = traverse_obj(data, self._VERSION_KEY)
@@ -100,7 +95,7 @@ class Cache(object):
             data, version = {'data': data}, self._DEFAULT_VERSION
         if not is_outdated_version(version, min_ver or '0', assume_new=False):
             return data['data']
-        self._write_debug('Discarding old cache from version {version} (needs {min_ver})'.format(version=version, min_ver=min_ver))
+        self._write_debug(f'Discarding old cache from version {version} (needs {min_ver})')
 
     def load(self, section, key, dtype='json', default=None, **kw_min_ver):
         assert dtype in ('json',)
@@ -112,12 +107,12 @@ class Cache(object):
         cache_fn = self._get_cache_fn(section, key, dtype)
         try:
             with open(cache_fn, encoding='utf-8') as cachef:
-                self._write_debug('Loading {section}.{key} from cache'.format(section=section, key=key), only_once=True)
+                self._write_debug(f'Loading {section}.{key} from cache', only_once=True)
                 return self._validate(json.load(cachef), min_ver)
         except (ValueError, KeyError):
             try:
                 file_size = 'size: %d' % os.path.getsize(cache_fn)
-            except (OSError, IOError) as oe:
+            except OSError as oe:
                 file_size = error_to_compat_str(oe)
             self._report_warning('Cache retrieval from %s failed (%s)' % (cache_fn, file_size))
         except Exception as e:
@@ -138,7 +133,7 @@ class Cache(object):
             raise Exception('Not removing directory %s - this does not look like a cache dir' % (cachedir,))
 
         self._to_screen(
-            'Removing cache dir %s .' % (cachedir,), skip_eol=True, ),
+            'Removing cache dir %s .' % (cachedir,), skip_eol=True ),
         if os.path.exists(cachedir):
             self._to_screen('.', skip_eol=True)
             shutil.rmtree(cachedir)

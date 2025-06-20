@@ -1,18 +1,16 @@
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
 import re
 import subprocess
 import time
 
-from .common import FileDownloader
 from ..compat import compat_str
-from ..utils import (
-    check_executable,
-    encodeFilename,
-    encodeArgument,
-    get_exe_version,
-)
+from ..utils import check_executable
+from ..utils import encodeArgument
+from ..utils import encodeFilename
+from ..utils import get_exe_version
+from .common import FileDownloader
 
 
 def rtmpdump_version():

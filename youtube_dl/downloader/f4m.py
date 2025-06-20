@@ -1,23 +1,19 @@
-from __future__ import division, unicode_literals
+from __future__ import annotations
 
 import io
 import itertools
 import time
 
+from ..compat import compat_b64decode
+from ..compat import compat_etree_fromstring
+from ..compat import compat_struct_pack
+from ..compat import compat_struct_unpack
+from ..compat import compat_urllib_error
+from ..compat import compat_urllib_parse_urlparse
+from ..compat import compat_urlparse
+from ..utils import fix_xml_ampersands
+from ..utils import xpath_text
 from .fragment import FragmentFD
-from ..compat import (
-    compat_b64decode,
-    compat_etree_fromstring,
-    compat_urlparse,
-    compat_urllib_error,
-    compat_urllib_parse_urlparse,
-    compat_struct_pack,
-    compat_struct_unpack,
-)
-from ..utils import (
-    fix_xml_ampersands,
-    xpath_text,
-)
 
 
 class DataTruncatedError(Exception):

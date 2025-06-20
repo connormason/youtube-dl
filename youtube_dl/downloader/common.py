@@ -1,23 +1,21 @@
-from __future__ import division, unicode_literals
+from __future__ import annotations
 
 import os
+import random
 import re
 import sys
 import time
-import random
 
 from ..compat import compat_os_name
-from ..utils import (
-    decodeArgument,
-    encodeFilename,
-    error_to_compat_str,
-    format_bytes,
-    shell_quote,
-    timeconvert,
-)
+from ..utils import decodeArgument
+from ..utils import encodeFilename
+from ..utils import error_to_compat_str
+from ..utils import format_bytes
+from ..utils import shell_quote
+from ..utils import timeconvert
 
 
-class FileDownloader(object):
+class FileDownloader:
     """File Downloader class.
 
     File downloader objects are the ones responsible of downloading the
@@ -206,7 +204,7 @@ class FileDownloader(object):
             if old_filename == new_filename:
                 return
             os.rename(encodeFilename(old_filename), encodeFilename(new_filename))
-        except (IOError, OSError) as err:
+        except OSError as err:
             self.report_error('unable to rename file: %s' % error_to_compat_str(err))
 
     def try_utime(self, filename, last_modified_hdr):

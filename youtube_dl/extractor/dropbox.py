@@ -1,12 +1,11 @@
-# coding: utf-8
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os.path
 import re
 
-from .common import InfoExtractor
 from ..compat import compat_urllib_parse_unquote
 from ..utils import url_basename
+from .common import InfoExtractor
 
 
 class DropboxIE(InfoExtractor):
