@@ -526,18 +526,6 @@ class YoutubeDL:
         """Add the progress hook (currently only for the file downloader)"""
         self._progress_hooks.append(ph)
 
-    def _bidi_workaround(self, message):
-        if not hasattr(self, '_output_channel'):
-            return message
-
-        assert hasattr(self, '_output_process')
-        assert isinstance(message, compat_str)
-        line_count = message.count('\n') + 1
-        self._output_process.stdin.write((message + '\n').encode('utf-8'))
-        self._output_process.stdin.flush()
-        res = ''.join(self._output_channel.readline().decode('utf-8') for _ in range(line_count))
-        return res[: -len('\n')]
-
     def to_screen(self, message, skip_eol: bool = False):
         """Print message to stdout if not in quiet mode."""
         return self.to_stdout(message, skip_eol, check_quiet=True)
