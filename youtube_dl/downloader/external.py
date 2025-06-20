@@ -55,8 +55,7 @@ class ExternalFD(FileDownloader):
                 try:
                     os.remove(self._cookies_tempfile)
                 except OSError:
-                    self.report_warning(
-                        f'Unable to delete temporary cookies file "{self._cookies_tempfile}"')
+                    self.report_warning(f'Unable to delete temporary cookies file "{self._cookies_tempfile}"')
 
         if retval == 0:
             status = {
@@ -68,16 +67,17 @@ class ExternalFD(FileDownloader):
                 fsize = os.path.getsize(encodeFilename(tmpfilename))
                 self.to_screen(f'\r[{self.get_basename()}] Downloaded {fsize} bytes')
                 self.try_rename(tmpfilename, filename)
-                status.update({
-                    'downloaded_bytes': fsize,
-                    'total_bytes': fsize,
-                })
+                status.update(
+                    {
+                        'downloaded_bytes': fsize,
+                        'total_bytes': fsize,
+                    }
+                )
             self._hook_progress(status)
             return True
         else:
             self.to_stderr('\n')
-            self.report_error('%s exited with code %d' % (
-                self.get_basename(), retval))
+            self.report_error('%s exited with code %d' % (self.get_basename(), retval))
             return False
 
     @classmethod
@@ -123,13 +123,12 @@ class ExternalFD(FileDownloader):
         return self.ydl.cookiejar.filename or self._cookies_tempfile
 
     def _call_downloader(self, tmpfilename, info_dict):
-        """ Either overwrite this or implement _make_cmd """
+        """Either overwrite this or implement _make_cmd"""
         cmd = [encodeArgument(a) for a in self._make_cmd(tmpfilename, info_dict)]
 
         self._debug_cmd(cmd)
 
-        p = subprocess.Popen(
-            cmd, stderr=subprocess.PIPE)
+        p = subprocess.Popen(cmd, stderr=subprocess.PIPE)
         _, stderr = process_communicate_or_kill(p)
         if p.returncode != 0:
             self.to_stderr(stderr.decode('utf-8', 'replace'))
@@ -137,8 +136,7 @@ class ExternalFD(FileDownloader):
 
     @staticmethod
     def _header_items(info_dict):
-        return traverse_obj(
-            info_dict, ('http_headers', T(dict.items), Ellipsis))
+        return traverse_obj(info_dict, ('http_headers', T(dict.items), Ellipsis))
 
 
 class CurlFD(ExternalFD):
@@ -228,9 +226,18 @@ class Aria2cFD(ExternalFD):
         return fn if os.path.isabs(fn) else os.path.join('.', fn)
 
     def _make_cmd(self, tmpfilename, info_dict):
-        cmd = [self.exe, '-c',
-               '--console-log-level=warn', '--summary-interval=0', '--download-result=hide',
-               '--http-accept-gzip=true', '--file-allocation=none', '-x16', '-j16', '-s16']
+        cmd = [
+            self.exe,
+            '-c',
+            '--console-log-level=warn',
+            '--summary-interval=0',
+            '--download-result=hide',
+            '--http-accept-gzip=true',
+            '--file-allocation=none',
+            '-x16',
+            '-j16',
+            '-s16',
+        ]
         if 'fragments' in info_dict:
             cmd += ['--allow-overwrite=true', '--allow-piece-length-change=true']
         else:
@@ -279,16 +286,18 @@ class Aria2cFD(ExternalFD):
 
 
 class Aria2pFD(ExternalFD):
-    ''' Aria2pFD class
+    """Aria2pFD class
     This class support to use aria2p as downloader.
     (Aria2p, a command-line tool and Python library to interact with an aria2c daemon process
     through JSON-RPC.)
     It can help you to get download progress more easily.
     To use aria2p as downloader, you need to install aria2c and aria2p, aria2p can download with pip.
     Then run aria2c in the background and enable with the --enable-rpc option.
-    '''
+    """
+
     try:
         import aria2p
+
         __avail = True
     except ImportError:
         __avail = False
@@ -298,13 +307,7 @@ class Aria2pFD(ExternalFD):
         return cls.__avail
 
     def _call_downloader(self, tmpfilename, info_dict):
-        aria2 = self.aria2p.API(
-            self.aria2p.Client(
-                host='http://localhost',
-                port=6800,
-                secret=''
-            )
-        )
+        aria2 = self.aria2p.API(self.aria2p.Client(host='http://localhost', port=6800, secret=''))
 
         options = {
             'min-split-size': '1M',
@@ -326,15 +329,17 @@ class Aria2pFD(ExternalFD):
         started = time.time()
         while download.status in ['active', 'waiting']:
             download = aria2.get_download(download.gid)
-            status.update({
-                'downloaded_bytes': download.completed_length,
-                'total_bytes': download.total_length,
-                'elapsed': time.time() - started,
-                'eta': download.eta.total_seconds(),
-                'speed': download.download_speed,
-            })
+            status.update(
+                {
+                    'downloaded_bytes': download.completed_length,
+                    'total_bytes': download.total_length,
+                    'elapsed': time.time() - started,
+                    'eta': download.eta.total_seconds(),
+                    'speed': download.download_speed,
+                }
+            )
             self._hook_progress(status)
-            time.sleep(.5)
+            time.sleep(0.5)
         return download.status != 'complete'
 
 
@@ -361,7 +366,17 @@ class HttpieFD(ExternalFD):
 class FFmpegFD(ExternalFD):
     @classmethod
     def supports(cls, info_dict):
-        return info_dict['protocol'] in ('http', 'https', 'ftp', 'ftps', 'm3u8', 'rtsp', 'rtmp', 'mms', 'http_dash_segments')
+        return info_dict['protocol'] in (
+            'http',
+            'https',
+            'ftp',
+            'ftps',
+            'm3u8',
+            'rtsp',
+            'rtmp',
+            'mms',
+            'http_dash_segments',
+        )
 
     @classmethod
     def available(cls):
@@ -372,7 +387,9 @@ class FFmpegFD(ExternalFD):
         # `downloader` means the parent `YoutubeDL`
         ffpp = FFmpegPostProcessor(downloader=self.ydl)
         if not ffpp.available:
-            self.report_error('ffmpeg required for download but no ffmpeg (nor avconv) executable could be found. Please install one.')
+            self.report_error(
+                'ffmpeg required for download but no ffmpeg (nor avconv) executable could be found. Please install one.'
+            )
             return False
         ffpp.check_version()
 
@@ -404,17 +421,21 @@ class FFmpegFD(ExternalFD):
         url = info_dict['url']
         cookies = self.ydl.cookiejar.get_cookies_for_url(url)
         if cookies:
-            args.extend(['-cookies', ''.join(
-                f'{cookie.name}={cookie.value}; path={cookie.path}; domain={cookie.domain};\r\n'
-                for cookie in cookies)])
+            args.extend(
+                [
+                    '-cookies',
+                    ''.join(
+                        f'{cookie.name}={cookie.value}; path={cookie.path}; domain={cookie.domain};\r\n'
+                        for cookie in cookies
+                    ),
+                ]
+            )
 
         if info_dict.get('http_headers') and re.match(r'^https?://', url):
             # Trailing \r\n after each HTTP header is important to prevent warning from ffmpeg/avconv:
             # [http @ 00000000003d2fa0] No trailing CRLF found in HTTP header.
             headers = handle_youtubedl_headers(info_dict['http_headers'])
-            args += [
-                '-headers',
-                ''.join(f'{key}: {val}\r\n' for key, val in headers.items())]
+            args += ['-headers', ''.join(f'{key}: {val}\r\n' for key, val in headers.items())]
 
         env = None
         proxy = self.params.get('proxy')
@@ -425,7 +446,8 @@ class FFmpegFD(ExternalFD):
             if proxy.startswith('socks'):
                 self.report_warning(
                     f'{self.get_basename()} does not support SOCKS proxies. Downloading is likely to fail. '
-                    'Consider adding --hls-prefer-native to your command.')
+                    'Consider adding --hls-prefer-native to your command.'
+                )
 
             # Since December 2015 ffmpeg supports -http_proxy option (see
             # http://git.videolan.org/?p=ffmpeg.git;a=commit;h=b4eb1f29ebddd60c41a2eb39f5af701e38e0d3fd)
@@ -476,7 +498,9 @@ class FFmpegFD(ExternalFD):
                 args += ['-f', 'mpegts']
             else:
                 args += ['-f', 'mp4']
-                if (ffpp.basename == 'ffmpeg' and is_outdated_version(ffpp._versions['ffmpeg'], '3.2', False)) and (not info_dict.get('acodec') or info_dict['acodec'].split('.')[0] in ('aac', 'mp4a')):
+                if (ffpp.basename == 'ffmpeg' and is_outdated_version(ffpp._versions['ffmpeg'], '3.2', False)) and (
+                    not info_dict.get('acodec') or info_dict['acodec'].split('.')[0] in ('aac', 'mp4a')
+                ):
                     args += ['-bsf:a', 'aac_adtstoasc']
         elif protocol == 'rtmp':
             args += ['-f', 'flv']
@@ -526,9 +550,7 @@ class AVconvFD(FFmpegFD):
 
 
 _BY_NAME = dict(
-    (klass.get_basename(), klass)
-    for name, klass in globals().items()
-    if name.endswith('FD') and name != 'ExternalFD'
+    (klass.get_basename(), klass) for name, klass in globals().items() if name.endswith('FD') and name != 'ExternalFD'
 )
 
 
@@ -537,8 +559,8 @@ def list_external_downloaders():
 
 
 def get_external_downloader(external_downloader):
-    """ Given the name of the executable, see whether we support the given
-        downloader . """
+    """Given the name of the executable, see whether we support the given
+    downloader ."""
     # Drop .exe extension on Windows
     bn = os.path.splitext(os.path.basename(external_downloader))[0]
     return _BY_NAME[bn]

@@ -15,136 +15,146 @@ from .common import InfoExtractor
 class VevoBaseIE(InfoExtractor):
     def _extract_json(self, webpage, video_id):
         return self._parse_json(
-            self._search_regex(
-                r'window\.__INITIAL_STORE__\s*=\s*({.+?});\s*</script>',
-                webpage, 'initial store'),
-            video_id)
+            self._search_regex(r'window\.__INITIAL_STORE__\s*=\s*({.+?});\s*</script>', webpage, 'initial store'),
+            video_id,
+        )
 
 
 class VevoIE(VevoBaseIE):
-    '''
+    """
     Accepts urls from vevo.com or in the format 'vevo:{id}'
     (currently used by MTVIE and MySpaceIE)
-    '''
-    _VALID_URL = r'''(?x)
+    """
+
+    _VALID_URL = r"""(?x)
         (?:https?://(?:www\.)?vevo\.com/watch/(?!playlist|genre)(?:[^/]+/(?:[^/]+/)?)?|
            https?://cache\.vevo\.com/m/html/embed\.html\?video=|
            https?://videoplayer\.vevo\.com/embed/embedded\?videoId=|
            https?://embed\.vevo\.com/.*?[?&]isrc=|
            vevo:)
-        (?P<id>[^&?#]+)'''
+        (?P<id>[^&?#]+)"""
 
-    _TESTS = [{
-        'url': 'http://www.vevo.com/watch/hurts/somebody-to-die-for/GB1101300280',
-        'md5': '95ee28ee45e70130e3ab02b0f579ae23',
-        'info_dict': {
-            'id': 'GB1101300280',
-            'ext': 'mp4',
-            'title': 'Hurts - Somebody to Die For',
-            'timestamp': 1372057200,
-            'upload_date': '20130624',
-            'uploader': 'Hurts',
-            'track': 'Somebody to Die For',
-            'artist': 'Hurts',
-            'genre': 'Pop',
+    _TESTS = [
+        {
+            'url': 'http://www.vevo.com/watch/hurts/somebody-to-die-for/GB1101300280',
+            'md5': '95ee28ee45e70130e3ab02b0f579ae23',
+            'info_dict': {
+                'id': 'GB1101300280',
+                'ext': 'mp4',
+                'title': 'Hurts - Somebody to Die For',
+                'timestamp': 1372057200,
+                'upload_date': '20130624',
+                'uploader': 'Hurts',
+                'track': 'Somebody to Die For',
+                'artist': 'Hurts',
+                'genre': 'Pop',
+            },
+            'expected_warnings': ['Unable to download SMIL file', 'Unable to download info'],
         },
-        'expected_warnings': ['Unable to download SMIL file', 'Unable to download info'],
-    }, {
-        'note': 'v3 SMIL format',
-        'url': 'http://www.vevo.com/watch/cassadee-pope/i-wish-i-could-break-your-heart/USUV71302923',
-        'md5': 'f6ab09b034f8c22969020b042e5ac7fc',
-        'info_dict': {
-            'id': 'USUV71302923',
-            'ext': 'mp4',
-            'title': 'Cassadee Pope - I Wish I Could Break Your Heart',
-            'timestamp': 1392796919,
-            'upload_date': '20140219',
-            'uploader': 'Cassadee Pope',
-            'track': 'I Wish I Could Break Your Heart',
-            'artist': 'Cassadee Pope',
-            'genre': 'Country',
+        {
+            'note': 'v3 SMIL format',
+            'url': 'http://www.vevo.com/watch/cassadee-pope/i-wish-i-could-break-your-heart/USUV71302923',
+            'md5': 'f6ab09b034f8c22969020b042e5ac7fc',
+            'info_dict': {
+                'id': 'USUV71302923',
+                'ext': 'mp4',
+                'title': 'Cassadee Pope - I Wish I Could Break Your Heart',
+                'timestamp': 1392796919,
+                'upload_date': '20140219',
+                'uploader': 'Cassadee Pope',
+                'track': 'I Wish I Could Break Your Heart',
+                'artist': 'Cassadee Pope',
+                'genre': 'Country',
+            },
+            'expected_warnings': ['Unable to download SMIL file', 'Unable to download info'],
         },
-        'expected_warnings': ['Unable to download SMIL file', 'Unable to download info'],
-    }, {
-        'note': 'Age-limited video',
-        'url': 'https://www.vevo.com/watch/justin-timberlake/tunnel-vision-explicit/USRV81300282',
-        'info_dict': {
-            'id': 'USRV81300282',
-            'ext': 'mp4',
-            'title': 'Justin Timberlake - Tunnel Vision (Explicit)',
-            'age_limit': 18,
-            'timestamp': 1372888800,
-            'upload_date': '20130703',
-            'uploader': 'Justin Timberlake',
-            'track': 'Tunnel Vision (Explicit)',
-            'artist': 'Justin Timberlake',
-            'genre': 'Pop',
+        {
+            'note': 'Age-limited video',
+            'url': 'https://www.vevo.com/watch/justin-timberlake/tunnel-vision-explicit/USRV81300282',
+            'info_dict': {
+                'id': 'USRV81300282',
+                'ext': 'mp4',
+                'title': 'Justin Timberlake - Tunnel Vision (Explicit)',
+                'age_limit': 18,
+                'timestamp': 1372888800,
+                'upload_date': '20130703',
+                'uploader': 'Justin Timberlake',
+                'track': 'Tunnel Vision (Explicit)',
+                'artist': 'Justin Timberlake',
+                'genre': 'Pop',
+            },
+            'expected_warnings': ['Unable to download SMIL file', 'Unable to download info'],
         },
-        'expected_warnings': ['Unable to download SMIL file', 'Unable to download info'],
-    }, {
-        'note': 'No video_info',
-        'url': 'http://www.vevo.com/watch/k-camp-1/Till-I-Die/USUV71503000',
-        'md5': '8b83cc492d72fc9cf74a02acee7dc1b0',
-        'info_dict': {
-            'id': 'USUV71503000',
-            'ext': 'mp4',
-            'title': 'K Camp ft. T.I. - Till I Die',
-            'age_limit': 18,
-            'timestamp': 1449468000,
-            'upload_date': '20151207',
-            'uploader': 'K Camp',
-            'track': 'Till I Die',
-            'artist': 'K Camp',
-            'genre': 'Hip-Hop',
+        {
+            'note': 'No video_info',
+            'url': 'http://www.vevo.com/watch/k-camp-1/Till-I-Die/USUV71503000',
+            'md5': '8b83cc492d72fc9cf74a02acee7dc1b0',
+            'info_dict': {
+                'id': 'USUV71503000',
+                'ext': 'mp4',
+                'title': 'K Camp ft. T.I. - Till I Die',
+                'age_limit': 18,
+                'timestamp': 1449468000,
+                'upload_date': '20151207',
+                'uploader': 'K Camp',
+                'track': 'Till I Die',
+                'artist': 'K Camp',
+                'genre': 'Hip-Hop',
+            },
+            'expected_warnings': ['Unable to download SMIL file', 'Unable to download info'],
         },
-        'expected_warnings': ['Unable to download SMIL file', 'Unable to download info'],
-    }, {
-        'note': 'Featured test',
-        'url': 'https://www.vevo.com/watch/lemaitre/Wait/USUV71402190',
-        'md5': 'd28675e5e8805035d949dc5cf161071d',
-        'info_dict': {
-            'id': 'USUV71402190',
-            'ext': 'mp4',
-            'title': 'Lemaitre ft. LoLo - Wait',
-            'age_limit': 0,
-            'timestamp': 1413432000,
-            'upload_date': '20141016',
-            'uploader': 'Lemaitre',
-            'track': 'Wait',
-            'artist': 'Lemaitre',
-            'genre': 'Electronic',
+        {
+            'note': 'Featured test',
+            'url': 'https://www.vevo.com/watch/lemaitre/Wait/USUV71402190',
+            'md5': 'd28675e5e8805035d949dc5cf161071d',
+            'info_dict': {
+                'id': 'USUV71402190',
+                'ext': 'mp4',
+                'title': 'Lemaitre ft. LoLo - Wait',
+                'age_limit': 0,
+                'timestamp': 1413432000,
+                'upload_date': '20141016',
+                'uploader': 'Lemaitre',
+                'track': 'Wait',
+                'artist': 'Lemaitre',
+                'genre': 'Electronic',
+            },
+            'expected_warnings': ['Unable to download SMIL file', 'Unable to download info'],
         },
-        'expected_warnings': ['Unable to download SMIL file', 'Unable to download info'],
-    }, {
-        'note': 'Only available via webpage',
-        'url': 'http://www.vevo.com/watch/GBUV71600656',
-        'md5': '67e79210613865b66a47c33baa5e37fe',
-        'info_dict': {
-            'id': 'GBUV71600656',
-            'ext': 'mp4',
-            'title': 'ABC - Viva Love',
-            'age_limit': 0,
-            'timestamp': 1461830400,
-            'upload_date': '20160428',
-            'uploader': 'ABC',
-            'track': 'Viva Love',
-            'artist': 'ABC',
-            'genre': 'Pop',
+        {
+            'note': 'Only available via webpage',
+            'url': 'http://www.vevo.com/watch/GBUV71600656',
+            'md5': '67e79210613865b66a47c33baa5e37fe',
+            'info_dict': {
+                'id': 'GBUV71600656',
+                'ext': 'mp4',
+                'title': 'ABC - Viva Love',
+                'age_limit': 0,
+                'timestamp': 1461830400,
+                'upload_date': '20160428',
+                'uploader': 'ABC',
+                'track': 'Viva Love',
+                'artist': 'ABC',
+                'genre': 'Pop',
+            },
+            'expected_warnings': ['Failed to download video versions info'],
         },
-        'expected_warnings': ['Failed to download video versions info'],
-    }, {
-        # no genres available
-        'url': 'http://www.vevo.com/watch/INS171400764',
-        'only_matching': True,
-    }, {
-        # Another case available only via the webpage; using streams/streamsV3 formats
-        # Geo-restricted to Netherlands/Germany
-        'url': 'http://www.vevo.com/watch/boostee/pop-corn-clip-officiel/FR1A91600909',
-        'only_matching': True,
-    }, {
-        'url': 'https://embed.vevo.com/?isrc=USH5V1923499&partnerId=4d61b777-8023-4191-9ede-497ed6c24647&partnerAdCode=',
-        'only_matching': True,
-    }]
+        {
+            # no genres available
+            'url': 'http://www.vevo.com/watch/INS171400764',
+            'only_matching': True,
+        },
+        {
+            # Another case available only via the webpage; using streams/streamsV3 formats
+            # Geo-restricted to Netherlands/Germany
+            'url': 'http://www.vevo.com/watch/boostee/pop-corn-clip-officiel/FR1A91600909',
+            'only_matching': True,
+        },
+        {
+            'url': 'https://embed.vevo.com/?isrc=USH5V1923499&partnerId=4d61b777-8023-4191-9ede-497ed6c24647&partnerAdCode=',
+            'only_matching': True,
+        },
+    ]
     _VERSIONS = {
         0: 'youtube',  # only in AuthenticateVideo videoVersions
         1: 'level3',
@@ -155,20 +165,23 @@ class VevoIE(VevoBaseIE):
 
     def _initialize_api(self, video_id):
         webpage = self._download_webpage(
-            'https://accounts.vevo.com/token', None,
+            'https://accounts.vevo.com/token',
+            None,
             note='Retrieving oauth token',
             errnote='Unable to retrieve oauth token',
-            data=json.dumps({
-                'client_id': 'SPupX1tvqFEopQ1YS6SS',
-                'grant_type': 'urn:vevo:params:oauth:grant-type:anonymous',
-            }).encode('utf-8'),
+            data=json.dumps(
+                {
+                    'client_id': 'SPupX1tvqFEopQ1YS6SS',
+                    'grant_type': 'urn:vevo:params:oauth:grant-type:anonymous',
+                }
+            ).encode('utf-8'),
             headers={
                 'Content-Type': 'application/json',
-            })
+            },
+        )
 
         if re.search(r'(?i)THIS PAGE IS CURRENTLY UNAVAILABLE IN YOUR REGION', webpage):
-            self.raise_geo_restricted(
-                f'{self.IE_NAME} said: This page is currently unavailable in your region')
+            self.raise_geo_restricted(f'{self.IE_NAME} said: This page is currently unavailable in your region')
 
         auth_info = self._parse_json(webpage, video_id)
         self._api_url_template = self.http_scheme() + '//apiv2.vevo.com/%s?token=' + auth_info['legacy_token']
@@ -190,14 +203,16 @@ class VevoIE(VevoBaseIE):
         self._initialize_api(video_id)
 
         video_info = self._call_api(
-            f'video/{video_id}', video_id, 'Downloading api video info',
-            'Failed to download video info')
+            f'video/{video_id}', video_id, 'Downloading api video info', 'Failed to download video info'
+        )
 
         video_versions = self._call_api(
-            f'video/{video_id}/streams', video_id,
+            f'video/{video_id}/streams',
+            video_id,
             'Downloading video versions info',
             'Failed to download video versions info',
-            fatal=False)
+            fatal=False,
+        )
 
         # Some videos are only available via webpage (e.g.
         # https://github.com/ytdl-org/youtube-dl/issues/9366)
@@ -208,9 +223,8 @@ class VevoIE(VevoBaseIE):
                 video_versions = json_data['default']['streams'][video_id][0]
             else:
                 video_versions = [
-                    value
-                    for key, value in json_data['apollo']['data'].items()
-                    if key.startswith(f'{video_id}.streams')]
+                    value for key, value in json_data['apollo']['data'].items() if key.startswith(f'{video_id}.streams')
+                ]
 
         uploader = None
         artist = None
@@ -232,40 +246,56 @@ class VevoIE(VevoBaseIE):
             if '.ism' in version_url:
                 continue
             elif '.mpd' in version_url:
-                formats.extend(self._extract_mpd_formats(
-                    version_url, video_id, mpd_id=f'dash-{version}',
-                    note=f'Downloading {version} MPD information',
-                    errnote=f'Failed to download {version} MPD information',
-                    fatal=False))
+                formats.extend(
+                    self._extract_mpd_formats(
+                        version_url,
+                        video_id,
+                        mpd_id=f'dash-{version}',
+                        note=f'Downloading {version} MPD information',
+                        errnote=f'Failed to download {version} MPD information',
+                        fatal=False,
+                    )
+                )
             elif '.m3u8' in version_url:
-                formats.extend(self._extract_m3u8_formats(
-                    version_url, video_id, 'mp4', 'm3u8_native',
-                    m3u8_id=f'hls-{version}',
-                    note=f'Downloading {version} m3u8 information',
-                    errnote=f'Failed to download {version} m3u8 information',
-                    fatal=False))
+                formats.extend(
+                    self._extract_m3u8_formats(
+                        version_url,
+                        video_id,
+                        'mp4',
+                        'm3u8_native',
+                        m3u8_id=f'hls-{version}',
+                        note=f'Downloading {version} m3u8 information',
+                        errnote=f'Failed to download {version} m3u8 information',
+                        fatal=False,
+                    )
+                )
             else:
-                m = re.search(r'''(?xi)
+                m = re.search(
+                    r"""(?xi)
                     _(?P<width>[0-9]+)x(?P<height>[0-9]+)
                     _(?P<vcodec>[a-z0-9]+)
                     _(?P<vbr>[0-9]+)
                     _(?P<acodec>[a-z0-9]+)
                     _(?P<abr>[0-9]+)
-                    \.(?P<ext>[a-z0-9]+)''', version_url)
+                    \.(?P<ext>[a-z0-9]+)""",
+                    version_url,
+                )
                 if not m:
                     continue
 
-                formats.append({
-                    'url': version_url,
-                    'format_id': 'http-{}-{}'.format(version, video_version['quality']),
-                    'vcodec': m.group('vcodec'),
-                    'acodec': m.group('acodec'),
-                    'vbr': int(m.group('vbr')),
-                    'abr': int(m.group('abr')),
-                    'ext': m.group('ext'),
-                    'width': int(m.group('width')),
-                    'height': int(m.group('height')),
-                })
+                formats.append(
+                    {
+                        'url': version_url,
+                        'format_id': 'http-{}-{}'.format(version, video_version['quality']),
+                        'vcodec': m.group('vcodec'),
+                        'acodec': m.group('acodec'),
+                        'vbr': int(m.group('vbr')),
+                        'abr': int(m.group('abr')),
+                        'ext': m.group('ext'),
+                        'width': int(m.group('width')),
+                        'height': int(m.group('height')),
+                    }
+                )
         self._sort_formats(formats)
 
         track = video_info['title']
@@ -274,9 +304,7 @@ class VevoIE(VevoBaseIE):
         title = f'{artist} - {track}' if artist else track
 
         genres = video_info.get('genres')
-        genre = (
-            genres[0] if genres and isinstance(genres, list)
-            and isinstance(genres[0], compat_str) else None)
+        genre = genres[0] if genres and isinstance(genres, list) and isinstance(genres[0], compat_str) else None
 
         is_explicit = video_info.get('isExplicit')
         if is_explicit is True:
@@ -305,39 +333,44 @@ class VevoIE(VevoBaseIE):
 class VevoPlaylistIE(VevoBaseIE):
     _VALID_URL = r'https?://(?:www\.)?vevo\.com/watch/(?P<kind>playlist|genre)/(?P<id>[^/?#&]+)'
 
-    _TESTS = [{
-        'url': 'http://www.vevo.com/watch/playlist/dadbf4e7-b99f-4184-9670-6f0e547b6a29',
-        'info_dict': {
-            'id': 'dadbf4e7-b99f-4184-9670-6f0e547b6a29',
-            'title': 'Best-Of: Birdman',
+    _TESTS = [
+        {
+            'url': 'http://www.vevo.com/watch/playlist/dadbf4e7-b99f-4184-9670-6f0e547b6a29',
+            'info_dict': {
+                'id': 'dadbf4e7-b99f-4184-9670-6f0e547b6a29',
+                'title': 'Best-Of: Birdman',
+            },
+            'playlist_count': 10,
         },
-        'playlist_count': 10,
-    }, {
-        'url': 'http://www.vevo.com/watch/genre/rock',
-        'info_dict': {
-            'id': 'rock',
-            'title': 'Rock',
+        {
+            'url': 'http://www.vevo.com/watch/genre/rock',
+            'info_dict': {
+                'id': 'rock',
+                'title': 'Rock',
+            },
+            'playlist_count': 20,
         },
-        'playlist_count': 20,
-    }, {
-        'url': 'http://www.vevo.com/watch/playlist/dadbf4e7-b99f-4184-9670-6f0e547b6a29?index=0',
-        'md5': '32dcdfddddf9ec6917fc88ca26d36282',
-        'info_dict': {
-            'id': 'USCMV1100073',
-            'ext': 'mp4',
-            'title': 'Birdman - Y.U. MAD',
-            'timestamp': 1323417600,
-            'upload_date': '20111209',
-            'uploader': 'Birdman',
-            'track': 'Y.U. MAD',
-            'artist': 'Birdman',
-            'genre': 'Rap/Hip-Hop',
+        {
+            'url': 'http://www.vevo.com/watch/playlist/dadbf4e7-b99f-4184-9670-6f0e547b6a29?index=0',
+            'md5': '32dcdfddddf9ec6917fc88ca26d36282',
+            'info_dict': {
+                'id': 'USCMV1100073',
+                'ext': 'mp4',
+                'title': 'Birdman - Y.U. MAD',
+                'timestamp': 1323417600,
+                'upload_date': '20111209',
+                'uploader': 'Birdman',
+                'track': 'Y.U. MAD',
+                'artist': 'Birdman',
+                'genre': 'Rap/Hip-Hop',
+            },
+            'expected_warnings': ['Unable to download SMIL file'],
         },
-        'expected_warnings': ['Unable to download SMIL file'],
-    }, {
-        'url': 'http://www.vevo.com/watch/genre/rock?index=0',
-        'only_matching': True,
-    }]
+        {
+            'url': 'http://www.vevo.com/watch/genre/rock?index=0',
+            'only_matching': True,
+        },
+    ]
 
     def _real_extract(self, url):
         mobj = re.match(self._VALID_URL, url)
@@ -352,19 +385,20 @@ class VevoPlaylistIE(VevoBaseIE):
         if index:
             video_id = self._search_regex(
                 r'<meta[^>]+content=(["\'])vevo://video/(?P<id>.+?)\1[^>]*>',
-                webpage, 'video id', default=None, group='id')
+                webpage,
+                'video id',
+                default=None,
+                group='id',
+            )
             if video_id:
                 return self.url_result(f'vevo:{video_id}', VevoIE.ie_key())
 
         playlists = self._extract_json(webpage, playlist_id)['default'][f'{playlist_kind}s']
 
-        playlist = (next(iter(playlists.values()))
-                    if playlist_kind == 'playlist' else playlists[playlist_id])
+        playlist = next(iter(playlists.values())) if playlist_kind == 'playlist' else playlists[playlist_id]
 
-        entries = [
-            self.url_result(f'vevo:{src}', VevoIE.ie_key())
-            for src in playlist['isrcs']]
+        entries = [self.url_result(f'vevo:{src}', VevoIE.ie_key()) for src in playlist['isrcs']]
 
         return self.playlist_result(
-            entries, playlist.get('playlistId') or playlist_id,
-            playlist.get('name'), playlist.get('description'))
+            entries, playlist.get('playlistId') or playlist_id, playlist.get('name'), playlist.get('description')
+        )

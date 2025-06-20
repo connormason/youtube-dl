@@ -74,8 +74,7 @@ def _real_main(argv=None):
             if opts.batchfile == '-':
                 batchfd = sys.stdin
             else:
-                batchfd = open(
-                    expand_path(opts.batchfile), encoding='utf-8', errors='ignore')
+                batchfd = open(expand_path(opts.batchfile), encoding='utf-8', errors='ignore')
             batch_urls = read_batch_urls(batchfd)
             if opts.verbose:
                 write_string('[debug] Batch file urls: ' + repr(batch_urls) + '\n')
@@ -100,7 +99,16 @@ def _real_main(argv=None):
             if desc is False:
                 continue
             if hasattr(ie, 'SEARCH_KEY'):
-                _SEARCHES = ('cute kittens', 'slithering pythons', 'falling cat', 'angry poodle', 'purple fish', 'running tortoise', 'sleeping bunny', 'burping cow')
+                _SEARCHES = (
+                    'cute kittens',
+                    'slithering pythons',
+                    'falling cat',
+                    'angry poodle',
+                    'purple fish',
+                    'running tortoise',
+                    'sleeping bunny',
+                    'burping cow',
+                )
                 _COUNTS = ('', '5', '10', 'all')
                 desc += f' (Example: "{ie.SEARCH_KEY}{random.choice(_COUNTS)}:{random.choice(_SEARCHES)}" )'
             write_string(desc + '\n', out=sys.stdout)
@@ -167,6 +175,7 @@ def _real_main(argv=None):
             except (TypeError, ValueError):
                 parser.error('invalid retry count specified')
         return parsed_retries
+
     if opts.retries is not None:
         opts.retries = parse_retries(opts.retries)
     if opts.fragment_retries is not None:
@@ -213,42 +222,60 @@ def _real_main(argv=None):
     if opts.allsubtitles and not opts.writeautomaticsub:
         opts.writesubtitles = True
 
-    outtmpl = ((opts.outtmpl is not None and opts.outtmpl)
-               or (opts.format == '-1' and opts.usetitle and '%(title)s-%(id)s-%(format)s.%(ext)s')
-               or (opts.format == '-1' and '%(id)s-%(format)s.%(ext)s')
-               or (opts.usetitle and opts.autonumber and '%(autonumber)s-%(title)s-%(id)s.%(ext)s')
-               or (opts.usetitle and '%(title)s-%(id)s.%(ext)s')
-               or (opts.useid and '%(id)s.%(ext)s')
-               or (opts.autonumber and '%(autonumber)s-%(id)s.%(ext)s')
-               or DEFAULT_OUTTMPL)
+    outtmpl = (
+        (opts.outtmpl is not None and opts.outtmpl)
+        or (opts.format == '-1' and opts.usetitle and '%(title)s-%(id)s-%(format)s.%(ext)s')
+        or (opts.format == '-1' and '%(id)s-%(format)s.%(ext)s')
+        or (opts.usetitle and opts.autonumber and '%(autonumber)s-%(title)s-%(id)s.%(ext)s')
+        or (opts.usetitle and '%(title)s-%(id)s.%(ext)s')
+        or (opts.useid and '%(id)s.%(ext)s')
+        or (opts.autonumber and '%(autonumber)s-%(id)s.%(ext)s')
+        or DEFAULT_OUTTMPL
+    )
     if not os.path.splitext(outtmpl)[1] and opts.extractaudio:
-        parser.error('Cannot download a video and extract audio into the same'
-                     f' file! Use "{outtmpl}.%(ext)s" instead of "{outtmpl}" as the output'
-                     ' template')
+        parser.error(
+            'Cannot download a video and extract audio into the same'
+            f' file! Use "{outtmpl}.%(ext)s" instead of "{outtmpl}" as the output'
+            ' template'
+        )
 
-    any_getting = opts.geturl or opts.gettitle or opts.getid or opts.getthumbnail or opts.getdescription or opts.getfilename or opts.getformat or opts.getduration or opts.dumpjson or opts.dump_single_json
+    any_getting = (
+        opts.geturl
+        or opts.gettitle
+        or opts.getid
+        or opts.getthumbnail
+        or opts.getdescription
+        or opts.getfilename
+        or opts.getformat
+        or opts.getduration
+        or opts.dumpjson
+        or opts.dump_single_json
+    )
     any_printing = opts.print_json
-    download_archive_fn = expand_path(opts.download_archive) if opts.download_archive is not None else opts.download_archive
+    download_archive_fn = (
+        expand_path(opts.download_archive) if opts.download_archive is not None else opts.download_archive
+    )
 
     # PostProcessors
     postprocessors = []
     if opts.metafromtitle:
-        postprocessors.append({
-            'key': 'MetadataFromTitle',
-            'titleformat': opts.metafromtitle
-        })
+        postprocessors.append({'key': 'MetadataFromTitle', 'titleformat': opts.metafromtitle})
     if opts.extractaudio:
-        postprocessors.append({
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': opts.audioformat,
-            'preferredquality': opts.audioquality,
-            'nopostoverwrites': opts.nopostoverwrites,
-        })
+        postprocessors.append(
+            {
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': opts.audioformat,
+                'preferredquality': opts.audioquality,
+                'nopostoverwrites': opts.nopostoverwrites,
+            }
+        )
     if opts.recodevideo:
-        postprocessors.append({
-            'key': 'FFmpegVideoConvertor',
-            'preferedformat': opts.recodevideo,
-        })
+        postprocessors.append(
+            {
+                'key': 'FFmpegVideoConvertor',
+                'preferedformat': opts.recodevideo,
+            }
+        )
     # FFmpegMetadataPP should be run after FFmpegVideoConvertorPP and
     # FFmpegExtractAudioPP as containers before conversion may not support
     # metadata (3gp, webm, etc.)
@@ -260,24 +287,27 @@ def _real_main(argv=None):
     if opts.addmetadata:
         postprocessors.append({'key': 'FFmpegMetadata'})
     if opts.convertsubtitles:
-        postprocessors.append({
-            'key': 'FFmpegSubtitlesConvertor',
-            'format': opts.convertsubtitles,
-        })
+        postprocessors.append(
+            {
+                'key': 'FFmpegSubtitlesConvertor',
+                'format': opts.convertsubtitles,
+            }
+        )
     if opts.embedsubtitles:
-        postprocessors.append({
-            'key': 'FFmpegEmbedSubtitle',
-        })
+        postprocessors.append(
+            {
+                'key': 'FFmpegEmbedSubtitle',
+            }
+        )
     if opts.aacToMp3:
-        postprocessors.append({
-            'key': 'ConvertAACToMP3PP',
-        })
+        postprocessors.append(
+            {
+                'key': 'ConvertAACToMP3PP',
+            }
+        )
     if opts.embedthumbnail:
         already_have_thumbnail = opts.writethumbnail or opts.write_all_thumbnails
-        postprocessors.append({
-            'key': 'EmbedThumbnail',
-            'already_have_thumbnail': already_have_thumbnail
-        })
+        postprocessors.append({'key': 'EmbedThumbnail', 'already_have_thumbnail': already_have_thumbnail})
         if not already_have_thumbnail:
             opts.writethumbnail = True
     # XAttrMetadataPP should be run after post-processors that may change file
@@ -287,19 +317,19 @@ def _real_main(argv=None):
     # Please keep ExecAfterDownload towards the bottom as it allows the user to modify the final file in any way.
     # So if the user is able to remove the file before your postprocessor runs it might cause a few problems.
     if opts.exec_cmd:
-        postprocessors.append({
-            'key': 'ExecAfterDownload',
-            'exec_cmd': opts.exec_cmd,
-        })
+        postprocessors.append(
+            {
+                'key': 'ExecAfterDownload',
+                'exec_cmd': opts.exec_cmd,
+            }
+        )
     external_downloader_args = None
     if opts.external_downloader_args:
         external_downloader_args = compat_shlex_split(opts.external_downloader_args)
     postprocessor_args = None
     if opts.postprocessor_args:
         postprocessor_args = compat_shlex_split(opts.postprocessor_args)
-    match_filter = (
-        None if opts.match_filter is None
-        else match_filter_func(opts.match_filter))
+    match_filter = None if opts.match_filter is None else match_filter_func(opts.match_filter)
 
     ydl_opts = {
         'usenetrc': opts.usenetrc,
@@ -424,7 +454,6 @@ def _real_main(argv=None):
     }
 
     with YoutubeDL(ydl_opts) as ydl:
-
         # Remove cache dir
         if opts.rm_cachedir:
             ydl.cache.remove()
@@ -435,9 +464,7 @@ def _real_main(argv=None):
                 sys.exit()
 
             ydl.warn_if_short_id(sys.argv[1:] if argv is None else argv)
-            parser.error(
-                'You must provide at least one URL.\n'
-                'Type youtube-dl --help to see a list of all options.')
+            parser.error('You must provide at least one URL.\nType youtube-dl --help to see a list of all options.')
 
         try:
             if opts.load_info_filename is not None:

@@ -8,10 +8,12 @@ import warnings
 try:
     from setuptools import Command
     from setuptools import setup
+
     setuptools_available = True
 except ImportError:
     from distutils.core import Command
     from distutils.core import setup
+
     setuptools_available = False
 from distutils.spawn import spawn
 
@@ -44,21 +46,19 @@ exec(
 DESCRIPTION = 'YouTube video downloader'
 LONG_DESCRIPTION = 'Command-line program to download videos from YouTube.com and other video sites'
 
-py2exe_console = [{
-    'script': './youtube_dl/__main__.py',
-    'dest_base': 'youtube-dl',
-    'version': __version__,
-    'description': DESCRIPTION,
-    'comments': LONG_DESCRIPTION,
-    'product_name': 'youtube-dl',
-    'product_version': __version__,
-}]
+py2exe_console = [
+    {
+        'script': './youtube_dl/__main__.py',
+        'dest_base': 'youtube-dl',
+        'version': __version__,
+        'description': DESCRIPTION,
+        'comments': LONG_DESCRIPTION,
+        'product_name': 'youtube-dl',
+        'product_version': __version__,
+    }
+]
 
-py2exe_params = {
-    'console': py2exe_console,
-    'options': {'py2exe': py2exe_options},
-    'zipfile': None
-}
+py2exe_params = {'console': py2exe_console, 'options': {'py2exe': py2exe_options}, 'zipfile': None}
 
 if len(sys.argv) >= 2 and sys.argv[1] == 'py2exe':
     params = py2exe_params
@@ -67,7 +67,7 @@ else:
         ('etc/bash_completion.d', ['youtube-dl.bash-completion']),
         ('etc/fish/completions', ['youtube-dl.fish']),
         ('share/doc/youtube_dl', ['README.txt']),
-        ('share/man/man1', ['youtube-dl.1'])
+        ('share/man/man1', ['youtube-dl.1']),
     ]
     root = os.path.dirname(os.path.abspath(__file__))
     data_files = []
@@ -75,7 +75,9 @@ else:
         resfiles = []
         for fn in files:
             if not os.path.exists(fn):
-                warnings.warn(f'Skipping file {fn} since it is not present. Type  make  to build all automatically generated files.')
+                warnings.warn(
+                    f'Skipping file {fn} since it is not present. Type  make  to build all automatically generated files.'
+                )
             else:
                 resfiles.append(fn)
         data_files.append((dirname, resfiles))
@@ -87,6 +89,7 @@ else:
         params['entry_points'] = {'console_scripts': ['youtube-dl = youtube_dl:main']}
     else:
         params['scripts'] = ['bin/youtube-dl']
+
 
 class build_lazy_extractors(Command):
     description = 'Build the extractor lazy loading module'
@@ -104,6 +107,7 @@ class build_lazy_extractors(Command):
             dry_run=self.dry_run,
         )
 
+
 setup(
     name='youtube_dl',
     version=__version__,
@@ -115,15 +119,10 @@ setup(
     maintainer='Sergey M.',
     maintainer_email='dstftw@gmail.com',
     license='Unlicense',
-    packages=[
-        'youtube_dl',
-        'youtube_dl.extractor', 'youtube_dl.downloader',
-        'youtube_dl.postprocessor'],
-
+    packages=['youtube_dl', 'youtube_dl.extractor', 'youtube_dl.downloader', 'youtube_dl.postprocessor'],
     # Provokes warning on most systems (why?!)
     # test_suite = 'nose.collector',
     # test_requires = ['nosetest'],
-
     classifiers=[
         'Topic :: Multimedia :: Video',
         'Development Status :: 5 - Production/Stable',
@@ -144,7 +143,6 @@ setup(
         'Programming Language :: Python :: Implementation :: Jython',
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
-
     cmdclass={'build_lazy_extractors': build_lazy_extractors},
-    **params
+    **params,
 )

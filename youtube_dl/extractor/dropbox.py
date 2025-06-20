@@ -13,12 +13,9 @@ class DropboxIE(InfoExtractor):
     _TESTS = [
         {
             'url': 'https://www.dropbox.com/s/nelirfsxnmcfbfh/youtube-dl%20test%20video%20%27%C3%A4%22BaW_jenozKc.mp4?dl=0',
-            'info_dict': {
-                'id': 'nelirfsxnmcfbfh',
-                'ext': 'mp4',
-                'title': 'youtube-dl test video \'ä"BaW_jenozKc'
-            }
-        }, {
+            'info_dict': {'id': 'nelirfsxnmcfbfh', 'ext': 'mp4', 'title': 'youtube-dl test video \'ä"BaW_jenozKc'},
+        },
+        {
             'url': 'https://www.dropbox.com/sh/662glsejgzoj9sr/AAByil3FGH9KFNZ13e08eSa1a/Pregame%20Ceremony%20Program%20PA%2020140518.m4v',
             'only_matching': True,
         },

@@ -14,11 +14,18 @@ class GooglePodcastsBaseIE(InfoExtractor):
     _VALID_URL_BASE = r'https?://podcasts\.google\.com/feed/'
 
     def _batch_execute(self, func_id, video_id, params):
-        return json.loads(self._download_json(
-            'https://podcasts.google.com/_/PodcastsUi/data/batchexecute',
-            video_id, data=urlencode_postdata({
-                'f.req': json.dumps([[[func_id, json.dumps(params), None, '1']]]),
-            }), transform_source=lambda x: self._search_regex(r'(?s)(\[.+\])', x, 'data'))[0][2])
+        return json.loads(
+            self._download_json(
+                'https://podcasts.google.com/_/PodcastsUi/data/batchexecute',
+                video_id,
+                data=urlencode_postdata(
+                    {
+                        'f.req': json.dumps([[[func_id, json.dumps(params), None, '1']]]),
+                    }
+                ),
+                transform_source=lambda x: self._search_regex(r'(?s)(\[.+\])', x, 'data'),
+            )[0][2]
+        )
 
     def _extract_episode(self, episode):
         return {
@@ -49,13 +56,12 @@ class GooglePodcastsIE(GooglePodcastsBaseIE):
             'timestamp': 1609606800,
             'duration': 2901,
             'series': "Wait Wait... Don't Tell Me!",
-        }
+        },
     }
 
     def _real_extract(self, url):
         b64_feed_url, b64_guid = re.match(self._VALID_URL, url).groups()
-        episode = self._batch_execute(
-            'oNjqVe', b64_guid, [b64_feed_url, b64_guid])[1]
+        episode = self._batch_execute('oNjqVe', b64_guid, [b64_feed_url, b64_guid])[1]
         return self._extract_episode(episode)
 
 
@@ -76,10 +82,10 @@ class GooglePodcastsFeedIE(GooglePodcastsBaseIE):
         data = self._batch_execute('ncqJEe', b64_feed_url, [b64_feed_url])
 
         entries = []
-        for episode in (try_get(data, lambda x: x[1][0]) or []):
+        for episode in try_get(data, lambda x: x[1][0]) or []:
             entries.append(self._extract_episode(episode))
 
         feed = try_get(data, lambda x: x[3]) or []
         return self.playlist_result(
-            entries, playlist_title=try_get(feed, lambda x: x[0]),
-            playlist_description=try_get(feed, lambda x: x[2]))
+            entries, playlist_title=try_get(feed, lambda x: x[0]), playlist_description=try_get(feed, lambda x: x[2])
+        )

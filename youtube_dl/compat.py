@@ -25,6 +25,7 @@ import xml.etree.ElementTree
 def _IDENTITY(x):
     return x
 
+
 # naming convention
 # 'compat_' + Python3_name.replace('.', '_')
 # other aliases exist for convenience and/or legacy
@@ -34,18 +35,15 @@ def _IDENTITY(x):
 # compat_str, compat_basestring, compat_chr
 try:
     # Python 2
-    compat_str, compat_basestring, compat_chr = (
-        unicode, basestring, unichr
-    )
+    compat_str, compat_basestring, compat_chr = (unicode, basestring, unichr)
 except NameError:
-    compat_str, compat_basestring, compat_chr = (
-        str, (str, bytes), chr
-    )
+    compat_str, compat_basestring, compat_chr = (str, (str, bytes), chr)
 
 
 # compat_casefold
 try:
     compat_str.casefold
+
     def compat_casefold(s):
         return s.casefold()
 except AttributeError:
@@ -69,8 +67,8 @@ except ImportError:  # Python 2
 try:
     type(compat_urllib_request.Request('http://127.0.0.1', method='GET'))
 except TypeError:
-    def _add_init_method_arg(cls):
 
+    def _add_init_method_arg(cls):
         init = cls.__init__
 
         def wrapped_init(self, *args, **kwargs):
@@ -103,6 +101,7 @@ except ImportError:  # Python 2
     import urllib as compat_urllib_parse
 
     import urlparse as _urlparse
+
     for a in dir(_urlparse):
         if not hasattr(compat_urllib_parse, a):
             setattr(compat_urllib_parse, a, getattr(_urlparse, a))
@@ -149,6 +148,7 @@ compat_http_cookies = compat_cookies
 
 # compat_http_cookies_SimpleCookie
 if sys.version_info[0] == 2 or sys.version_info < (3, 3):
+
     class compat_cookies_SimpleCookie(compat_cookies.SimpleCookie):
         def load(self, rawdata):
             must_have_value = 0
@@ -156,7 +156,8 @@ if sys.version_info[0] == 2 or sys.version_info < (3, 3):
                 if sys.version_info[:2] != (2, 7) or sys.platform.startswith('java'):
                     # attribute must have value for parsing
                     rawdata, must_have_value = re.subn(
-                        r'(?i)(;\s*)(secure|httponly)(\s*(?:;|$))', r'\1\2=\2\3', rawdata)
+                        r'(?i)(;\s*)(secure|httponly)(\s*(?:;|$))', r'\1\2=\2\3', rawdata
+                    )
             super().load(rawdata)
             if must_have_value > 0:
                 for morsel in self.values():
@@ -2447,6 +2448,7 @@ try:
     from HTMLParser import HTMLParser as compat_HTMLParser
 except ImportError:  # Python 3
     from html.parser import HTMLParser as compat_HTMLParser
+
     try:
         from html.parser import HTMLParseError as compat_HTMLParseError
     except ImportError:  # Python >3.4
@@ -2457,6 +2459,7 @@ except ImportError:  # Python 3
         class compat_HTMLParseError(Exception):
             pass
 
+
 compat_html_parser_HTMLParser = compat_HTMLParser
 compat_html_parser_HTMLParseError = compat_HTMLParseError
 
@@ -2464,9 +2467,11 @@ compat_html_parser_HTMLParseError = compat_HTMLParseError
 # compat_subprocess_get_DEVNULL
 try:
     _DEVNULL = subprocess.DEVNULL
+
     def compat_subprocess_get_DEVNULL():
         return _DEVNULL
 except AttributeError:
+
     def compat_subprocess_get_DEVNULL():
         return open(os.path.devnull, 'w')
 
@@ -2558,7 +2563,6 @@ except ImportError:  # Python 2
     # the friends or manually ensure input query contains only byte strings.
     # We will stick with latter thus recursively encoding the whole query.
     def compat_urllib_parse_urlencode(query, doseq=0, safe='', encoding='utf-8', errors='strict'):
-
         def encode_elem(e):
             if isinstance(e, dict):
                 e = encode_dict(e)
@@ -2575,8 +2579,7 @@ except ImportError:  # Python 2
 
     # HACK: The following is the correct parse_qs implementation from cpython 3's stdlib.
     # Python 2's version is apparently totally broken
-    def _parse_qsl(qs, keep_blank_values=False, strict_parsing=False,
-                   encoding='utf-8', errors='replace'):
+    def _parse_qsl(qs, keep_blank_values=False, strict_parsing=False, encoding='utf-8', errors='replace'):
         qs, _coerce_result = qs, compat_str
         pairs = [s2 for s1 in qs.split('&') for s2 in s1.split(';')]
         r = []
@@ -2594,21 +2597,17 @@ except ImportError:  # Python 2
                     continue
             if len(nv[1]) or keep_blank_values:
                 name = nv[0].replace('+', ' ')
-                name = compat_urllib_parse_unquote(
-                    name, encoding=encoding, errors=errors)
+                name = compat_urllib_parse_unquote(name, encoding=encoding, errors=errors)
                 name = _coerce_result(name)
                 value = nv[1].replace('+', ' ')
-                value = compat_urllib_parse_unquote(
-                    value, encoding=encoding, errors=errors)
+                value = compat_urllib_parse_unquote(value, encoding=encoding, errors=errors)
                 value = _coerce_result(value)
                 r.append((name, value))
         return r
 
-    def compat_parse_qs(qs, keep_blank_values=False, strict_parsing=False,
-                        encoding='utf-8', errors='replace'):
+    def compat_parse_qs(qs, keep_blank_values=False, strict_parsing=False, encoding='utf-8', errors='replace'):
         parsed_result = {}
-        pairs = _parse_qsl(qs, keep_blank_values, strict_parsing,
-                           encoding=encoding, errors=errors)
+        pairs = _parse_qsl(qs, keep_blank_values, strict_parsing, encoding=encoding, errors=errors)
         for name, value in pairs:
             if name in parsed_result:
                 parsed_result[name].append(value)
@@ -2616,14 +2615,14 @@ except ImportError:  # Python 2
                 parsed_result[name] = [value]
         return parsed_result
 
-    setattr(compat_urllib_parse, '_urlencode',
-            getattr(compat_urllib_parse, 'urlencode'))
+    setattr(compat_urllib_parse, '_urlencode', getattr(compat_urllib_parse, 'urlencode'))
     for name, fix in (
-            ('unquote_to_bytes', compat_urllib_parse_unquote_to_bytes),
-            ('parse_unquote', compat_urllib_parse_unquote),
-            ('unquote_plus', compat_urllib_parse_unquote_plus),
-            ('urlencode', compat_urllib_parse_urlencode),
-            ('parse_qs', compat_parse_qs)):
+        ('unquote_to_bytes', compat_urllib_parse_unquote_to_bytes),
+        ('parse_unquote', compat_urllib_parse_unquote),
+        ('unquote_plus', compat_urllib_parse_unquote_plus),
+        ('urlencode', compat_urllib_parse_urlencode),
+        ('parse_qs', compat_parse_qs),
+    ):
         setattr(compat_urllib_parse, name, fix)
 
     try:
@@ -2648,9 +2647,7 @@ except ImportError:  # Python 2
                 safe_map = {}
                 for i in range(256):
                     c = chr(i)
-                    safe_map[c] = (
-                        c if (i < 128 and c in safe)
-                        else b'%{0:02X}'.format(i))
+                    safe_map[c] = c if (i < 128 and c in safe) else b'%{0:02X}'.format(i)
                 _safemaps[cachekey] = safe_map
 
             if safe.issuperset(s):
@@ -2659,9 +2656,7 @@ except ImportError:  # Python 2
 
         # linked code
         def _quote_plus(s, safe=''):
-            return (
-                _quote(s, safe + b' ').replace(b' ', b'+') if b' ' in s
-                else _quote(s, safe))
+            return _quote(s, safe + b' ').replace(b' ', b'+') if b' ' in s else _quote(s, safe)
 
         # linked code
         def _urlcleanup():
@@ -2670,10 +2665,7 @@ except ImportError:  # Python 2
             _safemaps.clear()
             compat_urllib_parse.ftpcache.clear()
 
-        for name, fix in (
-                ('quote', _quote),
-                ('quote_plus', _quote_plus),
-                ('urlcleanup', _urlcleanup)):
+        for name, fix in (('quote', _quote), ('quote_plus', _quote_plus), ('urlcleanup', _urlcleanup)):
             setattr(compat_urllib_parse, '_' + name, getattr(compat_urllib_parse, name))
             setattr(compat_urllib_parse, name, fix)
 
@@ -2710,8 +2702,7 @@ except ImportError:  # Python < 3.4
             if not mediatype:
                 mediatype = 'text/plain;charset=US-ASCII'
 
-            headers = email.message_from_string(
-                'Content-type: %s\nContent-length: %d\n' % (mediatype, len(data)))
+            headers = email.message_from_string('Content-type: %s\nContent-length: %d\n' % (mediatype, len(data)))
 
             return compat_urllib_response.addinfourl(io.BytesIO(data), headers, url)
 
@@ -2743,6 +2734,7 @@ except TypeError:  # Python <=2.6
     from xml.etree.ElementTree import _ElementInterface as compat_etree_Element
 compat_xml_etree_ElementTree_Element = compat_etree_Element
 
+
 def compat_etree_fromstring(text):
     return _etree.XML(text, parser=_etree.XMLParser(target=_TreeBuilder()))
 
@@ -2751,6 +2743,7 @@ def compat_etree_fromstring(text):
 try:
     compat_etree_register_namespace = _etree.register_namespace
 except AttributeError:
+
     def compat_etree_register_namespace(prefix, uri):
         """Register a namespace prefix.
         The registry is global, and any existing mapping for either the
@@ -2765,12 +2758,16 @@ except AttributeError:
             if k == uri or v == prefix:
                 del _etree._namespace_map[k]
         _etree._namespace_map[uri] = prefix
+
+
 compat_xml_etree_register_namespace = compat_etree_register_namespace
 
 
 # compat_xpath, compat_etree_iterfind
 def compat_etree_iterfind(element, match):
     return element.iterfind(match)
+
+
 compat_xpath = _IDENTITY
 
 
@@ -2780,12 +2777,14 @@ compat_os_name = os._name if os.name == 'java' else os.name
 
 # compat_shlex_quote
 if compat_os_name == 'nt':
+
     def compat_shlex_quote(s):
         return s if re.match(r'^[-_\w./]+$', s) else '"{}"'.format(s.replace('"', '\\"'))
 else:
     try:
         from shlex import quote as compat_shlex_quote
     except ImportError:  # Python < 3.3
+
         def compat_shlex_quote(s):
             if re.match(r'^[-_\w./]+$', s):
                 return s
@@ -2796,9 +2795,7 @@ else:
 # compat_shlex.split
 try:
     args = shlex.split('中文')
-    assert (isinstance(args, list)
-            and isinstance(args[0], compat_str)
-            and args[0] == '中文')
+    assert isinstance(args, list) and isinstance(args[0], compat_str) and args[0] == '中文'
     compat_shlex_split = shlex.split
 except (AssertionError, UnicodeEncodeError):
     # Working around shlex issue with unicode strings on some python 2
@@ -2821,8 +2818,10 @@ def compat_ord(c):
 compat_getenv = os.getenv
 compat_expanduser = os.path.expanduser
 
+
 def compat_setenv(key, value, env=os.environ):
     env[key] = value
+
 
 compat_os_path_expanduser = compat_expanduser
 
@@ -2864,9 +2863,11 @@ def compat_print(s):
 
 # compat_getpass_getpass
 if sys.version_info < (3, 0) and sys.platform == 'win32':
+
     def compat_getpass(prompt, *args, **kwargs):
         if isinstance(prompt, compat_str):
             from .utils import preferredencoding
+
             prompt = prompt.encode(preferredencoding())
         return getpass.getpass(prompt, *args, **kwargs)
 else:
@@ -2887,6 +2888,7 @@ except NameError:  # Python 3
 try:
     (lambda x: x)(**{'x': 0})
 except TypeError:
+
     def compat_kwargs(kwargs):
         return dict((bytes(k), v) for k, v in kwargs.items())
 else:
@@ -2904,7 +2906,7 @@ except NameError:  # Python 3
 try:
     compat_integer_types = (int, long)
 except NameError:  # Python 3
-    compat_integer_types = (int, )
+    compat_integer_types = (int,)
 
 # compat_int
 compat_int = compat_integer_types[-1]
@@ -2918,6 +2920,7 @@ compat_socket_create_connection = socket.create_connection
 try:
     from contextlib import suppress as compat_contextlib_suppress
 except ImportError:
+
     class compat_contextlib_suppress:
         _exceptions = None
 
@@ -2972,13 +2975,12 @@ def _workaround_optparse_bug9161():
 
         def _compat_add_option(self, *args, **kwargs):
             def enc(v):
-                return (
-                            v.encode('ascii', 'replace') if isinstance(v, compat_str)
-                            else v)
+                return v.encode('ascii', 'replace') if isinstance(v, compat_str) else v
+
             bargs = [enc(a) for a in args]
-            bkwargs = dict(
-                (k, enc(v)) for k, v in kwargs.items())
+            bkwargs = dict((k, enc(v)) for k, v in kwargs.items())
             return real_add_option(self, *bargs, **bkwargs)
+
         optparse.OptionGroup.add_option = _compat_add_option
 
 
@@ -2990,6 +2992,7 @@ except ImportError:
 
     def compat_get_terminal_size(fallback=(80, 24)):
         from .utils import process_communicate_or_kill
+
         columns = compat_getenv('COLUMNS')
         if columns:
             columns = int(columns)
@@ -3003,9 +3006,7 @@ except ImportError:
 
         if columns is None or lines is None or columns <= 0 or lines <= 0:
             try:
-                sp = subprocess.Popen(
-                    ['stty', 'size'],
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                sp = subprocess.Popen(['stty', 'size'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out, err = process_communicate_or_kill(sp)
                 _lines, _columns = map(int, out.split())
             except Exception:
@@ -3018,6 +3019,7 @@ except ImportError:
 
         return _terminal_size(columns, lines)
 
+
 compat_shutil_get_terminal_size = compat_get_terminal_size
 
 
@@ -3026,6 +3028,7 @@ try:
     type(itertools.count(start=0, step=1))
     compat_itertools_count = itertools.count
 except TypeError:  # Python 2.6 lacks step
+
     def compat_itertools_count(start=0, step=1):
         while True:
             yield start
@@ -3060,6 +3063,7 @@ else:
     compat_struct_pack = struct.pack
     compat_struct_unpack = struct.unpack
     if platform.python_implementation() == 'IronPython' and sys.version_info < (2, 7, 8):
+
         class compat_Struct(struct.Struct):
             def unpack(self, string):
                 if not isinstance(string, buffer):  # noqa: F821
@@ -3115,7 +3119,6 @@ try:
 except ImportError:
     # Py <= 3.3
     class compat_collections_chain_map(compat_collections_abc.MutableMapping):
-
         maps = [{}]
 
         def __init__(self, *maps):
@@ -3198,6 +3201,7 @@ if platform.python_implementation() == 'PyPy' and sys.pypy_version_info < (5, 4,
 
         return resf
 else:
+
     def compat_ctypes_WINFUNCTYPE(*args, **kwargs):
         return ctypes.WINFUNCTYPE(*args, **kwargs)
 
@@ -3212,8 +3216,8 @@ def compat_register_utf8():
         # https://github.com/ytdl-org/youtube-dl/issues/820
         from codecs import lookup
         from codecs import register
-        register(
-            lambda name: lookup('utf-8') if name == 'cp65001' else None)
+
+        register(lambda name: lookup('utf-8') if name == 'cp65001' else None)
 
 
 # compat_datetime_timedelta_total_seconds

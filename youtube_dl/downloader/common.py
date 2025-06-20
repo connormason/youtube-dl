@@ -186,14 +186,17 @@ class FileDownloader:
 
     def temp_name(self, filename):
         """Returns a temporary filename for the given filename."""
-        if self.params.get('nopart', False) or filename == '-' or \
-                (os.path.exists(encodeFilename(filename)) and not os.path.isfile(encodeFilename(filename))):
+        if (
+            self.params.get('nopart', False)
+            or filename == '-'
+            or (os.path.exists(encodeFilename(filename)) and not os.path.isfile(encodeFilename(filename)))
+        ):
             return filename
         return filename + '.part'
 
     def undo_temp_name(self, filename):
         if filename.endswith('.part'):
-            return filename[:-len('.part')]
+            return filename[: -len('.part')]
         return filename
 
     def ytdl_filename(self, filename):
@@ -238,14 +241,13 @@ class FileDownloader:
             self.to_screen(fullmsg)
         else:
             if compat_os_name == 'nt':
-                prev_len = getattr(self, '_report_progress_prev_line_length',
-                                   0)
+                prev_len = getattr(self, '_report_progress_prev_line_length', 0)
                 if prev_len > len(fullmsg):
                     fullmsg += ' ' * (prev_len - len(fullmsg))
                 self._report_progress_prev_line_length = len(fullmsg)
                 clear_line = '\r'
             else:
-                clear_line = ('\r\x1b[K' if sys.stderr.isatty() else '\r')
+                clear_line = '\r\x1b[K' if sys.stderr.isatty() else '\r'
             self.to_screen(clear_line + fullmsg, skip_eol=not is_last_line)
 
     def report_progress(self, s):
@@ -260,8 +262,7 @@ class FileDownloader:
                 if s.get('elapsed') is not None:
                     s['_elapsed_str'] = self.format_seconds(s['elapsed'])
                     msg_template += ' in %(_elapsed_str)s'
-                self._report_progress_status(
-                    msg_template % s, is_last_line=True)
+                self._report_progress_status(msg_template % s, is_last_line=True)
 
         if self.params.get('noprogress'):
             return
@@ -316,7 +317,8 @@ class FileDownloader:
         """Report retry in case of HTTP error 5xx"""
         self.to_screen(
             '[download] Got server HTTP error: %s. Retrying (attempt %d of %s)...'
-            % (error_to_compat_str(err), count, self.format_retries(retries)))
+            % (error_to_compat_str(err), count, self.format_retries(retries))
+        )
 
     def report_file_already_downloaded(self, file_name):
         """Report file has already been fully downloaded."""
@@ -338,10 +340,7 @@ class FileDownloader:
         See: https://github.com/yt-dlp/yt-dlp/security/advisories/GHSA-v8mc-9377-rwjj
         """
 
-        nooverwrites_and_exists = (
-            self.params.get('nooverwrites', False)
-            and os.path.exists(encodeFilename(filename))
-        )
+        nooverwrites_and_exists = self.params.get('nooverwrites', False) and os.path.exists(encodeFilename(filename))
 
         if not hasattr(filename, 'write'):
             continuedl_and_exists = (
@@ -353,11 +352,13 @@ class FileDownloader:
             # Check file already present
             if filename != '-' and (nooverwrites_and_exists or continuedl_and_exists):
                 self.report_file_already_downloaded(filename)
-                self._hook_progress({
-                    'filename': filename,
-                    'status': 'finished',
-                    'total_bytes': os.path.getsize(encodeFilename(filename)),
-                })
+                self._hook_progress(
+                    {
+                        'filename': filename,
+                        'status': 'finished',
+                        'total_bytes': os.path.getsize(encodeFilename(filename)),
+                    }
+                )
                 return True
 
         min_sleep_interval = self.params.get('sleep_interval')
@@ -365,9 +366,9 @@ class FileDownloader:
             max_sleep_interval = self.params.get('max_sleep_interval', min_sleep_interval)
             sleep_interval = random.uniform(min_sleep_interval, max_sleep_interval)
             self.to_screen(
-                '[download] Sleeping %s seconds...' % (
-                    int(sleep_interval) if sleep_interval.is_integer()
-                    else f'{sleep_interval:.2f}'))
+                '[download] Sleeping %s seconds...'
+                % (int(sleep_interval) if sleep_interval.is_integer() else f'{sleep_interval:.2f}')
+            )
             time.sleep(sleep_interval)
 
         return self.real_download(filename, info_dict)

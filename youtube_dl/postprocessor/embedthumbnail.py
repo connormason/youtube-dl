@@ -32,14 +32,13 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
         temp_filename = prepend_extension(filename, 'temp')
 
         if not info.get('thumbnails'):
-            self._downloader.to_screen('[embedthumbnail] There aren\'t any thumbnails to embed')
+            self._downloader.to_screen("[embedthumbnail] There aren't any thumbnails to embed")
             return [], info
 
         thumbnail_filename = info['thumbnails'][-1]['filename']
 
         if not os.path.exists(encodeFilename(thumbnail_filename)):
-            self._downloader.report_warning(
-                'Skipping embedding the thumbnail because the file is missing.')
+            self._downloader.report_warning('Skipping embedding the thumbnail because the file is missing.')
             return [], info
 
         def is_webp(path):
@@ -53,7 +52,8 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
             thumbnail_ext = thumbnail_ext[1:].lower()
             if thumbnail_ext != 'webp' and is_webp(thumbnail_filename):
                 self._downloader.to_screen(
-                    f'[ffmpeg] Correcting extension to webp and escaping path for thumbnail "{thumbnail_filename}"')
+                    f'[ffmpeg] Correcting extension to webp and escaping path for thumbnail "{thumbnail_filename}"'
+                )
                 thumbnail_webp_filename = replace_extension(thumbnail_filename, 'webp')
                 os.rename(encodeFilename(thumbnail_filename), encodeFilename(thumbnail_webp_filename))
                 thumbnail_filename = thumbnail_webp_filename
@@ -76,8 +76,17 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
 
         if info['ext'] == 'mp3':
             options = [
-                '-c', 'copy', '-map', '0', '-map', '1',
-                '-metadata:s:v', 'title="Album cover"', '-metadata:s:v', 'comment="Cover (Front)"']
+                '-c',
+                'copy',
+                '-map',
+                '0',
+                '-map',
+                '1',
+                '-metadata:s:v',
+                'title="Album cover"',
+                '-metadata:s:v',
+                'comment="Cover (Front)"',
+            ]
 
             self._downloader.to_screen(f'[ffmpeg] Adding thumbnail to "{filename}"')
 
@@ -89,19 +98,19 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
             os.rename(encodeFilename(temp_filename), encodeFilename(filename))
 
         elif info['ext'] in ['m4a', 'mp4']:
-            atomicparsley = next((x
-                                  for x in ['AtomicParsley', 'atomicparsley']
-                                  if check_executable(x, ['-v'])), None)
+            atomicparsley = next((x for x in ['AtomicParsley', 'atomicparsley'] if check_executable(x, ['-v'])), None)
 
             if atomicparsley is None:
                 raise EmbedThumbnailPPError('AtomicParsley was not found. Please install.')
 
-            cmd = [encodeFilename(atomicparsley, True),
-                   encodeFilename(filename, True),
-                   encodeArgument('--artwork'),
-                   encodeFilename(thumbnail_filename, True),
-                   encodeArgument('-o'),
-                   encodeFilename(temp_filename, True)]
+            cmd = [
+                encodeFilename(atomicparsley, True),
+                encodeFilename(filename, True),
+                encodeArgument('--artwork'),
+                encodeFilename(thumbnail_filename, True),
+                encodeArgument('-o'),
+                encodeFilename(temp_filename, True),
+            ]
 
             self._downloader.to_screen(f'[atomicparsley] Adding thumbnail to "{filename}"')
 
@@ -120,7 +129,7 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
             # for formats that don't support thumbnails (like 3gp) AtomicParsley
             # won't create to the temporary file
             if b'No changes' in stdout:
-                self._downloader.report_warning('The file format doesn\'t support embedding a thumbnail')
+                self._downloader.report_warning("The file format doesn't support embedding a thumbnail")
             else:
                 os.remove(encodeFilename(filename))
                 os.rename(encodeFilename(temp_filename), encodeFilename(filename))

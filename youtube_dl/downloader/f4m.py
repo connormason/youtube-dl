@@ -29,9 +29,7 @@ class FlvReader(io.BytesIO):
     def read_bytes(self, n):
         data = self.read(n)
         if len(data) < n:
-            raise DataTruncatedError(
-                'FlvReader error: need %d bytes while only %d bytes got' % (
-                    n, len(data)))
+            raise DataTruncatedError('FlvReader error: need %d bytes while only %d bytes got' % (n, len(data)))
         return data
 
     # Utility functions for reading numbers and strings
@@ -109,12 +107,14 @@ class FlvReader(io.BytesIO):
                 discontinuity_indicator = self.read_unsigned_char()
             else:
                 discontinuity_indicator = None
-            fragments.append({
-                'first': first,
-                'ts': first_ts,
-                'duration': duration,
-                'discontinuity_indicator': discontinuity_indicator,
-            })
+            fragments.append(
+                {
+                    'first': first,
+                    'ts': first_ts,
+                    'duration': duration,
+                    'discontinuity_indicator': discontinuity_indicator,
+                }
+            )
 
         return {
             'fragments': fragments,
@@ -182,7 +182,7 @@ def read_bootstrap_info(bootstrap_bytes):
 
 
 def build_fragments_list(boot_info):
-    """ Return a list of (segment, fragment) for each fragment in the video """
+    """Return a list of (segment, fragment) for each fragment in the video"""
     res = []
     segment_run_table = boot_info['segments'][0]
     fragment_run_entry_table = boot_info['fragments'][0]['fragments']
@@ -234,9 +234,9 @@ def write_metadata_tag(stream, metadata):
 
 
 def remove_encrypted_media(media):
-    return list(filter(lambda e: 'drmAdditionalHeaderId' not in e.attrib
-                                 and 'drmAdditionalHeaderSetId' not in e.attrib,
-                       media))
+    return list(
+        filter(lambda e: 'drmAdditionalHeaderId' not in e.attrib and 'drmAdditionalHeaderSetId' not in e.attrib, media)
+    )
 
 
 def _add_ns(prop, ver=1):
@@ -244,9 +244,7 @@ def _add_ns(prop, ver=1):
 
 
 def get_base_url(manifest):
-    base_url = xpath_text(
-        manifest, [_add_ns('baseURL'), _add_ns('baseURL', 2)],
-        'base URL', default=None)
+    base_url = xpath_text(manifest, [_add_ns('baseURL'), _add_ns('baseURL', 2)], 'base URL', default=None)
     if base_url:
         base_url = base_url.strip()
     return base_url
@@ -263,8 +261,7 @@ class F4mFD(FragmentFD):
         media = doc.findall(_add_ns('media'))
         if not media:
             self.report_error('No media found')
-        for e in (doc.findall(_add_ns('drmAdditionalHeader'))
-                  + doc.findall(_add_ns('drmAdditionalHeaderSet'))):
+        for e in doc.findall(_add_ns('drmAdditionalHeader')) + doc.findall(_add_ns('drmAdditionalHeaderSet')):
             # If id attribute is missing it's valid for all media nodes
             # without drmAdditionalHeaderId or drmAdditionalHeaderSetId attribute
             if 'id' not in e.attrib:
@@ -303,8 +300,7 @@ class F4mFD(FragmentFD):
         # 1. http://live-1-1.rutube.ru/stream/1024/HDS/SD/C2NKsS85HQNckgn5HdEmOQ/1454167650/S-s604419906/move/four/dirs/upper/1024-576p.f4m
         bootstrap_url = node.get('url')
         if bootstrap_url:
-            bootstrap_url = compat_urlparse.urljoin(
-                base_url, bootstrap_url)
+            bootstrap_url = compat_urlparse.urljoin(base_url, bootstrap_url)
             boot_info = self._get_bootstrap_from_url(bootstrap_url)
         else:
             bootstrap_url = None
@@ -325,23 +321,20 @@ class F4mFD(FragmentFD):
         manifest = fix_xml_ampersands(urlh.read().decode('utf-8', 'ignore')).strip()
 
         doc = compat_etree_fromstring(manifest)
-        formats = [(int(f.attrib.get('bitrate', -1)), f)
-                   for f in self._get_unencrypted_media(doc)]
+        formats = [(int(f.attrib.get('bitrate', -1)), f) for f in self._get_unencrypted_media(doc)]
         if requested_bitrate is None or len(formats) == 1:
             # get the best format
             formats = sorted(formats, key=lambda f: f[0])
             rate, media = formats[-1]
         else:
-            rate, media = next(filter(
-                lambda f: int(f[0]) == requested_bitrate, formats))
+            rate, media = next(filter(lambda f: int(f[0]) == requested_bitrate, formats))
 
         # Prefer baseURL for relative URLs as per 11.2 of F4M 3.0 spec.
         man_base_url = get_base_url(doc) or man_url
 
         base_url = compat_urlparse.urljoin(man_base_url, media.attrib['url'])
         bootstrap_node = doc.find(_add_ns('bootstrapInfo'))
-        boot_info, bootstrap_url = self._parse_bootstrap_node(
-            bootstrap_node, man_base_url)
+        boot_info, bootstrap_url = self._parse_bootstrap_node(bootstrap_node, man_base_url)
         live = boot_info['live']
         metadata_node = media.find(_add_ns('metadata'))
         if metadata_node is not None:
@@ -412,7 +405,7 @@ class F4mFD(FragmentFD):
                     if box_type == b'mdat':
                         self._append_fragment(ctx, box_data)
                         break
-            except (compat_urllib_error.HTTPError, ) as err:
+            except (compat_urllib_error.HTTPError,) as err:
                 if live and (err.code == 404 or err.code == 410):
                     # We didn't keep up with the live window. Continue
                     # with the next available fragment.

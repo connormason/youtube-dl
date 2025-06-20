@@ -23,7 +23,6 @@ class ExecAfterDownloadPP(PostProcessor):
         self._downloader.to_screen(f'[exec] Executing command: {cmd}')
         retCode = subprocess.call(encodeArgument(cmd), shell=True)
         if retCode != 0:
-            raise PostProcessingError(
-                'Command returned error code %d' % retCode)
+            raise PostProcessingError('Command returned error code %d' % retCode)
 
         return [], information

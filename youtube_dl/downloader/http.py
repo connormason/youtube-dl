@@ -41,9 +41,15 @@ class HttpFD(FileDownloader):
             headers.update(add_headers)
 
         is_test = self.params.get('test', False)
-        chunk_size = self._TEST_FILE_SIZE if is_test else (
-            info_dict.get('downloader_options', {}).get('http_chunk_size')
-            or self.params.get('http_chunk_size') or 0)
+        chunk_size = (
+            self._TEST_FILE_SIZE
+            if is_test
+            else (
+                info_dict.get('downloader_options', {}).get('http_chunk_size')
+                or self.params.get('http_chunk_size')
+                or 0
+            )
+        )
 
         ctx.open_mode = 'wb'
         ctx.resume_len = 0
@@ -80,8 +86,9 @@ class HttpFD(FileDownloader):
             req.add_header('Range', range_header)
 
         def establish_connection():
-            ctx.chunk_size = (random.randint(int(chunk_size * 0.95), chunk_size)
-                              if not is_test and chunk_size else chunk_size)
+            ctx.chunk_size = (
+                random.randint(int(chunk_size * 0.95), chunk_size) if not is_test and chunk_size else chunk_size
+            )
             if ctx.resume_len > 0:
                 range_start = ctx.resume_len
                 if ctx.is_resume:
@@ -104,7 +111,7 @@ class HttpFD(FileDownloader):
             try:
                 try:
                     ctx.data = self.ydl.urlopen(request)
-                except (compat_urllib_error.URLError, ) as err:
+                except (compat_urllib_error.URLError,) as err:
                     # reason may not be available, e.g. for urllib2.HTTPError on python 2.6
                     reason = getattr(err, 'reason', None)
                     if isinstance(reason, socket.timeout):
@@ -130,7 +137,8 @@ class HttpFD(FileDownloader):
                                     # Chunked download and requested piece or
                                     # its part is promised to be served
                                     or content_range_end == range_end
-                                    or content_len < range_end)
+                                    or content_len < range_end
+                                )
                                 if accept_content_len:
                                     ctx.data_len = content_len
                                     return
@@ -143,21 +151,21 @@ class HttpFD(FileDownloader):
                     ctx.open_mode = 'wb'
                 ctx.data_len = int_or_none(ctx.data.info().get('Content-length', None))
                 return
-            except (compat_urllib_error.HTTPError, ) as err:
+            except (compat_urllib_error.HTTPError,) as err:
                 if err.code == 416:
                     # Unable to resume (requested range not satisfiable)
                     try:
                         # Open the connection again without the range header
-                        ctx.data = self.ydl.urlopen(
-                            sanitized_Request(url, None, headers))
+                        ctx.data = self.ydl.urlopen(sanitized_Request(url, None, headers))
                         content_length = ctx.data.info()['Content-Length']
-                    except (compat_urllib_error.HTTPError, ) as err:
+                    except (compat_urllib_error.HTTPError,) as err:
                         if err.code < 500 or err.code >= 600:
                             raise
                     else:
                         # Examine the reported length
-                        if (content_length is not None
-                                and (ctx.resume_len - 100 < int(content_length) < ctx.resume_len + 100)):
+                        if content_length is not None and (
+                            ctx.resume_len - 100 < int(content_length) < ctx.resume_len + 100
+                        ):
                             # The file had already been fully downloaded.
                             # Explanation to the above condition: in issue #175 it was revealed that
                             # YouTube sometimes adds or removes a few bytes from the end of the file,
@@ -167,12 +175,14 @@ class HttpFD(FileDownloader):
                             # the one in the hard drive.
                             self.report_file_already_downloaded(ctx.filename)
                             self.try_rename(ctx.tmpfilename, ctx.filename)
-                            self._hook_progress({
-                                'filename': ctx.filename,
-                                'status': 'finished',
-                                'downloaded_bytes': ctx.resume_len,
-                                'total_bytes': ctx.resume_len,
-                            })
+                            self._hook_progress(
+                                {
+                                    'filename': ctx.filename,
+                                    'status': 'finished',
+                                    'downloaded_bytes': ctx.resume_len,
+                                    'total_bytes': ctx.resume_len,
+                                }
+                            )
                             raise SucceedDownload()
                         else:
                             # The length does not match, we start the download over
@@ -206,10 +216,14 @@ class HttpFD(FileDownloader):
                 min_data_len = self.params.get('min_filesize')
                 max_data_len = self.params.get('max_filesize')
                 if min_data_len is not None and data_len < min_data_len:
-                    self.to_screen(f'\r[download] File is smaller than min-filesize ({data_len} bytes < {min_data_len} bytes). Aborting.')
+                    self.to_screen(
+                        f'\r[download] File is smaller than min-filesize ({data_len} bytes < {min_data_len} bytes). Aborting.'
+                    )
                     return False
                 if max_data_len is not None and data_len > max_data_len:
-                    self.to_screen(f'\r[download] File is larger than max-filesize ({data_len} bytes > {max_data_len} bytes). Aborting.')
+                    self.to_screen(
+                        f'\r[download] File is larger than max-filesize ({data_len} bytes > {max_data_len} bytes). Aborting.'
+                    )
                     return False
 
             byte_counter = 0 + ctx.resume_len
@@ -232,7 +246,9 @@ class HttpFD(FileDownloader):
             while True:
                 try:
                     # Download and write
-                    data_block = ctx.data.read(block_size if data_len is None else min(block_size, data_len - byte_counter))
+                    data_block = ctx.data.read(
+                        block_size if data_len is None else min(block_size, data_len - byte_counter)
+                    )
                 # socket.timeout is a subclass of socket.error but may not have
                 # errno set
                 except socket.timeout as e:
@@ -240,7 +256,10 @@ class HttpFD(FileDownloader):
                 except OSError as e:
                     # SSLError on python 2 (inherits socket.error) may have
                     # no errno set but this error message
-                    if e.errno in (errno.ECONNRESET, errno.ETIMEDOUT) or getattr(e, 'message', None) == 'The read operation timed out':
+                    if (
+                        e.errno in (errno.ECONNRESET, errno.ETIMEDOUT)
+                        or getattr(e, 'message', None) == 'The read operation timed out'
+                    ):
                         retry(e)
                     raise
 
@@ -253,8 +272,7 @@ class HttpFD(FileDownloader):
                 # Open destination file just in time
                 if ctx.stream is None:
                     try:
-                        ctx.stream, ctx.tmpfilename = sanitize_open(
-                            ctx.tmpfilename, ctx.open_mode)
+                        ctx.stream, ctx.tmpfilename = sanitize_open(ctx.tmpfilename, ctx.open_mode)
                         assert ctx.stream is not None
                         ctx.filename = self.undo_temp_name(ctx.tmpfilename)
                         self.report_destination(ctx.filename)
@@ -292,16 +310,18 @@ class HttpFD(FileDownloader):
                 speed = self.calc_speed(start, now, byte_counter - ctx.resume_len)
                 eta = self.calc_eta(speed, ctx.data_len and (ctx.data_len - byte_counter))
 
-                self._hook_progress({
-                    'status': 'downloading',
-                    'downloaded_bytes': byte_counter,
-                    'total_bytes': ctx.data_len,
-                    'tmpfilename': ctx.tmpfilename,
-                    'filename': ctx.filename,
-                    'eta': eta,
-                    'speed': speed,
-                    'elapsed': now - ctx.start_time,
-                })
+                self._hook_progress(
+                    {
+                        'status': 'downloading',
+                        'downloaded_bytes': byte_counter,
+                        'total_bytes': ctx.data_len,
+                        'tmpfilename': ctx.tmpfilename,
+                        'filename': ctx.filename,
+                        'eta': eta,
+                        'speed': speed,
+                        'elapsed': now - ctx.start_time,
+                    }
+                )
 
                 if data_len is not None and byte_counter == data_len:
                     break
@@ -330,13 +350,15 @@ class HttpFD(FileDownloader):
             if self.params.get('updatetime', True):
                 info_dict['filetime'] = self.try_utime(ctx.filename, ctx.data.info().get('last-modified', None))
 
-            self._hook_progress({
-                'downloaded_bytes': byte_counter,
-                'total_bytes': byte_counter,
-                'filename': ctx.filename,
-                'status': 'finished',
-                'elapsed': time.time() - ctx.start_time,
-            })
+            self._hook_progress(
+                {
+                    'downloaded_bytes': byte_counter,
+                    'total_bytes': byte_counter,
+                    'filename': ctx.filename,
+                    'status': 'finished',
+                    'elapsed': time.time() - ctx.start_time,
+                }
+            )
 
             return True
 

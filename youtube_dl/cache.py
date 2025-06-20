@@ -20,7 +20,6 @@ from .version import __version__
 
 
 class Cache:
-
     _YTDL_DIR = 'youtube-dl'
     _VERSION_KEY = _YTDL_DIR + '_version'
     _DEFAULT_VERSION = '2021.12.17'
@@ -48,11 +47,9 @@ class Cache:
         return expand_path(res)
 
     def _get_cache_fn(self, section, key, dtype):
-        assert re.match(r'^[\w.-]+$', section), \
-            f'invalid section {section!r}'
+        assert re.match(r'^[\w.-]+$', section), f'invalid section {section!r}'
         key = escape_rfc3986(key, safe='').replace('%', ',')  # encode non-ascii characters
-        return os.path.join(
-            self._get_root_dir(), section, f'{key}.{dtype}')
+        return os.path.join(self._get_root_dir(), section, f'{key}.{dtype}')
 
     @property
     def enabled(self):
@@ -74,7 +71,6 @@ class Cache:
             self._report_warning(f'Writing cache to {fn!r} failed: {tb}')
 
     def clear(self, section, key, dtype='json'):
-
         if not self.enabled:
             return
 
@@ -132,8 +128,7 @@ class Cache:
         if not any((term in cachedir) for term in ('cache', 'tmp')):
             raise Exception(f'Not removing directory {cachedir} - this does not look like a cache dir')
 
-        self._to_screen(
-            f'Removing cache dir {cachedir} .', skip_eol=True ),
+        (self._to_screen(f'Removing cache dir {cachedir} .', skip_eol=True),)
         if os.path.exists(cachedir):
             self._to_screen('.', skip_eol=True)
             shutil.rmtree(cachedir)

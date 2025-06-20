@@ -12,7 +12,7 @@ from .compat import compat_str
 # `from_hex_code; status; space_separated_to_hex_code_list; comment`
 # Only `status` C/F are used.
 
-_map_str = '''
+_map_str = """
 # CaseFolding-15.0.0.txt
 # Date: 2022-02-02, 23:35:35 GMT
 # © 2022 Unicode®, Inc.
@@ -1635,7 +1635,7 @@ FF3A; C; FF5A; # FULLWIDTH LATIN CAPITAL LETTER Z
 1E91F; C; 1E941; # ADLAM CAPITAL LETTER ZAL
 1E920; C; 1E942; # ADLAM CAPITAL LETTER KPO
 1E921; C; 1E943; # ADLAM CAPITAL LETTER SHA
-'''
+"""
 
 
 def _parse_unichr(s):
@@ -1649,9 +1649,9 @@ def _parse_unichr(s):
 
 _map = dict(
     (_parse_unichr(from_), ''.join(map(_parse_unichr, to_.split(' '))))
-    for from_, type_, to_, _ in (
-        l.split('; ', 3) for l in _map_str.splitlines() if l and not l[0] == '#')
-    if type_ in ('C', 'F'))
+    for from_, type_, to_, _ in (l.split('; ', 3) for l in _map_str.splitlines() if l and not l[0] == '#')
+    if type_ in ('C', 'F')
+)
 del _map_str
 
 

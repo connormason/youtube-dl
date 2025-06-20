@@ -8,22 +8,25 @@ from .common import InfoExtractor
 
 class CommonMistakesIE(InfoExtractor):
     IE_DESC = False  # Do not list
-    _VALID_URL = r'''(?x)
+    _VALID_URL = r"""(?x)
         (?:url|URL)$
-    '''
+    """
 
-    _TESTS = [{
-        'url': 'url',
-        'only_matching': True,
-    }, {
-        'url': 'URL',
-        'only_matching': True,
-    }]
+    _TESTS = [
+        {
+            'url': 'url',
+            'only_matching': True,
+        },
+        {
+            'url': 'URL',
+            'only_matching': True,
+        },
+    ]
 
     def _real_extract(self, url):
         msg = (
             f'You\'ve asked youtube-dl to download the URL "{url}". '
-            'That doesn\'t make any sense. '
+            "That doesn't make any sense. "
             'Simply remove the parameter in your command or configuration.'
         )
         if not self._downloader.params.get('verbose'):
@@ -37,14 +40,20 @@ class UnicodeBOMIE(InfoExtractor):
 
     # Disable test for python 3.2 since BOM is broken in re in this version
     # (see https://github.com/ytdl-org/youtube-dl/issues/9751)
-    _TESTS = [] if (3, 0) < sys.version_info <= (3, 3) else [{
-        'url': '\ufeffhttp://www.youtube.com/watch?v=BaW_jenozKc',
-        'only_matching': True,
-    }]
+    _TESTS = (
+        []
+        if (3, 0) < sys.version_info <= (3, 3)
+        else [
+            {
+                'url': '\ufeffhttp://www.youtube.com/watch?v=BaW_jenozKc',
+                'only_matching': True,
+            }
+        ]
+    )
 
     def _real_extract(self, url):
         real_url = self._match_id(url)
         self.report_warning(
-            'Your URL starts with a Byte Order Mark (BOM). '
-            f'Removing the BOM and looking for "{real_url}" ...')
+            f'Your URL starts with a Byte Order Mark (BOM). Removing the BOM and looking for "{real_url}" ...'
+        )
         return self.url_result(real_url)

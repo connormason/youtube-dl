@@ -62,8 +62,7 @@ class ProxyError(socket.error):
 
 class InvalidVersionError(ProxyError):
     def __init__(self, expected_version, got_version):
-        msg = (f'Invalid response version from server. Expected {expected_version:02x} got '
-               f'{got_version:02x}')
+        msg = f'Invalid response version from server. Expected {expected_version:02x} got {got_version:02x}'
         super().__init__(0, msg)
 
 
@@ -73,7 +72,7 @@ class Socks4Error(ProxyError):
     CODES = {
         91: 'request rejected or failed',
         92: 'request rejected because SOCKS server cannot connect to identd on the client',
-        93: 'request rejected because the client program and identd report different user-ids'
+        93: 'request rejected because the client program and identd report different user-ids',
     }
 
 
@@ -90,7 +89,7 @@ class Socks5Error(ProxyError):
         0x07: 'Command not supported',
         0x08: 'Address type not supported',
         0xFE: 'unknown username or invalid password',
-        0xFF: 'all offered authentication methods were rejected'
+        0xFF: 'all offered authentication methods were rejected',
     }
 
 
@@ -100,8 +99,7 @@ class ProxyType:
     SOCKS5 = 2
 
 
-Proxy = collections.namedtuple('Proxy', (
-    'type', 'host', 'port', 'username', 'password', 'remote_dns'))
+Proxy = collections.namedtuple('Proxy', ('type', 'host', 'port', 'username', 'password', 'remote_dns'))
 
 
 class sockssocket(socket.socket):
@@ -190,7 +188,8 @@ class sockssocket(socket.socket):
         self._check_response_version(SOCKS5_VERSION, version)
 
         if method == Socks5Auth.AUTH_NO_ACCEPTABLE or (
-                method == Socks5Auth.AUTH_USER_PASS and (not self._proxy.username or not self._proxy.password)):
+            method == Socks5Auth.AUTH_USER_PASS and (not self._proxy.username or not self._proxy.password)
+        ):
             self.close()
             raise Socks5Error(Socks5Auth.AUTH_NO_ACCEPTABLE)
 

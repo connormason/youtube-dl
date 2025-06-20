@@ -26,8 +26,8 @@ repos:
     hooks:
       - id: ruff
         args: [ --fix, --exit-non-zero-on-fix ]
-#      - id: ruff-format
-#        exclude: .gitignore
+      - id: ruff-format
+        exclude: .gitignore
 
 #  - repo: https://github.com/pre-commit/mirrors-mypy
 #    rev: v1.16.1

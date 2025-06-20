@@ -17,7 +17,7 @@ class SoundgasmIE(InfoExtractor):
             'title': 'Piano sample',
             'description': 'Royalty Free Sample Music',
             'uploader': 'ytdl',
-        }
+        },
     }
 
     def _real_extract(self, url):
@@ -27,20 +27,19 @@ class SoundgasmIE(InfoExtractor):
         webpage = self._download_webpage(url, display_id)
 
         audio_url = self._html_search_regex(
-            r'(?s)m4a\s*:\s*(["\'])(?P<url>(?:(?!\1).)+)\1', webpage,
-            'audio URL', group='url')
+            r'(?s)m4a\s*:\s*(["\'])(?P<url>(?:(?!\1).)+)\1', webpage, 'audio URL', group='url'
+        )
 
-        title = self._search_regex(
-            r'<div[^>]+\bclass=["\']jp-title[^>]+>([^<]+)',
-            webpage, 'title', default=display_id)
+        title = self._search_regex(r'<div[^>]+\bclass=["\']jp-title[^>]+>([^<]+)', webpage, 'title', default=display_id)
 
         description = self._html_search_regex(
-            (r'(?s)<div[^>]+\bclass=["\']jp-description[^>]+>(.+?)</div>',
-             r'(?s)<li>Description:\s(.*?)<\/li>'),
-            webpage, 'description', fatal=False)
+            (r'(?s)<div[^>]+\bclass=["\']jp-description[^>]+>(.+?)</div>', r'(?s)<li>Description:\s(.*?)<\/li>'),
+            webpage,
+            'description',
+            fatal=False,
+        )
 
-        audio_id = self._search_regex(
-            r'/([^/]+)\.m4a', audio_url, 'audio id', default=display_id)
+        audio_id = self._search_regex(r'/([^/]+)\.m4a', audio_url, 'audio id', default=display_id)
 
         return {
             'id': audio_id,
@@ -71,6 +70,7 @@ class SoundgasmProfileIE(InfoExtractor):
 
         entries = [
             self.url_result(audio_url, 'Soundgasm')
-            for audio_url in re.findall(rf'href="([^"]+/u/{profile_id}/[^"]+)', webpage)]
+            for audio_url in re.findall(rf'href="([^"]+/u/{profile_id}/[^"]+)', webpage)
+        ]
 
         return self.playlist_result(entries, profile_id)

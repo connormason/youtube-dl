@@ -17,8 +17,7 @@ class DashSegmentsFD(FragmentFD):
 
     def real_download(self, filename, info_dict):
         fragment_base_url = info_dict.get('fragment_base_url')
-        fragments = info_dict['fragments'][:1] if self.params.get(
-            'test', False) else info_dict['fragments']
+        fragments = info_dict['fragments'][:1] if self.params.get('test', False) else info_dict['fragments']
 
         ctx = {
             'filename': filename,

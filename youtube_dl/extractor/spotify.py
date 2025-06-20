@@ -22,20 +22,25 @@ class SpotifyBaseIE(InfoExtractor):
     _VALID_URL_TEMPL = r'https?://open\.spotify\.com/%s/(?P<id>[^/?&#]+)'
 
     def _real_initialize(self):
-        self._ACCESS_TOKEN = self._download_json(
-            'https://open.spotify.com/get_access_token', None)['accessToken']
+        self._ACCESS_TOKEN = self._download_json('https://open.spotify.com/get_access_token', None)['accessToken']
 
     def _call_api(self, operation, video_id, variables):
         return self._download_json(
-            'https://api-partner.spotify.com/pathfinder/v1/query', video_id, query={
+            'https://api-partner.spotify.com/pathfinder/v1/query',
+            video_id,
+            query={
                 'operationName': 'query' + operation,
                 'variables': json.dumps(variables),
-                'extensions': json.dumps({
-                    'persistedQuery': {
-                        'sha256Hash': self._OPERATION_HASHES[operation],
-                    },
-                })
-            }, headers={'authorization': 'Bearer ' + self._ACCESS_TOKEN})['data']
+                'extensions': json.dumps(
+                    {
+                        'persistedQuery': {
+                            'sha256Hash': self._OPERATION_HASHES[operation],
+                        },
+                    }
+                ),
+            },
+            headers={'authorization': 'Bearer ' + self._ACCESS_TOKEN},
+        )['data']
 
     def _extract_episode(self, episode, series):
         episode_id = episode['id']
@@ -54,31 +59,37 @@ class SpotifyBaseIE(InfoExtractor):
                 f['format_id'] = audio_preview_format
                 mobj = re.match(r'([0-9A-Z]{3})_(?:[A-Z]+_)?(\d+)', audio_preview_format)
                 if mobj:
-                    f.update({
-                        'abr': int(mobj.group(2)),
-                        'ext': mobj.group(1).lower(),
-                    })
+                    f.update(
+                        {
+                            'abr': int(mobj.group(2)),
+                            'ext': mobj.group(1).lower(),
+                        }
+                    )
             formats.append(f)
 
-        for item in (try_get(episode, lambda x: x['audio']['items']) or []):
+        for item in try_get(episode, lambda x: x['audio']['items']) or []:
             item_url = item.get('url')
             if not (item_url and item.get('externallyHosted')):
                 continue
-            formats.append({
-                'url': clean_podcast_url(item_url),
-                'vcodec': 'none',
-            })
+            formats.append(
+                {
+                    'url': clean_podcast_url(item_url),
+                    'vcodec': 'none',
+                }
+            )
 
         thumbnails = []
-        for source in (try_get(episode, lambda x: x['coverArt']['sources']) or []):
+        for source in try_get(episode, lambda x: x['coverArt']['sources']) or []:
             source_url = source.get('url')
             if not source_url:
                 continue
-            thumbnails.append({
-                'url': source_url,
-                'width': int_or_none(source.get('width')),
-                'height': int_or_none(source.get('height')),
-            })
+            thumbnails.append(
+                {
+                    'url': source_url,
+                    'width': int_or_none(source.get('width')),
+                    'height': int_or_none(source.get('height')),
+                }
+            )
 
         return {
             'id': episode_id,
@@ -86,10 +97,8 @@ class SpotifyBaseIE(InfoExtractor):
             'formats': formats,
             'thumbnails': thumbnails,
             'description': strip_or_none(episode.get('description')),
-            'duration': float_or_none(try_get(
-                episode, lambda x: x['duration']['totalMilliseconds']), 1000),
-            'release_date': unified_strdate(try_get(
-                episode, lambda x: x['releaseDate']['isoString'])),
+            'duration': float_or_none(try_get(episode, lambda x: x['duration']['totalMilliseconds']), 1000),
+            'release_date': unified_strdate(try_get(episode, lambda x: x['releaseDate']['isoString'])),
             'series': series,
         }
 
@@ -108,16 +117,13 @@ class SpotifyIE(SpotifyBaseIE):
             'duration': 2083.605,
             'release_date': '20201217',
             'series': "The Guardian's Audio Long Reads",
-        }
+        },
     }
 
     def _real_extract(self, url):
         episode_id = self._match_id(url)
-        episode = self._call_api('Episode', episode_id, {
-            'uri': 'spotify:episode:' + episode_id
-        })['episode']
-        return self._extract_episode(
-            episode, try_get(episode, lambda x: x['podcast']['name']))
+        episode = self._call_api('Episode', episode_id, {'uri': 'spotify:episode:' + episode_id})['episode']
+        return self._extract_episode(episode, try_get(episode, lambda x: x['podcast']['name']))
 
 
 class SpotifyShowIE(SpotifyBaseIE):
@@ -135,19 +141,22 @@ class SpotifyShowIE(SpotifyBaseIE):
 
     def _real_extract(self, url):
         show_id = self._match_id(url)
-        podcast = self._call_api('ShowEpisodes', show_id, {
-            'limit': 1000000000,
-            'offset': 0,
-            'uri': 'spotify:show:' + show_id,
-        })['podcast']
+        podcast = self._call_api(
+            'ShowEpisodes',
+            show_id,
+            {
+                'limit': 1000000000,
+                'offset': 0,
+                'uri': 'spotify:show:' + show_id,
+            },
+        )['podcast']
         podcast_name = podcast.get('name')
 
         entries = []
-        for item in (try_get(podcast, lambda x: x['episodes']['items']) or []):
+        for item in try_get(podcast, lambda x: x['episodes']['items']) or []:
             episode = item.get('episode')
             if not episode:
                 continue
             entries.append(self._extract_episode(episode, podcast_name))
 
-        return self.playlist_result(
-            entries, show_id, podcast_name, podcast.get('description'))
+        return self.playlist_result(entries, show_id, podcast_name, podcast.get('description'))

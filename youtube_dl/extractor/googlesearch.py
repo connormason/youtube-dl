@@ -40,19 +40,15 @@ class GoogleSearchIE(SearchInfoExtractor):
                     'q': query,
                     'start': pagenum * 10,
                     'hl': 'en',
-                })
+                },
+            )
 
-            for hit_idx, mobj in enumerate(re.finditer(
-                    r'<h3 class="r"><a href="([^"]+)"', webpage)):
-
+            for hit_idx, mobj in enumerate(re.finditer(r'<h3 class="r"><a href="([^"]+)"', webpage)):
                 # Skip playlists
                 if not re.search(r'id="vidthumb%d"' % (hit_idx + 1), webpage):
                     continue
 
-                entries.append({
-                    '_type': 'url',
-                    'url': mobj.group(1)
-                })
+                entries.append({'_type': 'url', 'url': mobj.group(1)})
 
             if (len(entries) >= n) or not re.search(r'id="pnnext"', webpage):
                 res['entries'] = entries[:n]
