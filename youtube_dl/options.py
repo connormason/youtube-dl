@@ -256,13 +256,6 @@ def parseOpts(overrideArguments=None):
         'The default proxy specified by --proxy (or none, if the option is not present) is used for the actual downloading.',
     )
     geo.add_option(
-        '--cn-verification-proxy',
-        dest='cn_verification_proxy',
-        default=None,
-        metavar='URL',
-        help=optparse.SUPPRESS_HELP,
-    )
-    geo.add_option(
         '--geo-bypass',
         action='store_true',
         dest='geo_bypass',
@@ -935,9 +928,6 @@ def parseOpts(overrideArguments=None):
         help=('Placeholder value for unavailable meta fields in output filename template (default is "%default")'),
     )
     filesystem.add_option(
-        '--autonumber-size', dest='autonumber_size', metavar='NUMBER', type=int, help=optparse.SUPPRESS_HELP
-    )
-    filesystem.add_option(
         '--autonumber-start',
         dest='autonumber_start',
         metavar='NUMBER',
@@ -951,15 +941,6 @@ def parseOpts(overrideArguments=None):
         dest='restrictfilenames',
         default=False,
         help='Restrict filenames to only ASCII characters, and avoid "&" and spaces in filenames',
-    )
-    filesystem.add_option(
-        '-A', '--auto-number', action='store_true', dest='autonumber', default=False, help=optparse.SUPPRESS_HELP
-    )
-    filesystem.add_option(
-        '-t', '--title', action='store_true', dest='usetitle', default=False, help=optparse.SUPPRESS_HELP
-    )
-    filesystem.add_option(
-        '-l', '--literal', default=False, action='store_true', dest='usetitle', help=optparse.SUPPRESS_HELP
     )
     filesystem.add_option(
         '-w', '--no-overwrites', action='store_true', dest='nooverwrites', default=False, help='Do not overwrite files'

@@ -102,7 +102,6 @@ from .utils import platform_name
 from .utils import preferredencoding
 from .utils import prepend_extension
 from .utils import process_communicate_or_kill
-from .utils import register_socks_protocols
 from .utils import render_table
 from .utils import replace_extension
 from .utils import sanitize_filename
@@ -414,24 +413,6 @@ class YoutubeDL:
         self._header_cookies = []
         self._load_cookies_from_headers(self.params.get('http_headers'))
 
-        def check_deprecated(param, option, suggestion):
-            if self.params.get(param) is not None:
-                self.report_warning(f'{option} is deprecated. Use {suggestion} instead.')
-                return True
-            return False
-
-        if check_deprecated('cn_verification_proxy', '--cn-verification-proxy', '--geo-verification-proxy'):
-            if self.params.get('geo_verification_proxy') is None:
-                self.params['geo_verification_proxy'] = self.params['cn_verification_proxy']
-
-        check_deprecated(
-            'autonumber_size',
-            '--autonumber-size',
-            'output template with %(autonumber)0Nd, where N in the number of digits',
-        )
-        check_deprecated('autonumber', '--auto-number', '-o "%(autonumber)s-%(title)s.%(ext)s"')
-        check_deprecated('usetitle', '--title', '-o "%(title)s-%(id)s.%(ext)s"')
-
         if (
             sys.platform != 'win32'
             and sys.getfilesystemencoding() in ['ascii', 'ANSI_X3.4-1968']
@@ -466,8 +447,6 @@ class YoutubeDL:
 
         for ph in self.params.get('progress_hooks', []):
             self.add_progress_hook(ph)
-
-        register_socks_protocols()
 
     def __enter__(self) -> YoutubeDL:
         return self
@@ -653,9 +632,6 @@ class YoutubeDL:
             template_dict = dict(info_dict)
 
             template_dict['epoch'] = int(time.time())
-            autonumber_size = self.params.get('autonumber_size')
-            if autonumber_size is None:
-                autonumber_size = 5
             template_dict['autonumber'] = self.params.get('autonumber_start', 1) - 1 + self._num_downloads
             if template_dict.get('resolution') is None:
                 if template_dict.get('width') and template_dict.get('height'):
@@ -687,7 +663,7 @@ class YoutubeDL:
             # of %(field)s to %(field)0Nd for backward compatibility
             field_size_compat_map = {
                 'playlist_index': len(str(template_dict['n_entries'])),
-                'autonumber': autonumber_size,
+                'autonumber': 5,
             }
             FIELD_SIZE_COMPAT_RE = r'(?<!%)%\((?P<field>autonumber|playlist_index)\)s'
             mobj = re.search(FIELD_SIZE_COMPAT_RE, outtmpl)

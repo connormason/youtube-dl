@@ -121,16 +121,11 @@ def _real_main(argv=None):
         parser.error('account username missing\n')
     if opts.ap_password is not None and opts.ap_username is None:
         parser.error('TV Provider account username missing\n')
-    if opts.outtmpl is not None and (opts.usetitle or opts.autonumber or opts.useid):
+    if (opts.outtmpl is not None) and opts.useid:
         parser.error('using output template conflicts with using title, video ID or auto number')
-    if opts.autonumber_size is not None:
-        if opts.autonumber_size <= 0:
-            parser.error('auto number size must be positive')
     if opts.autonumber_start is not None:
         if opts.autonumber_start < 0:
             parser.error('auto number start must be positive or 0')
-    if opts.usetitle and opts.useid:
-        parser.error('using title conflicts with using video ID')
     if opts.username is not None and opts.password is None:
         opts.password = compat_getpass('Type account password and press [Return]: ')
     if opts.ap_username is not None and opts.ap_password is None:
@@ -224,12 +219,8 @@ def _real_main(argv=None):
 
     outtmpl = (
         (opts.outtmpl is not None and opts.outtmpl)
-        or (opts.format == '-1' and opts.usetitle and '%(title)s-%(id)s-%(format)s.%(ext)s')
         or (opts.format == '-1' and '%(id)s-%(format)s.%(ext)s')
-        or (opts.usetitle and opts.autonumber and '%(autonumber)s-%(title)s-%(id)s.%(ext)s')
-        or (opts.usetitle and '%(title)s-%(id)s.%(ext)s')
         or (opts.useid and '%(id)s.%(ext)s')
-        or (opts.autonumber and '%(autonumber)s-%(id)s.%(ext)s')
         or DEFAULT_OUTTMPL
     )
     if not os.path.splitext(outtmpl)[1] and opts.extractaudio:
@@ -357,7 +348,6 @@ def _real_main(argv=None):
         'listformats': opts.listformats,
         'outtmpl': outtmpl,
         'outtmpl_na_placeholder': opts.outtmpl_na_placeholder,
-        'autonumber_size': opts.autonumber_size,
         'autonumber_start': opts.autonumber_start,
         'restrictfilenames': opts.restrictfilenames,
         'ignoreerrors': opts.ignoreerrors,
@@ -441,15 +431,11 @@ def _real_main(argv=None):
         'hls_use_mpegts': opts.hls_use_mpegts,
         'external_downloader_args': external_downloader_args,
         'postprocessor_args': postprocessor_args,
-        'cn_verification_proxy': opts.cn_verification_proxy,
         'geo_verification_proxy': opts.geo_verification_proxy,
         'config_location': opts.config_location,
         'geo_bypass': opts.geo_bypass,
         'geo_bypass_country': opts.geo_bypass_country,
         'geo_bypass_ip_block': opts.geo_bypass_ip_block,
-        # just for deprecation check
-        'autonumber': opts.autonumber if opts.autonumber is True else None,
-        'usetitle': opts.usetitle if opts.usetitle is True else None,
     }
 
     with YoutubeDL(ydl_opts) as ydl:
