@@ -1,16 +1,8 @@
 from __future__ import annotations
 
-try:
-    from .lazy_extractors import *
-    from .lazy_extractors import _ALL_CLASSES
+from .extractors import *
 
-    _LAZY_LOADER = True
-except ImportError:
-    _LAZY_LOADER = False
-    from .extractors import *
-
-    _ALL_CLASSES = [klass for name, klass in globals().items() if name.endswith('IE') and name != 'GenericIE']
-    _ALL_CLASSES.append(GenericIE)
+_ALL_CLASSES = [klass for name, klass in globals().items() if name.endswith('IE')]
 
 
 def gen_extractor_classes():

@@ -76,16 +76,6 @@ from .compat import compat_xpath
 from .socks import ProxyType
 from .socks import sockssocket
 
-
-def register_socks_protocols():
-    # "Register" SOCKS protocols
-    # In Python < 2.6.5, urlsplit() suffers from bug https://bugs.python.org/issue7904
-    # URLs with protocols not in urlparse.uses_netloc are not handled correctly
-    for scheme in ('socks', 'socks4', 'socks4a', 'socks5'):
-        if scheme not in compat_urllib_parse.uses_netloc:
-            compat_urllib_parse.uses_netloc.append(scheme)
-
-
 # Unfavoured alias
 compiled_regex_type = compat_re_Pattern
 
@@ -4781,10 +4771,6 @@ def urlhandle_detect_ext(url_handle):
                 return e
 
     return mimetype2ext(getheader('Content-Type'))
-
-
-def encode_data_uri(data, mime_type):
-    return 'data:{};base64,{}'.format(mime_type, base64.b64encode(data).decode('ascii'))
 
 
 def age_restricted(content_limit, age_limit):

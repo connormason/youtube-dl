@@ -153,13 +153,6 @@ def parseOpts(overrideArguments=None):
         help='Output descriptions of all supported extractors',
     )
     general.add_option(
-        '--force-generic-extractor',
-        action='store_true',
-        dest='force_generic_extractor',
-        default=False,
-        help='Force extraction to use the generic extractor',
-    )
-    general.add_option(
         '--default-search',
         dest='default_search',
         metavar='PREFIX',
@@ -251,51 +244,6 @@ def parseOpts(overrideArguments=None):
         const='::',
         dest='source_address',
         help='Make all connections via IPv6',
-    )
-
-    geo = optparse.OptionGroup(parser, 'Geo Restriction')
-    geo.add_option(
-        '--geo-verification-proxy',
-        dest='geo_verification_proxy',
-        default=None,
-        metavar='URL',
-        help='Use this proxy to verify the IP address for some geo-restricted sites. '
-        'The default proxy specified by --proxy (or none, if the option is not present) is used for the actual downloading.',
-    )
-    geo.add_option(
-        '--cn-verification-proxy',
-        dest='cn_verification_proxy',
-        default=None,
-        metavar='URL',
-        help=optparse.SUPPRESS_HELP,
-    )
-    geo.add_option(
-        '--geo-bypass',
-        action='store_true',
-        dest='geo_bypass',
-        default=True,
-        help='Bypass geographic restriction via faking X-Forwarded-For HTTP header',
-    )
-    geo.add_option(
-        '--no-geo-bypass',
-        action='store_false',
-        dest='geo_bypass',
-        default=True,
-        help='Do not bypass geographic restriction via faking X-Forwarded-For HTTP header',
-    )
-    geo.add_option(
-        '--geo-bypass-country',
-        metavar='CODE',
-        dest='geo_bypass_country',
-        default=None,
-        help='Force bypass geographic restriction with explicitly provided two-letter ISO 3166-2 country code',
-    )
-    geo.add_option(
-        '--geo-bypass-ip-block',
-        metavar='IP_BLOCK',
-        dest='geo_bypass_ip_block',
-        default=None,
-        help='Force bypass geographic restriction with explicitly provided IP block in CIDR notation',
     )
 
     selection = optparse.OptionGroup(parser, 'Video Selection')
@@ -942,9 +890,6 @@ def parseOpts(overrideArguments=None):
         help=('Placeholder value for unavailable meta fields in output filename template (default is "%default")'),
     )
     filesystem.add_option(
-        '--autonumber-size', dest='autonumber_size', metavar='NUMBER', type=int, help=optparse.SUPPRESS_HELP
-    )
-    filesystem.add_option(
         '--autonumber-start',
         dest='autonumber_start',
         metavar='NUMBER',
@@ -958,15 +903,6 @@ def parseOpts(overrideArguments=None):
         dest='restrictfilenames',
         default=False,
         help='Restrict filenames to only ASCII characters, and avoid "&" and spaces in filenames',
-    )
-    filesystem.add_option(
-        '-A', '--auto-number', action='store_true', dest='autonumber', default=False, help=optparse.SUPPRESS_HELP
-    )
-    filesystem.add_option(
-        '-t', '--title', action='store_true', dest='usetitle', default=False, help=optparse.SUPPRESS_HELP
-    )
-    filesystem.add_option(
-        '-l', '--literal', default=False, action='store_true', dest='usetitle', help=optparse.SUPPRESS_HELP
     )
     filesystem.add_option(
         '-w', '--no-overwrites', action='store_true', dest='nooverwrites', default=False, help='Do not overwrite files'
@@ -1216,7 +1152,6 @@ def parseOpts(overrideArguments=None):
 
     parser.add_option_group(general)
     parser.add_option_group(network)
-    parser.add_option_group(geo)
     parser.add_option_group(selection)
     parser.add_option_group(downloader)
     parser.add_option_group(filesystem)

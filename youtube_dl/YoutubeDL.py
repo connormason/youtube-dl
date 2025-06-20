@@ -23,7 +23,7 @@ import time
 import tokenize
 import traceback
 from typing import Any
-from typing import cast
+from typing import ClassVar
 
 try:
     from ssl import OPENSSL_VERSION
@@ -53,7 +53,6 @@ from .compat import compat_urllib_request
 from .compat import compat_urllib_request_DataHandler
 from .downloader import get_suitable_downloader
 from .downloader.rtmp import rtmpdump_version
-from .extractor import _LAZY_LOADER
 from .extractor import gen_extractor_classes
 from .extractor import get_info_extractor
 from .postprocessor import FFmpegFixupM3u8PP
@@ -103,7 +102,6 @@ from .utils import platform_name
 from .utils import preferredencoding
 from .utils import prepend_extension
 from .utils import process_communicate_or_kill
-from .utils import register_socks_protocols
 from .utils import render_table
 from .utils import replace_extension
 from .utils import sanitize_filename
@@ -196,7 +194,6 @@ class YoutubeDL:
     outtmpl_na_placeholder: Placeholder for unavailable meta fields.
     restrictfilenames: Do not allow "&" and spaces in file names
     ignoreerrors:      Do not stop on download errors.
-    force_generic_extractor: Force downloader to use the generic extractor
     nooverwrites:      Prevent overwriting files.
     playliststart:     Playlist item to start at.
     playlistend:       Playlist item to end at.
@@ -205,7 +202,6 @@ class YoutubeDL:
     playlistrandom:    Download playlist items in random order.
     matchtitle:        Download only matching titles.
     rejecttitle:       Reject downloads for matching titles.
-    logger:            Log messages to a logging.Logger instance.
     logtostderr:       Log messages to stderr instead of stdout.
     writedescription:  Write the video description to a .description file
     writeinfojson:     Write the video description to a .info.json file
@@ -244,8 +240,6 @@ class YoutubeDL:
     prefer_insecure:   Use HTTP instead of HTTPS to retrieve information.
                        At the moment, this is only supported by YouTube.
     proxy:             URL of the proxy server to use
-    geo_verification_proxy:  URL of the proxy to use for IP address verification
-                       on geo-restricted sites.
     socket_timeout:    Time to wait for unresponsive hosts, in seconds
     debug_printtraffic:Print out sent and received HTTP traffic
     include_ads:       Download ads as well
@@ -312,15 +306,6 @@ class YoutubeDL:
                        If it returns None, the video is downloaded.
                        match_filter_func in utils.py is one example for this.
     no_color:          Do not emit color codes in output.
-    geo_bypass:        Bypass geographic restriction via faking X-Forwarded-For
-                       HTTP header
-    geo_bypass_country:
-                       Two-letter ISO 3166-2 country code that will be used for
-                       explicit geographic restriction bypassing via faking
-                       X-Forwarded-For HTTP header
-    geo_bypass_ip_block:
-                       IP range in CIDR notation that will be used similarly to
-                       geo_bypass_country
 
     The following options determine which downloader is picked:
     external_downloader: Executable of the external downloader to call.
@@ -351,40 +336,38 @@ class YoutubeDL:
                         care about DASH.
     """
 
-    _NUMERIC_FIELDS = set(
-        (
-            'width',
-            'height',
-            'tbr',
-            'abr',
-            'asr',
-            'vbr',
-            'fps',
-            'filesize',
-            'filesize_approx',
-            'timestamp',
-            'upload_year',
-            'upload_month',
-            'upload_day',
-            'duration',
-            'view_count',
-            'like_count',
-            'dislike_count',
-            'repost_count',
-            'average_rating',
-            'comment_count',
-            'age_limit',
-            'start_time',
-            'end_time',
-            'chapter_number',
-            'season_number',
-            'episode_number',
-            'track_number',
-            'disc_number',
-            'release_year',
-            'playlist_index',
-        )
-    )
+    _NUMERIC_FIELDS: ClassVar[set[str]] = {
+        'width',
+        'height',
+        'tbr',
+        'abr',
+        'asr',
+        'vbr',
+        'fps',
+        'filesize',
+        'filesize_approx',
+        'timestamp',
+        'upload_year',
+        'upload_month',
+        'upload_day',
+        'duration',
+        'view_count',
+        'like_count',
+        'dislike_count',
+        'repost_count',
+        'average_rating',
+        'comment_count',
+        'age_limit',
+        'start_time',
+        'end_time',
+        'chapter_number',
+        'season_number',
+        'episode_number',
+        'track_number',
+        'disc_number',
+        'release_year',
+        'playlist_index',
+    }
 
     params = None
     _ies = []
@@ -416,24 +399,6 @@ class YoutubeDL:
 
         self._header_cookies = []
         self._load_cookies_from_headers(self.params.get('http_headers'))
-
-        def check_deprecated(param, option, suggestion):
-            if self.params.get(param) is not None:
-                self.report_warning(f'{option} is deprecated. Use {suggestion} instead.')
-                return True
-            return False
-
-        if check_deprecated('cn_verification_proxy', '--cn-verification-proxy', '--geo-verification-proxy'):
-            if self.params.get('geo_verification_proxy') is None:
-                self.params['geo_verification_proxy'] = self.params['cn_verification_proxy']
-
-        check_deprecated(
-            'autonumber_size',
-            '--autonumber-size',
-            'output template with %(autonumber)0Nd, where N in the number of digits',
-        )
-        check_deprecated('autonumber', '--auto-number', '-o "%(autonumber)s-%(title)s.%(ext)s"')
-        check_deprecated('usetitle', '--title', '-o "%(title)s-%(id)s.%(ext)s"')
 
         if (
             sys.platform != 'win32'
@@ -469,8 +434,6 @@ class YoutubeDL:
 
         for ph in self.params.get('progress_hooks', []):
             self.add_progress_hook(ph)
-
-        register_socks_protocols()
 
     def __enter__(self) -> YoutubeDL:
         return self
@@ -526,25 +489,9 @@ class YoutubeDL:
         """Add the progress hook (currently only for the file downloader)"""
         self._progress_hooks.append(ph)
 
-    def _bidi_workaround(self, message):
-        if not hasattr(self, '_output_channel'):
-            return message
-
-        assert hasattr(self, '_output_process')
-        assert isinstance(message, compat_str)
-        line_count = message.count('\n') + 1
-        self._output_process.stdin.write((message + '\n').encode('utf-8'))
-        self._output_process.stdin.flush()
-        res = ''.join(self._output_channel.readline().decode('utf-8') for _ in range(line_count))
-        return res[: -len('\n')]
-
     def to_screen(self, message, skip_eol: bool = False):
         """Print message to stdout if not in quiet mode."""
         return self.to_stdout(message, skip_eol, check_quiet=True)
-
-    @property
-    def user_logger(self) -> logging.Logger | None:
-        return cast(logging.Logger | None, self.params.get('logger'))
 
     def _write_string(self, s: str, out: io.TextIOWrapper | None = None) -> None:
         write_string(s, out=out, encoding=self.params.get('encoding'))
@@ -581,10 +528,7 @@ class YoutubeDL:
             _logger.info(message)
 
     def to_stderr(self, message: str) -> None:
-        if self.user_logger is not None:
-            self.user_logger.error(message)
-        else:
-            logger.error(message)
+        logger.error(message)
 
     def to_screen(self, message, skip_eol=False):
         """Print message to stdout if not in quiet mode."""
@@ -637,12 +581,9 @@ class YoutubeDL:
             if m_cnt > 0:
                 return
 
-        if self.user_logger is not None:
-            self.user_logger.warning(message)
-        else:
-            if self.params.get('no_warnings'):
-                return
-            logger.warning(message)
+        if self.params.get('no_warnings'):
+            return
+        logger.warning(message)
 
     # TODO: re-implement :meth:`trouble` to output tracebacks with RichHandler
     def report_error(self, message: str, *args: Any, **kwargs: Any) -> None:
@@ -655,10 +596,7 @@ class YoutubeDL:
         if not self.params.get('verbose', False):
             return
         message = f'[debug] {message}'
-        if self.params.get('logger'):
-            self.params['logger'].debug(message)
-        else:
-            self.to_stderr(message)
+        self.to_stderr(message)
 
     def report_unscoped_cookies(self, *args, **kwargs):
         # message=None, tb=False, is_error=False
@@ -681,9 +619,6 @@ class YoutubeDL:
             template_dict = dict(info_dict)
 
             template_dict['epoch'] = int(time.time())
-            autonumber_size = self.params.get('autonumber_size')
-            if autonumber_size is None:
-                autonumber_size = 5
             template_dict['autonumber'] = self.params.get('autonumber_start', 1) - 1 + self._num_downloads
             if template_dict.get('resolution') is None:
                 if template_dict.get('width') and template_dict.get('height'):
@@ -715,7 +650,7 @@ class YoutubeDL:
             # of %(field)s to %(field)0Nd for backward compatibility
             field_size_compat_map = {
                 'playlist_index': len(str(template_dict['n_entries'])),
-                'autonumber': autonumber_size,
+                'autonumber': 5,
             }
             FIELD_SIZE_COMPAT_RE = r'(?<!%)%\((?P<field>autonumber|playlist_index)\)s'
             mobj = re.search(FIELD_SIZE_COMPAT_RE, outtmpl)
@@ -830,7 +765,7 @@ class YoutubeDL:
         for key, value in extra_info.items():
             info_dict.setdefault(key, value)
 
-    def extract_info(self, url, download=True, ie_key=None, extra_info={}, process=True, force_generic_extractor=False):
+    def extract_info(self, url, download=True, ie_key=None, extra_info={}, process=True):
         """
         Return a list with a dictionary for each video extracted.
 
@@ -843,12 +778,7 @@ class YoutubeDL:
         extra_info -- dictionary containing the extra values to add to each result
         process -- whether to resolve all unresolved references (URLs, playlist items),
             must be True for download to work.
-        force_generic_extractor -- force using the generic extractor
         """
-
-        if not ie_key and force_generic_extractor:
-            ie_key = 'Generic'
-
         if ie_key:
             ies = [self.get_info_extractor(ie_key)]
         else:
@@ -859,11 +789,6 @@ class YoutubeDL:
                 continue
 
             ie = self.get_info_extractor(ie.ie_key())
-            if not ie.working():
-                self.report_warning(
-                    'The program functionality for this site has been marked as broken, and will probably not work.'
-                )
-
             return self.__extract_info(url, ie, download, extra_info, process)
         else:
             self.report_error(f'no suitable InfoExtractor for URL {url}')
@@ -990,12 +915,14 @@ class YoutubeDL:
             ie_result is None
         ):  # Finished already (backwards compatibility; listformats and friends should be moved here)
             return
+
         if isinstance(ie_result, list):
             # Backwards compatibility: old IE result format
             ie_result = {
                 '_type': 'compat_list',
                 'entries': ie_result,
             }
+
         self.add_default_extra_info(ie_result, ie, url)
         if process:
             return self.process_ie_result(ie_result, download, extra_info)
@@ -2258,7 +2185,7 @@ class YoutubeDL:
         for url in url_list:
             try:
                 # It also downloads the videos
-                res = self.extract_info(url, force_generic_extractor=self.params.get('force_generic_extractor', False))
+                res = self.extract_info(url)
             except UnavailableVideoError:
                 self.report_error('unable to download video')
             except MaxDownloadsReached:
@@ -2518,8 +2445,6 @@ class YoutubeDL:
             return self.write_debug(''.join(s))
 
         writeln_debug('youtube-dl version ', __version__)
-        if _LAZY_LOADER:
-            writeln_debug('Lazy loading extractors enabled')
         if ytdl_is_updateable():
             writeln_debug('Single file build')
         try:
