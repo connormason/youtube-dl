@@ -23,7 +23,6 @@ import time
 import tokenize
 import traceback
 from typing import Any
-from typing import cast
 
 try:
     from ssl import OPENSSL_VERSION
@@ -205,7 +204,6 @@ class YoutubeDL:
     playlistrandom:    Download playlist items in random order.
     matchtitle:        Download only matching titles.
     rejecttitle:       Reject downloads for matching titles.
-    logger:            Log messages to a logging.Logger instance.
     logtostderr:       Log messages to stderr instead of stdout.
     writedescription:  Write the video description to a .description file
     writeinfojson:     Write the video description to a .info.json file
@@ -530,10 +528,6 @@ class YoutubeDL:
         """Print message to stdout if not in quiet mode."""
         return self.to_stdout(message, skip_eol, check_quiet=True)
 
-    @property
-    def user_logger(self) -> logging.Logger | None:
-        return cast(logging.Logger | None, self.params.get('logger'))
-
     def _write_string(self, s: str, out: io.TextIOWrapper | None = None) -> None:
         write_string(s, out=out, encoding=self.params.get('encoding'))
 
@@ -569,10 +563,7 @@ class YoutubeDL:
             _logger.info(message)
 
     def to_stderr(self, message: str) -> None:
-        if self.user_logger is not None:
-            self.user_logger.error(message)
-        else:
-            logger.error(message)
+        logger.error(message)
 
     def to_screen(self, message, skip_eol=False):
         """Print message to stdout if not in quiet mode."""
@@ -625,12 +616,9 @@ class YoutubeDL:
             if m_cnt > 0:
                 return
 
-        if self.user_logger is not None:
-            self.user_logger.warning(message)
-        else:
-            if self.params.get('no_warnings'):
-                return
-            logger.warning(message)
+        if self.params.get('no_warnings'):
+            return
+        logger.warning(message)
 
     # TODO: re-implement :meth:`trouble` to output tracebacks with RichHandler
     def report_error(self, message: str, *args: Any, **kwargs: Any) -> None:
@@ -643,10 +631,7 @@ class YoutubeDL:
         if not self.params.get('verbose', False):
             return
         message = f'[debug] {message}'
-        if self.params.get('logger'):
-            self.params['logger'].debug(message)
-        else:
-            self.to_stderr(message)
+        self.to_stderr(message)
 
     def report_unscoped_cookies(self, *args, **kwargs):
         # message=None, tb=False, is_error=False
