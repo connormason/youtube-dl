@@ -195,7 +195,6 @@ class YoutubeDL:
     outtmpl_na_placeholder: Placeholder for unavailable meta fields.
     restrictfilenames: Do not allow "&" and spaces in file names
     ignoreerrors:      Do not stop on download errors.
-    force_generic_extractor: Force downloader to use the generic extractor
     nooverwrites:      Prevent overwriting files.
     playliststart:     Playlist item to start at.
     playlistend:       Playlist item to end at.
@@ -803,7 +802,7 @@ class YoutubeDL:
         for key, value in extra_info.items():
             info_dict.setdefault(key, value)
 
-    def extract_info(self, url, download=True, ie_key=None, extra_info={}, process=True, force_generic_extractor=False):
+    def extract_info(self, url, download=True, ie_key=None, extra_info={}, process=True):
         """
         Return a list with a dictionary for each video extracted.
 
@@ -816,17 +815,20 @@ class YoutubeDL:
         extra_info -- dictionary containing the extra values to add to each result
         process -- whether to resolve all unresolved references (URLs, playlist items),
             must be True for download to work.
-        force_generic_extractor -- force using the generic extractor
         """
-
-        if not ie_key and force_generic_extractor:
-            ie_key = 'Generic'
+        print(f'url:                     {url}')
+        print(f'download:                {download}')
+        print(f'ie_key:                  {ie_key}')
+        print(f'extra_info:              {extra_info}')
+        print(f'process:                 {process}')
 
         if ie_key:
             ies = [self.get_info_extractor(ie_key)]
         else:
             ies = self._ies
 
+        print(f'ies: {ies}')
+        print('')
         for ie in ies:
             if not ie.suitable(url):
                 continue
@@ -2231,7 +2233,7 @@ class YoutubeDL:
         for url in url_list:
             try:
                 # It also downloads the videos
-                res = self.extract_info(url, force_generic_extractor=self.params.get('force_generic_extractor', False))
+                res = self.extract_info(url)
             except UnavailableVideoError:
                 self.report_error('unable to download video')
             except MaxDownloadsReached:

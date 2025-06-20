@@ -153,13 +153,6 @@ def parseOpts(overrideArguments=None):
         help='Output descriptions of all supported extractors',
     )
     general.add_option(
-        '--force-generic-extractor',
-        action='store_true',
-        dest='force_generic_extractor',
-        default=False,
-        help='Force extraction to use the generic extractor',
-    )
-    general.add_option(
         '--default-search',
         dest='default_search',
         metavar='PREFIX',

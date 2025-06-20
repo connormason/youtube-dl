@@ -361,7 +361,6 @@ def _real_main(argv=None):
         'autonumber_start': opts.autonumber_start,
         'restrictfilenames': opts.restrictfilenames,
         'ignoreerrors': opts.ignoreerrors,
-        'force_generic_extractor': opts.force_generic_extractor,
         'ratelimit': opts.ratelimit,
         'nooverwrites': opts.nooverwrites,
         'retries': opts.retries,

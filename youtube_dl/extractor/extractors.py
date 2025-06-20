@@ -9,7 +9,6 @@ from .cloudflarestream import CloudflareStreamIE
 from .deezer import DeezerPlaylistIE
 from .dropbox import DropboxIE
 from .eighttracks import EightTracksIE
-from .generic import GenericIE
 from .googledrive import GoogleDriveIE
 from .googlepodcasts import (
     GooglePodcastsIE,
