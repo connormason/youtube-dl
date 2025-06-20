@@ -396,7 +396,6 @@ class InfoExtractor:
     _GEO_BYPASS = True
     _GEO_COUNTRIES = None
     _GEO_IP_BLOCKS = None
-    _WORKING = True
     # supply this in public subclasses: used in supported sites list, etc
     # IE_DESC = 'short description of IE'
 
@@ -435,11 +434,6 @@ class InfoExtractor:
         m = cls.__match_valid_url(url)
         assert m
         return compat_str(m.group('id'))
-
-    @classmethod
-    def working(cls):
-        """Getter method for _WORKING."""
-        return cls._WORKING
 
     def initialize(self):
         """Initializes an instance (authentication, etc)."""
