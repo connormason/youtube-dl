@@ -23,6 +23,7 @@ import time
 import tokenize
 import traceback
 from typing import Any
+from typing import ClassVar
 
 try:
     from ssl import OPENSSL_VERSION
@@ -335,40 +336,38 @@ class YoutubeDL:
                         care about DASH.
     """
 
-    _NUMERIC_FIELDS = set(
-        (
-            'width',
-            'height',
-            'tbr',
-            'abr',
-            'asr',
-            'vbr',
-            'fps',
-            'filesize',
-            'filesize_approx',
-            'timestamp',
-            'upload_year',
-            'upload_month',
-            'upload_day',
-            'duration',
-            'view_count',
-            'like_count',
-            'dislike_count',
-            'repost_count',
-            'average_rating',
-            'comment_count',
-            'age_limit',
-            'start_time',
-            'end_time',
-            'chapter_number',
-            'season_number',
-            'episode_number',
-            'track_number',
-            'disc_number',
-            'release_year',
-            'playlist_index',
-        )
-    )
+    _NUMERIC_FIELDS: ClassVar[set[str]] = {
+        'width',
+        'height',
+        'tbr',
+        'abr',
+        'asr',
+        'vbr',
+        'fps',
+        'filesize',
+        'filesize_approx',
+        'timestamp',
+        'upload_year',
+        'upload_month',
+        'upload_day',
+        'duration',
+        'view_count',
+        'like_count',
+        'dislike_count',
+        'repost_count',
+        'average_rating',
+        'comment_count',
+        'age_limit',
+        'start_time',
+        'end_time',
+        'chapter_number',
+        'season_number',
+        'episode_number',
+        'track_number',
+        'disc_number',
+        'release_year',
+        'playlist_index',
+    }
 
     params = None
     _ies = []
