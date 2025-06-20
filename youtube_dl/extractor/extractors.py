@@ -19,20 +19,3 @@ from .spotify import (
     SpotifyIE,
     SpotifyShowIE,
 )
-from .youtube import (
-    YoutubeIE,
-    YoutubeFavouritesIE,
-    YoutubeHistoryIE,
-    YoutubeTabIE,
-    YoutubePlaylistIE,
-    YoutubeRecommendedIE,
-    YoutubeSearchDateIE,
-    YoutubeSearchIE,
-    YoutubeSearchURLIE,
-    YoutubeSubscriptionsIE,
-    YoutubeTruncatedIDIE,
-    YoutubeTruncatedURLIE,
-    YoutubeYtBeIE,
-    YoutubeYtUserIE,
-    YoutubeWatchLaterIE,
-)

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import base64
 import collections
-import datetime
 import hashlib
 import json
 import math
@@ -15,20 +14,15 @@ import ssl
 import sys
 import time
 
-from ..compat import compat_cookiejar_Cookie
-from ..compat import compat_cookies_SimpleCookie
 from ..compat import compat_etree_Element
 from ..compat import compat_etree_fromstring
-from ..compat import compat_getpass
 from ..compat import compat_http_client
 from ..compat import compat_integer_types
-from ..compat import compat_kwargs
 from ..compat import compat_map as map
 from ..compat import compat_open as open
 from ..compat import compat_os_name
 from ..compat import compat_str
 from ..compat import compat_urllib_error
-from ..compat import compat_urllib_parse_unquote
 from ..compat import compat_urllib_request
 from ..compat import compat_urlparse
 from ..compat import compat_xml_parse_error
@@ -49,13 +43,11 @@ from ..utils import compiled_regex_type
 from ..utils import determine_ext
 from ..utils import determine_protocol
 from ..utils import error_to_compat_str
-from ..utils import extract_attributes
 from ..utils import fix_xml_ampersands
 from ..utils import float_or_none
 from ..utils import int_or_none
 from ..utils import join_nonempty
 from ..utils import mimetype2ext
-from ..utils import orderedSet
 from ..utils import parse_codecs
 from ..utils import parse_duration
 from ..utils import parse_m3u8_attributes
@@ -64,7 +56,6 @@ from ..utils import sanitized_Request
 from ..utils import traverse_obj
 from ..utils import update_Request
 from ..utils import update_url_query
-from ..utils import url_basename
 from ..utils import variadic
 from ..utils import xpath_element
 from ..utils import xpath_text
@@ -1121,10 +1112,6 @@ class InfoExtractor:
             video_info['title'] = video_title
         return video_info
 
-    def playlist_from_matches(self, matches, playlist_id=None, playlist_title=None, getter=None, ie=None):
-        urls = orderedSet(self.url_result(self._proto_relative_url(getter(m) if getter else m), ie) for m in matches)
-        return self.playlist_result(urls, playlist_id=playlist_id, playlist_title=playlist_title)
-
     @staticmethod
     def playlist_result(entries, playlist_id=None, playlist_title=None, playlist_description=None):
         """Returns a playlist"""
@@ -1172,63 +1159,6 @@ class InfoExtractor:
         else:
             self.report_warning(f'unable to extract {_name}' + bug_reports_message())
             return None
-
-    def _search_json(self, start_pattern, string, name, video_id, **kwargs):
-        """Searches string for the JSON object specified by start_pattern"""
-
-        # self, start_pattern, string, name, video_id, *, end_pattern='',
-        # contains_pattern=r'{(?s:.+)}', fatal=True, default=NO_DEFAULT
-        # NB: end_pattern is only used to reduce the size of the initial match
-        end_pattern = kwargs.pop('end_pattern', '')
-        # (?:[\s\S]) simulates (?(s):.) (eg)
-        contains_pattern = kwargs.pop('contains_pattern', r'{[\s\S]+}')
-        fatal = kwargs.pop('fatal', True)
-        default = kwargs.pop('default', NO_DEFAULT)
-
-        if default is NO_DEFAULT:
-            default, has_default = {}, False
-        else:
-            fatal, has_default = False, True
-
-        json_string = self._search_regex(
-            rf'(?:{start_pattern})\s*(?P<json>{contains_pattern})\s*(?:{end_pattern})',
-            string,
-            name,
-            group='json',
-            fatal=fatal,
-            default=None if has_default else NO_DEFAULT,
-        )
-        if not json_string:
-            return default
-
-        # yt-dlp has a special JSON parser that allows trailing text.
-        # Until that arrives here, the diagnostic from the exception
-        # raised by json.loads() is used to extract the wanted text.
-        # Either way, it's a problem if a transform_source() can't
-        # handle the trailing text.
-
-        # force an exception
-        kwargs['fatal'] = True
-
-        # self._downloader._format_err(name, self._downloader.Styles.EMPHASIS)
-        for _ in range(2):
-            try:
-                # return self._parse_json(json_string, video_id, ignore_extra=True, **kwargs)
-                transform_source = kwargs.pop('transform_source', None)
-                if transform_source:
-                    json_string = transform_source(json_string)
-                return self._parse_json(json_string, video_id, **compat_kwargs(kwargs))
-            except ExtractorError as e:
-                end = int_or_none(self._search_regex(r'\(char\s+(\d+)', error_to_compat_str(e), 'end', default=None))
-                if end is not None:
-                    json_string = json_string[:end]
-                    continue
-                msg = f'Unable to extract {name} - Failed to parse JSON'
-                if fatal:
-                    raise ExtractorError(msg, cause=e.cause, video_id=video_id)
-                elif not has_default:
-                    self.report_warning(f'{msg}: {error_to_compat_str(e)}', video_id=video_id)
-            return default
 
     def _html_search_regex(self, pattern, string, name, default=NO_DEFAULT, fatal=True, flags=0, group=None):
         """
@@ -1280,22 +1210,6 @@ class InfoExtractor:
 
         return username, password
 
-    def _get_tfa_info(self, note='two-factor verification code'):
-        """
-        Get the two-factor authentication info
-        TODO - asking the user will be required for sms/phone verify
-        currently just uses the command line option
-        If there's no info available, return None
-        """
-        if self._downloader is None:
-            return None
-
-        twofactor = self.get_param('twofactor')
-        if twofactor is not None:
-            return twofactor
-
-        return compat_getpass(f'Type {note} and press [Return]: ')
-
     def _html_search_meta(self, name, html, display_name=None, fatal=False, **kwargs):
         if not isinstance(name, (list, tuple)):
             name = [name]
@@ -1304,69 +1218,6 @@ class InfoExtractor:
         return self._html_search_regex(
             [self._meta_regex(n) for n in name], html, display_name, fatal=fatal, group='content', **kwargs
         )
-
-    def _dc_search_uploader(self, html):
-        return self._html_search_meta('dc.creator', html, 'uploader')
-
-    def _rta_search(self, html):
-        # See http://www.rtalabel.org/index.php?content=howtofaq#single
-        if re.search(
-            r'(?ix)<meta\s+name="rating"\s+'
-            r'     content="RTA-5042-1996-1400-1577-RTA"',
-            html,
-        ):
-            return 18
-        return 0
-
-    def _media_rating_search(self, html):
-        # See http://www.tjg-designs.com/WP/metadata-code-examples-adding-metadata-to-your-web-pages/
-        rating = self._html_search_meta('rating', html)
-
-        if not rating:
-            return None
-
-        RATING_TABLE = {
-            'safe for kids': 0,
-            'general': 8,
-            '14 years': 14,
-            'mature': 17,
-            'restricted': 19,
-        }
-        return RATING_TABLE.get(rating.lower())
-
-    def _family_friendly_search(self, html):
-        # See http://schema.org/VideoObject
-        family_friendly = self._html_search_meta('isFamilyFriendly', html, default=None)
-
-        if not family_friendly:
-            return None
-
-        RATING_TABLE = {
-            '1': 0,
-            'true': 0,
-            '0': 18,
-            'false': 18,
-        }
-        return RATING_TABLE.get(family_friendly.lower())
-
-    def _twitter_search_player(self, html):
-        return self._html_search_meta('twitter:player', html, 'twitter card player')
-
-    @staticmethod
-    def _hidden_inputs(html):
-        html = re.sub(r'<!--(?:(?!<!--).)*-->', '', html)
-        hidden_inputs = {}
-        for input in re.findall(r'(?i)(<input[^>]+>)', html):
-            attrs = extract_attributes(input)
-            if not input:
-                continue
-            if attrs.get('type') not in ('hidden', 'submit'):
-                continue
-            name = attrs.get('name') or attrs.get('id')
-            value = attrs.get('value')
-            if name and value is not None:
-                hidden_inputs[name] = value
-        return hidden_inputs
 
     def _sort_formats(self, formats, field_preference=None):
         if not formats:
@@ -1444,17 +1295,6 @@ class InfoExtractor:
             )
 
         formats.sort(key=_formats_key)
-
-    def _check_formats(self, formats, video_id):
-        if formats:
-            formats[:] = filter(
-                lambda f: self._is_valid_url(
-                    f['url'],
-                    video_id,
-                    item='{} video format'.format(f.get('format_id')) if f.get('format_id') else 'video',
-                ),
-                formats,
-            )
 
     def _is_valid_url(self, url, video_id, item='video', headers={}):
         url = self._proto_relative_url(url, scheme='http:')
@@ -1937,12 +1777,6 @@ class InfoExtractor:
 
         return self._parse_mpd_formats_and_subtitles(mpd_doc, mpd_id, mpd_base_url, mpd_url)
 
-    def _parse_mpd_formats(self, *args, **kwargs):
-        fmts, subs = self._parse_mpd_formats_and_subtitles(*args, **kwargs)
-        if subs:
-            self._report_ignoring_subs('DASH')
-        return fmts
-
     def _parse_mpd_formats_and_subtitles(self, mpd_doc, mpd_id=None, mpd_base_url='', mpd_url=None):
         """
         Parse formats from MPD manifest.
@@ -2366,27 +2200,6 @@ class InfoExtractor:
                         subtitles.setdefault(lang or 'und', []).append(f)
         return formats, subtitles
 
-    def _extract_ism_formats(
-        self, ism_url, video_id, ism_id=None, note=None, errnote=None, fatal=True, data=None, headers={}, query={}
-    ):
-        res = self._download_xml_handle(
-            ism_url,
-            video_id,
-            note=note or 'Downloading ISM manifest',
-            errnote=errnote or 'Failed to download ISM manifest',
-            fatal=fatal,
-            data=data,
-            headers=headers,
-            query=query,
-        )
-        if res is False:
-            return []
-        ism_doc, urlh = res
-        if ism_doc is None:
-            return []
-
-        return self._parse_ism_formats(ism_doc, urlh.geturl(), ism_id)
-
     def _parse_ism_formats(self, ism_doc, ism_url, ism_id=None):
         """
         Parse formats from ISM manifest.
@@ -2486,88 +2299,6 @@ class InfoExtractor:
                 )
         return formats
 
-    def _live_title(self, name):
-        """Generate the title for a live video"""
-        now = datetime.datetime.now()
-        now_str = now.strftime('%Y-%m-%d %H:%M')
-        return name + ' ' + now_str
-
-    def _int(self, v, name, fatal=False, **kwargs):
-        res = int_or_none(v, **kwargs)
-        if 'get_attr' in kwargs:
-            print(getattr(v, kwargs['get_attr']))
-        if res is None:
-            msg = f'Failed to extract {name}: Could not parse value {v!r}'
-            if fatal:
-                raise ExtractorError(msg)
-            else:
-                self.report_warning(msg)
-        return res
-
-    def _float(self, v, name, fatal=False, **kwargs):
-        res = float_or_none(v, **kwargs)
-        if res is None:
-            msg = f'Failed to extract {name}: Could not parse value {v!r}'
-            if fatal:
-                raise ExtractorError(msg)
-            else:
-                self.report_warning(msg)
-        return res
-
-    def _set_cookie(
-        self, domain, name, value, expire_time=None, port=None, path='/', secure=False, discard=False, rest={}, **kwargs
-    ):
-        cookie = compat_cookiejar_Cookie(
-            0,
-            name,
-            value,
-            port,
-            port is not None,
-            domain,
-            True,
-            domain.startswith('.'),
-            path,
-            True,
-            secure,
-            expire_time,
-            discard,
-            None,
-            None,
-            rest,
-        )
-        self.cookiejar.set_cookie(cookie)
-
-    def _get_cookies(self, url):
-        """Return a compat_cookies_SimpleCookie with the cookies for the url"""
-        req = sanitized_Request(url)
-        self.cookiejar.add_cookie_header(req)
-        return compat_cookies_SimpleCookie(req.get_header('Cookie'))
-
-    def _apply_first_set_cookie_header(self, url_handle, cookie):
-        """
-        Apply first Set-Cookie header instead of the last. Experimental.
-
-        Some sites (e.g. [1-3]) may serve two cookies under the same name
-        in Set-Cookie header and expect the first (old) one to be set rather
-        than second (new). However, as of RFC6265 the newer one cookie
-        should be set into cookie store what actually happens.
-        We will workaround this issue by resetting the cookie to
-        the first one manually.
-        1. https://new.vk.com/
-        2. https://github.com/ytdl-org/youtube-dl/issues/9841#issuecomment-227871201
-        3. https://learning.oreilly.com/
-        """
-        for header, cookies in url_handle.headers.items():
-            if header.lower() != 'set-cookie':
-                continue
-            cookies = cookies.encode('iso-8859-1')
-            cookies = cookies.decode('utf-8')
-            cookie_value = re.search(rf'{cookie}=(.+?);.*?\b[Dd]omain=(.+?)(?:[,;]|$)', cookies)
-            if cookie_value:
-                value, domain = cookie_value.groups()
-                self._set_cookie(domain, cookie, value)
-                break
-
     def get_testcases(self, include_onlymatching=False):
         t = getattr(self, '_TEST', None)
         if t:
@@ -2603,43 +2334,6 @@ class InfoExtractor:
 
     def _mark_watched(self, *args, **kwargs):
         raise NotImplementedError('This method must be implemented by subclasses')
-
-    def geo_verification_headers(self):
-        headers = {}
-        geo_verification_proxy = self.get_param('geo_verification_proxy')
-        if geo_verification_proxy:
-            headers['Ytdl-request-proxy'] = geo_verification_proxy
-        return headers
-
-    def _generic_id(self, url):
-        return compat_urllib_parse_unquote(os.path.splitext(url.rstrip('/').split('/')[-1])[0])
-
-    def _generic_title(self, url):
-        return compat_urllib_parse_unquote(os.path.splitext(url_basename(url))[0])
-
-    def _yes_playlist(self, playlist_id, video_id, *args, **kwargs):
-        # smuggled_data=None, *, playlist_label='playlist', video_label='video'
-        smuggled_data = args[0] if len(args) == 1 else kwargs.get('smuggled_data')
-        playlist_label = kwargs.get('playlist_label', 'playlist')
-        video_label = kwargs.get('video_label', 'video')
-
-        if not playlist_id or not video_id:
-            return not video_id
-
-        no_playlist = (smuggled_data or {}).get('force_noplaylist')
-        if no_playlist is not None:
-            return not no_playlist
-
-        video_id = '' if video_id is True else ' ' + video_id
-        noplaylist = self.get_param('noplaylist')
-        self.to_screen(
-            f'Downloading just the {video_label}{video_id} because of --no-playlist'
-            if noplaylist
-            else 'Downloading {}{} - add --no-playlist to download just the {}{}'.format(
-                playlist_label, '' if playlist_id is True else ' ' + playlist_id, video_label, video_id
-            )
-        )
-        return not noplaylist
 
 
 class SearchInfoExtractor(InfoExtractor):
