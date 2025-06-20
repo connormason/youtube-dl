@@ -98,7 +98,7 @@ def parseOpts(overrideArguments=None):
             opts.insert(1, ', ')
 
         if option.takes_value():
-            opts.append(' %s' % option.metavar)
+            opts.append(f' {option.metavar}')
 
         return ''.join(opts)
 
@@ -506,7 +506,7 @@ def parseOpts(overrideArguments=None):
         '--external-downloader',
         dest='external_downloader', metavar='COMMAND',
         help='Use the specified external downloader. '
-             'Currently supports %s' % ','.join(list_external_downloaders()))
+             'Currently supports {}'.format(','.join(list_external_downloaders())))
     downloader.add_option(
         '--external-downloader-args',
         dest='external_downloader_args', metavar='ARGS',
@@ -877,8 +877,6 @@ def parseOpts(overrideArguments=None):
             write_string('[debug] Override config: ' + repr(overrideArguments) + '\n')
     else:
         def compat_conf(conf):
-            if sys.version_info < (3,):
-                return [a.decode(preferredencoding(), 'replace') for a in conf]
             return conf
 
         command_line_conf = compat_conf(sys.argv[1:])
@@ -891,7 +889,7 @@ def parseOpts(overrideArguments=None):
             if os.path.isdir(location):
                 location = os.path.join(location, 'youtube-dl.conf')
             if not os.path.exists(location):
-                parser.error('config-location %s does not exist.' % location)
+                parser.error(f'config-location {location} does not exist.')
             custom_conf = _readOptions(location)
         elif '--ignore-config' in command_line_conf:
             pass
@@ -908,6 +906,6 @@ def parseOpts(overrideArguments=None):
                     ('User config', user_conf),
                     ('Custom config', custom_conf),
                     ('Command-line args', command_line_conf)):
-                write_string('[debug] %s: %s\n' % (conf_label, repr(_hide_login_info(conf))))
+                write_string(f'[debug] {conf_label}: {_hide_login_info(conf)!r}\n')
 
     return parser, opts, args

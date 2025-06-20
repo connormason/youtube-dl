@@ -83,7 +83,7 @@ class FileDownloader:
     def format_percent(percent):
         if percent is None:
             return '---.-%'
-        return '%6s' % ('%3.1f%%' % percent)
+        return '%6s' % (f'{percent:3.1f}%')
 
     @classmethod
     def calc_eta(cls, start_or_rate, now_or_remaining, *args):
@@ -118,11 +118,11 @@ class FileDownloader:
     def format_speed(speed):
         if speed is None:
             return '%10s' % '---b/s'
-        return '%10s' % ('%s/s' % format_bytes(speed))
+        return '%10s' % (f'{format_bytes(speed)}/s')
 
     @staticmethod
     def format_retries(retries):
-        return 'inf' if retries == float('inf') else '%.0f' % retries
+        return 'inf' if retries == float('inf') else f'{retries:.0f}'
 
     @staticmethod
     def filesize_or_none(unencoded_filename):
@@ -151,7 +151,7 @@ class FileDownloader:
             return None
         number = float(matchobj.group(1))
         multiplier = 1024.0 ** 'bkmgtpezy'.index(matchobj.group(2).lower())
-        return int(round(number * multiplier))
+        return round(number * multiplier)
 
     def to_screen(self, *args, **kargs):
         self.ydl.to_screen(*args, **kargs)
@@ -205,7 +205,7 @@ class FileDownloader:
                 return
             os.rename(encodeFilename(old_filename), encodeFilename(new_filename))
         except OSError as err:
-            self.report_error('unable to rename file: %s' % error_to_compat_str(err))
+            self.report_error(f'unable to rename file: {error_to_compat_str(err)}')
 
     def try_utime(self, filename, last_modified_hdr):
         """Try to set the last-modified time of the given file."""
@@ -310,7 +310,7 @@ class FileDownloader:
 
     def report_resuming_byte(self, resume_len):
         """Report attempt to resume at given byte."""
-        self.to_screen('[download] Resuming download at byte %s' % resume_len)
+        self.to_screen(f'[download] Resuming download at byte {resume_len}')
 
     def report_retry(self, err, count, retries):
         """Report retry in case of HTTP error 5xx"""
@@ -321,7 +321,7 @@ class FileDownloader:
     def report_file_already_downloaded(self, file_name):
         """Report file has already been fully downloaded."""
         try:
-            self.to_screen('[download] %s has already been downloaded' % file_name)
+            self.to_screen(f'[download] {file_name} has already been downloaded')
         except UnicodeEncodeError:
             self.to_screen('[download] The file has already been downloaded')
 
@@ -367,7 +367,7 @@ class FileDownloader:
             self.to_screen(
                 '[download] Sleeping %s seconds...' % (
                     int(sleep_interval) if sleep_interval.is_integer()
-                    else '%.2f' % sleep_interval))
+                    else f'{sleep_interval:.2f}'))
             time.sleep(sleep_interval)
 
         return self.real_download(filename, info_dict)
@@ -394,5 +394,4 @@ class FileDownloader:
         if exe is None:
             exe = os.path.basename(str_args[0])
 
-        self.to_screen('[debug] %s command line: %s' % (
-            exe, shell_quote(str_args)))
+        self.to_screen(f'[debug] {exe} command line: {shell_quote(str_args)}')

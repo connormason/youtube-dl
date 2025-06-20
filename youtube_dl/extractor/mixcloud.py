@@ -21,11 +21,11 @@ class MixcloudBaseIE(InfoExtractor):
         lookup_key = object_type + 'Lookup'
         return self._download_json(
             'https://app.mixcloud.com/graphql', display_id, query={
-                'query': '''{
-  %s(lookup: {username: "%s"%s}) {
-    %s
-  }
-}''' % (lookup_key, username, ', slug: "%s"' % slug if slug else '', object_fields)
+                'query': '''{{
+  {}(lookup: {{username: "{}"{}}}) {{
+    {}
+  }}
+}}'''.format(lookup_key, username, f', slug: "{slug}"' if slug else '', object_fields)
             })['data'][lookup_key]
 
 
@@ -94,7 +94,7 @@ class MixcloudIE(MixcloudBaseIE):
     def _real_extract(self, url):
         username, slug = self._match_valid_url(url).groups()
         username, slug = compat_urllib_parse_unquote(username), compat_urllib_parse_unquote(slug)
-        track_id = '%s_%s' % (username, slug)
+        track_id = f'{username}_{slug}'
 
         cloudcast = self._call_api('cloudcast', '''audioLength
     comments(first: 100) {
@@ -194,7 +194,8 @@ class MixcloudIE(MixcloudBaseIE):
             if not tag:
                 tags.append(tag)
 
-        get_count = lambda x: int_or_none(try_get(cloudcast, lambda y: y[x]['totalCount']))
+        def get_count(x):
+            return int_or_none(try_get(cloudcast, lambda y: y[x]['totalCount']))
 
         owner = cloudcast.get('owner') or {}
 
@@ -233,7 +234,7 @@ class MixcloudPlaylistBaseIE(MixcloudBaseIE):
             slug = 'uploads'
         else:
             slug = compat_urllib_parse_unquote(slug)
-        playlist_id = '%s_%s' % (username, slug)
+        playlist_id = f'{username}_{slug}'
 
         is_playlist_type = self._ROOT_TYPE == 'playlist'
         playlist_type = 'items' if is_playlist_type else slug
@@ -243,19 +244,19 @@ class MixcloudPlaylistBaseIE(MixcloudBaseIE):
         entries = []
         while has_next_page:
             playlist = self._call_api(
-                self._ROOT_TYPE, '''%s
-    %s
-    %s(first: 100%s) {
-      edges {
-        node {
-          %s
-        }
-      }
-      pageInfo {
+                self._ROOT_TYPE, f'''{self._TITLE_KEY}
+    {self._DESCRIPTION_KEY}
+    {playlist_type}(first: 100{list_filter}) {{
+      edges {{
+        node {{
+          {self._NODE_TEMPLATE}
+        }}
+      }}
+      pageInfo {{
         endCursor
         hasNextPage
-      }
-    }''' % (self._TITLE_KEY, self._DESCRIPTION_KEY, playlist_type, list_filter, self._NODE_TEMPLATE),
+      }}
+    }}''',
                 playlist_id, username, slug if is_playlist_type else None)
 
             items = playlist.get(playlist_type) or {}
@@ -266,13 +267,13 @@ class MixcloudPlaylistBaseIE(MixcloudBaseIE):
                     continue
                 slug = try_get(cloudcast, lambda x: x['slug'], compat_str)
                 owner_username = try_get(cloudcast, lambda x: x['owner']['username'], compat_str)
-                video_id = '%s_%s' % (owner_username, slug) if slug and owner_username else None
+                video_id = f'{owner_username}_{slug}' if slug and owner_username else None
                 entries.append(self.url_result(
                     cloudcast_url, MixcloudIE.ie_key(), video_id))
 
             page_info = items['pageInfo']
             has_next_page = page_info['hasNextPage']
-            list_filter = ', after: "%s"' % page_info['endCursor']
+            list_filter = ', after: "{}"'.format(page_info['endCursor'])
 
         return self.playlist_result(
             entries, playlist_id,
@@ -341,7 +342,7 @@ class MixcloudUserIE(MixcloudPlaylistBaseIE):
           owner { username }'''
 
     def _get_playlist_title(self, title, slug):
-        return '%s (%s)' % (title, slug)
+        return f'{title} ({slug})'
 
 
 class MixcloudPlaylistIE(MixcloudPlaylistBaseIE):

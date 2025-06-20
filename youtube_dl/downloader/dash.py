@@ -45,7 +45,7 @@ class DashSegmentsFD(FragmentFD):
             fragment_range = fragment.get('range')
             if fragment_range:
                 headers = headers.copy() if headers else {}
-                headers['Range'] = 'bytes=%s' % (fragment_range,)
+                headers['Range'] = f'bytes={fragment_range}'
             for count in itertools.count():
                 try:
                     success, frag_content = self._download_fragment(ctx, fragment_url, info_dict, headers)
@@ -73,7 +73,7 @@ class DashSegmentsFD(FragmentFD):
                 if not fatal:
                     self.report_skip_fragment(frag_index)
                     continue
-                self.report_error('giving up after %s fragment retries' % count)
+                self.report_error(f'giving up after {count} fragment retries')
                 return False
 
         self._finish_frag_download(ctx)

@@ -49,10 +49,10 @@ class Cache:
 
     def _get_cache_fn(self, section, key, dtype):
         assert re.match(r'^[\w.-]+$', section), \
-            'invalid section %r' % section
+            f'invalid section {section!r}'
         key = escape_rfc3986(key, safe='').replace('%', ',')  # encode non-ascii characters
         return os.path.join(
-            self._get_root_dir(), section, '%s.%s' % (key, dtype))
+            self._get_root_dir(), section, f'{key}.{dtype}')
 
     @property
     def enabled(self):
@@ -114,12 +114,12 @@ class Cache:
                 file_size = 'size: %d' % os.path.getsize(cache_fn)
             except OSError as oe:
                 file_size = error_to_compat_str(oe)
-            self._report_warning('Cache retrieval from %s failed (%s)' % (cache_fn, file_size))
+            self._report_warning(f'Cache retrieval from {cache_fn} failed ({file_size})')
         except Exception as e:
             if getattr(e, 'errno') == errno.ENOENT:
                 # no cache available
                 return
-            self._report_warning('Cache retrieval from %s failed' % (cache_fn,))
+            self._report_warning(f'Cache retrieval from {cache_fn} failed')
 
         return default
 
@@ -130,10 +130,10 @@ class Cache:
 
         cachedir = self._get_root_dir()
         if not any((term in cachedir) for term in ('cache', 'tmp')):
-            raise Exception('Not removing directory %s - this does not look like a cache dir' % (cachedir,))
+            raise Exception(f'Not removing directory {cachedir} - this does not look like a cache dir')
 
         self._to_screen(
-            'Removing cache dir %s .' % (cachedir,), skip_eol=True ),
+            f'Removing cache dir {cachedir} .', skip_eol=True ),
         if os.path.exists(cachedir):
             self._to_screen('.', skip_eol=True)
             shutil.rmtree(cachedir)

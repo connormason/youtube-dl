@@ -137,7 +137,7 @@ class FragmentFD(FileDownloader):
         else:
             total_frags_str = 'unknown (live)'
         self.to_screen(
-            '[%s] Total fragments: %s' % (self.FD_NAME, total_frags_str))
+            f'[{self.FD_NAME}] Total fragments: {total_frags_str}')
         self.report_destination(ctx['filename'])
         continuedl = self.params.get('continuedl', True)
         dl = HttpQuietDownloader(
@@ -177,7 +177,7 @@ class FragmentFD(FileDownloader):
                         '.ytdl file is corrupt' if is_corrupt else
                         'Inconsistent state of incomplete fragment download')
                     self.report_warning(
-                        '%s. Restarting from the beginning...' % message)
+                        f'{message}. Restarting from the beginning...')
                     ctx['fragment_index'] = resume_len = 0
                     if 'ytdl_corrupt' in ctx:
                         del ctx['ytdl_corrupt']

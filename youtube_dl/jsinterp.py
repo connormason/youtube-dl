@@ -336,7 +336,7 @@ class JS_Throw(ExtractorError):
 class LocalNameSpace(ChainMap):
     def __getitem__(self, key):
         try:
-            return super(LocalNameSpace, self).__getitem__(key)
+            return super().__getitem__(key)
         except KeyError:
             return JS_Undefined
 
@@ -366,7 +366,7 @@ class Debugger:
                 return s
             return '...'.join((s[:left - 3], s[-right:] if right else ''))
 
-        write_string('[debug] JS: {0}{1}\n'.format(
+        write_string('[debug] JS: {}{}\n'.format(
             '  ' * (100 - level),
             ' '.join(truncate_string(compat_str(x), 50, 50) for x in args)))
 
@@ -521,7 +521,7 @@ class JSInterpreter:
             return flags, expr[idx + 1:]
 
         def dump(self):
-            return '(/{0}/{1})'.format(
+            return '(/{}/{})'.format(
                 re.sub(r'(?<!\\)/', r'\/', self.source),
                 self.flags)
 
@@ -612,7 +612,7 @@ class JSInterpreter:
         self.__named_object_counter += 1
         name = '%s%d' % (self._OBJ_NAME, self.__named_object_counter)
         if callable(obj) and not isinstance(obj, function_with_repr):
-            obj = function_with_repr(obj, 'F<%s>' % (self.__named_object_counter, ))
+            obj = function_with_repr(obj, f'F<{self.__named_object_counter}>')
         namespace[name] = obj
         return name
 
@@ -936,7 +936,7 @@ class JSInterpreter:
                 if_expr, expr = self._separate_at_paren(expr)
             else:
                 # may lose ... else ... because of ll.368-374
-                if_expr, expr = self._separate_at_paren(' %s;' % (expr,), delim=';')
+                if_expr, expr = self._separate_at_paren(f' {expr};', delim=';')
             else_expr = None
             m = re.match(r'else\s*(?P<block>\{)?', expr)
             if m:
@@ -1009,7 +1009,7 @@ class JSInterpreter:
                 if switch_m:
                     switch_val, remaining = self._separate_at_paren(remaining[switch_m.end() - 1:])
                     body, expr = self._separate_at_paren(remaining, '}')
-                    body = 'switch(%s){%s}' % (switch_val, body)
+                    body = f'switch({switch_val}){{{body}}}'
                 else:
                     body, expr = remaining, ''
             if md.get('for'):
@@ -1315,7 +1315,7 @@ class JSInterpreter:
                 elif member == 'splice':
                     assertion(isinstance(obj, list), 'must be applied on a list')
                     assertion(argvals, 'takes one or more arguments')
-                    index, how_many = map(int, (argvals + [len(obj)])[:2])
+                    index, how_many = map(int, ([*argvals, len(obj)])[:2])
                     if index < 0:
                         index += len(obj)
                     res = [obj.pop(index)
@@ -1338,12 +1338,12 @@ class JSInterpreter:
                 elif member == 'forEach':
                     assertion(argvals, 'takes one or more arguments')
                     assertion(len(argvals) <= 2, 'takes at most 2 arguments')
-                    f, this = (argvals + [''])[:2]
+                    f, this = ([*argvals, ''])[:2]
                     return [f((item, idx, obj), {'this': this}, allow_recursion) for idx, item in enumerate(obj)]
                 elif member == 'indexOf':
                     assertion(argvals, 'takes one or more arguments')
                     assertion(len(argvals) <= 2, 'takes at most 2 arguments')
-                    idx, start = (argvals + [0])[:2]
+                    idx, start = ([*argvals, 0])[:2]
                     try:
                         return obj.index(idx, start)
                     except ValueError:
@@ -1417,9 +1417,9 @@ class JSInterpreter:
             raise self.Exception('Could not find object ' + objname)
         # Currently, it only supports function definitions
         for f in re.finditer(
-                r'''(?x)
-                    (?P<key>%s)\s*:\s*function\s*\((?P<args>(?:%s|,)*)\){(?P<code>[^}]+)}
-                ''' % (_FUNC_NAME_RE, _NAME_RE),
+                rf'''(?x)
+                    (?P<key>{_FUNC_NAME_RE})\s*:\s*function\s*\((?P<args>(?:{_NAME_RE}|,)*)\){{(?P<code>[^}}]+)}}
+                ''',
                 fields):
             argnames = self.build_arglist(f.group('args'))
             name = remove_quotes(f.group('key'))
@@ -1444,12 +1444,12 @@ class JSInterpreter:
         func_m = re.search(
             r'''(?xs)
                 (?:
-                    function\s+%(name)s|
-                    [{;,]\s*%(name)s\s*=\s*function|
-                    (?:var|const|let)\s+%(name)s\s*=\s*function
+                    function\s+{name}|
+                    [{{;,]\s*{name}\s*=\s*function|
+                    (?:var|const|let)\s+{name}\s*=\s*function
                 )\s*
                 \((?P<args>[^)]*)\)\s*
-                (?P<code>{.+})''' % {'name': re.escape(funcname)},
+                (?P<code>{{.+}})'''.format(name=re.escape(funcname)),
             self.code)
         if func_m is None:
             raise self.Exception('Could not find JS function "{funcname}"'.format(**locals()))
@@ -1460,7 +1460,7 @@ class JSInterpreter:
         return function_with_repr(
             self.extract_function_from_code(*itertools.chain(
                 self.extract_function_code(funcname), global_stack)),
-            'F<%s>' % (funcname,))
+            f'F<{funcname}>')
 
     def extract_function_from_code(self, argnames, code, *global_stack):
         local_vars = {}
@@ -1490,7 +1490,7 @@ class JSInterpreter:
         def valid_arg(y):
             y = y.strip()
             if not y:
-                raise cls.Exception('Missing arg in "%s"' % (arg_text, ))
+                raise cls.Exception(f'Missing arg in "{arg_text}"')
             return y
 
         return [valid_arg(x) for x in cls._separate(arg_text)]

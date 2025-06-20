@@ -80,7 +80,7 @@ class BandcampIE(InfoExtractor):
 
     def _extract_data_attr(self, webpage, video_id, attr='tralbum', fatal=True):
         return self._parse_json(self._html_search_regex(
-            r'data-%s=(["\'])({.+?})\1' % attr, webpage,
+            rf'data-{attr}=(["\'])({{.+?}})\1', webpage,
             attr + ' data', group=2), video_id, fatal=fatal)
 
     def _real_extract(self, url):
@@ -165,7 +165,7 @@ class BandcampIE(InfoExtractor):
                             })
                         format_id = f.get('encoding_name') or format_id
                         stat = self._download_json(
-                            stat_url, track_id, 'Downloading %s JSON' % format_id,
+                            stat_url, track_id, f'Downloading {format_id} JSON',
                             transform_source=lambda s: s[s.index('{'):s.rindex('}') + 1],
                             fatal=False)
                         if not stat:
@@ -184,7 +184,7 @@ class BandcampIE(InfoExtractor):
 
         self._sort_formats(formats)
 
-        title = '%s - %s' % (artist, track) if artist else track
+        title = f'{artist} - {track}' if artist else track
 
         if not duration:
             duration = float_or_none(self._html_search_meta(
@@ -288,7 +288,7 @@ class BandcampAlbumIE(BandcampIE):
     def suitable(cls, url):
         return (False
                 if BandcampWeeklyIE.suitable(url) or BandcampIE.suitable(url)
-                else super(BandcampAlbumIE, cls).suitable(url))
+                else super().suitable(url))
 
     def _real_extract(self, url):
         uploader_id, album_id = re.match(self._VALID_URL, url).groups()
@@ -372,7 +372,7 @@ class BandcampWeeklyIE(BandcampIE):
         title = show.get('audio_title') or 'Bandcamp Weekly'
         subtitle = show.get('subtitle')
         if subtitle:
-            title += ' - %s' % subtitle
+            title += f' - {subtitle}'
 
         return {
             'id': show_id,

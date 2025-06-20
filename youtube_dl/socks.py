@@ -57,14 +57,14 @@ class ProxyError(socket.error):
     def __init__(self, code=None, msg=None):
         if code is not None and msg is None:
             msg = self.CODES.get(code) or 'unknown error'
-        super(ProxyError, self).__init__(code, msg)
+        super().__init__(code, msg)
 
 
 class InvalidVersionError(ProxyError):
     def __init__(self, expected_version, got_version):
         msg = (f'Invalid response version from server. Expected {expected_version:02x} got '
                f'{got_version:02x}')
-        super(InvalidVersionError, self).__init__(0, msg)
+        super().__init__(0, msg)
 
 
 class Socks4Error(ProxyError):
@@ -107,7 +107,7 @@ Proxy = collections.namedtuple('Proxy', (
 class sockssocket(socket.socket):
     def __init__(self, *args, **kwargs):
         self._proxy = None
-        super(sockssocket, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def setproxy(self, proxytype, addr, port, rdns=True, username=None, password=None):
         assert proxytype in (ProxyType.SOCKS4, ProxyType.SOCKS4A, ProxyType.SOCKS5)

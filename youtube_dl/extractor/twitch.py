@@ -59,7 +59,7 @@ class TwitchBaseIE(InfoExtractor):
 
         def fail(message):
             raise ExtractorError(
-                'Unable to login. Twitch said: %s' % message, expected=True)
+                f'Unable to login. Twitch said: {message}', expected=True)
 
         def login_step(page, urlh, note, data):
             form = self._hidden_inputs(page)
@@ -157,26 +157,26 @@ class TwitchBaseIE(InfoExtractor):
         return self._download_base_gql(video_id, ops, note)
 
     def _download_access_token(self, video_id, token_kind, param_name):
-        method = '%sPlaybackAccessToken' % token_kind
+        method = f'{token_kind}PlaybackAccessToken'
         ops = {
-            'query': '''{
-              %s(
-                %s: "%s",
-                params: {
+            'query': f'''{{
+              {method}(
+                {param_name}: "{video_id}",
+                params: {{
                   platform: "web",
                   playerBackend: "mediaplayer",
                   playerType: "site"
-                }
+                }}
               )
-              {
+              {{
                 value
                 signature
-              }
-            }''' % (method, param_name, video_id),
+              }}
+            }}''',
         }
         return self._download_base_gql(
             video_id, ops,
-            'Downloading %s access token GraphQL' % token_kind)['data'][method]
+            f'Downloading {token_kind} access token GraphQL')['data'][method]
 
 
 class TwitchVodIE(TwitchBaseIE):
@@ -259,7 +259,7 @@ class TwitchVodIE(TwitchBaseIE):
         video = data.get('video')
         if video is None:
             raise ExtractorError(
-                'Video %s does not exist' % item_id, expected=True)
+                f'Video {item_id} does not exist', expected=True)
         return self._extract_info_gql(video, item_id)
 
     @staticmethod
@@ -304,11 +304,11 @@ class TwitchVodIE(TwitchBaseIE):
         vod_id = info.get('id') or item_id
         # id backward compatibility for download archives
         if vod_id[0] != 'v':
-            vod_id = 'v%s' % vod_id
+            vod_id = f'v{vod_id}'
         thumbnail = url_or_none(info.get('previewThumbnailURL'))
         if thumbnail:
             for p in ('width', 'height'):
-                thumbnail = thumbnail.replace('{%s}' % p, '0')
+                thumbnail = thumbnail.replace(f'{{{p}}}', '0')
         return {
             'id': vod_id,
             'title': info.get('title') or 'Untitled Broadcast',
@@ -328,7 +328,7 @@ class TwitchVodIE(TwitchBaseIE):
         access_token = self._download_access_token(vod_id, 'video', 'id')
 
         formats = self._extract_m3u8_formats(
-            '%s/vod/%s.m3u8?%s' % (
+            '{}/vod/{}.m3u8?{}'.format(
                 self._USHER_BASE, vod_id,
                 compat_urllib_parse_urlencode({
                     'allow_source': 'true',
@@ -353,7 +353,7 @@ class TwitchVodIE(TwitchBaseIE):
             info['subtitles'] = {
                 'rechat': [{
                     'url': update_url_query(
-                        'https://api.twitch.tv/v5/videos/%s/comments' % vod_id, {
+                        f'https://api.twitch.tv/v5/videos/{vod_id}/comments', {
                             'client_id': self._CLIENT_ID,
                         }),
                     'ext': 'json',
@@ -372,7 +372,7 @@ def _make_video_result(node):
         '_type': 'url_transparent',
         'ie_key': TwitchVodIE.ie_key(),
         'id': video_id,
-        'url': 'https://www.twitch.tv/videos/%s' % video_id,
+        'url': f'https://www.twitch.tv/videos/{video_id}',
         'title': node.get('title'),
         'thumbnail': node.get('previewThumbnailURL'),
         'duration': float_or_none(node.get('lengthSeconds')),
@@ -423,7 +423,7 @@ class TwitchPlaylistBaseIE(TwitchBaseIE):
     def _entries(self, channel_name, *args):
         cursor = None
         variables_common = self._make_variables(channel_name, *args)
-        entries_key = '%ss' % self._ENTRY_KIND
+        entries_key = f'{self._ENTRY_KIND}s'
         for page_num in itertools.count(1):
             variables = variables_common.copy()
             variables['limit'] = self._PAGE_LIMIT
@@ -434,7 +434,7 @@ class TwitchPlaylistBaseIE(TwitchBaseIE):
                     'operationName': self._OPERATION_NAME,
                     'variables': variables,
                 }],
-                'Downloading %ss GraphQL page %s' % (self._NODE_KIND, page_num),
+                f'Downloading {self._NODE_KIND}s GraphQL page {page_num}',
                 fatal=False)
             if not page:
                 break
@@ -550,7 +550,7 @@ class TwitchVideosIE(TwitchPlaylistBaseIE):
                 if any(ie.suitable(url) for ie in (
                     TwitchVideosClipsIE,
                     TwitchVideosCollectionsIE))
-                else super(TwitchVideosIE, cls).suitable(url))
+                else super().suitable(url))
 
     @staticmethod
     def _make_variables(channel_name, broadcast_type, sort):
@@ -573,9 +573,7 @@ class TwitchVideosIE(TwitchPlaylistBaseIE):
         return self.playlist_result(
             self._entries(channel_name, broadcast.type, sort),
             playlist_id=channel_name,
-            playlist_title='%s - %s sorted by %s'
-            % (channel_name, broadcast.label,
-               self._SORTED_BY.get(sort, self._DEFAULT_SORTED_BY)))
+            playlist_title=f'{channel_name} - {broadcast.label} sorted by {self._SORTED_BY.get(sort, self._DEFAULT_SORTED_BY)}')
 
 
 class TwitchVideosClipsIE(TwitchPlaylistBaseIE):
@@ -648,7 +646,7 @@ class TwitchVideosClipsIE(TwitchPlaylistBaseIE):
         return self.playlist_result(
             self._entries(channel_name, clip.filter),
             playlist_id=channel_name,
-            playlist_title='%s - Clips %s' % (channel_name, clip.label))
+            playlist_title=f'{channel_name} - Clips {clip.label}')
 
 
 class TwitchVideosCollectionsIE(TwitchPlaylistBaseIE):
@@ -685,7 +683,7 @@ class TwitchVideosCollectionsIE(TwitchPlaylistBaseIE):
             '_type': 'url_transparent',
             'ie_key': TwitchCollectionIE.ie_key(),
             'id': collection_id,
-            'url': 'https://www.twitch.tv/collections/%s' % collection_id,
+            'url': f'https://www.twitch.tv/collections/{collection_id}',
             'title': node.get('title'),
             'thumbnail': node.get('thumbnailURL'),
             'duration': float_or_none(node.get('lengthSeconds')),
@@ -697,7 +695,7 @@ class TwitchVideosCollectionsIE(TwitchPlaylistBaseIE):
         channel_name = self._match_id(url)
         return self.playlist_result(
             self._entries(channel_name), playlist_id=channel_name,
-            playlist_title='%s - Collections' % channel_name)
+            playlist_title=f'{channel_name} - Collections')
 
 
 class TwitchStreamIE(TwitchBaseIE):
@@ -754,7 +752,7 @@ class TwitchStreamIE(TwitchBaseIE):
                     TwitchVideosClipsIE,
                     TwitchVideosCollectionsIE,
                     TwitchClipsIE))
-                else super(TwitchStreamIE, cls).suitable(url))
+                else super().suitable(url))
 
     def _real_extract(self, url):
         channel_name = self._match_id(url).lower()
@@ -783,12 +781,12 @@ class TwitchStreamIE(TwitchBaseIE):
 
         if not user:
             raise ExtractorError(
-                '%s does not exist' % channel_name, expected=True)
+                f'{channel_name} does not exist', expected=True)
 
         stream = user['stream']
 
         if not stream:
-            raise ExtractorError('%s is offline' % channel_name, expected=True)
+            raise ExtractorError(f'{channel_name} is offline', expected=True)
 
         access_token = self._download_access_token(
             channel_name, 'stream', 'channelName')
@@ -807,7 +805,7 @@ class TwitchStreamIE(TwitchBaseIE):
             'token': token.encode('utf-8'),
         }
         formats = self._extract_m3u8_formats(
-            '%s/api/channel/hls/%s.m3u8' % (self._USHER_BASE, channel_name),
+            f'{self._USHER_BASE}/api/channel/hls/{channel_name}.m3u8',
             stream_id, 'mp4', query=query)
         self._prefer_source(formats)
 
@@ -826,7 +824,7 @@ class TwitchStreamIE(TwitchBaseIE):
         title = uploader or channel_name
         stream_type = stream.get('type')
         if stream_type in ['rerun', 'live']:
-            title += ' (%s)' % stream_type
+            title += f' ({stream_type})'
 
         return {
             'id': stream_id,
@@ -909,30 +907,30 @@ class TwitchClipsIE(TwitchBaseIE):
 
         data = self._download_base_gql(
             video_id, {
-                'query': '''{
-  clip(slug: "%s") {
-    broadcaster {
+                'query': f'''{{
+  clip(slug: "{video_id}") {{
+    broadcaster {{
       displayName
-    }
+    }}
     createdAt
-    curator {
+    curator {{
       displayName
       id
-    }
+    }}
     durationSeconds
     id
     tiny: thumbnailURL(width: 86, height: 45)
     small: thumbnailURL(width: 260, height: 147)
     medium: thumbnailURL(width: 480, height: 272)
     title
-    videoQualities {
+    videoQualities {{
       frameRate
       quality
       sourceURL
-    }
+    }}
     viewCount
-  }
-}''' % video_id}, 'Downloading clip GraphQL', fatal=False)
+  }}
+}}'''}, 'Downloading clip GraphQL', fatal=False)
 
         if data:
             clip = try_get(data, lambda x: x['data']['clip'], dict) or clip

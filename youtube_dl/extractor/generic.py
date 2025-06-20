@@ -158,7 +158,7 @@ class GenericIE(InfoExtractor):
 
     def report_following_redirect(self, new_url):
         """Report information extraction."""
-        self._downloader.to_screen('[redirect] Following redirect to %s' % new_url)
+        self._downloader.to_screen(f'[redirect] Following redirect to {new_url}')
 
     def _extract_rss(self, url, video_id, doc):
         playlist_title = doc.find('./channel/title').text
@@ -186,7 +186,7 @@ class GenericIE(InfoExtractor):
 
             def itunes(key):
                 return xpath_text(
-                    it, xpath_with_ns('./itunes:%s' % key, NS_MAP),
+                    it, xpath_with_ns(f'./itunes:{key}', NS_MAP),
                     default=None)
 
             duration = itunes('duration')
@@ -247,7 +247,7 @@ class GenericIE(InfoExtractor):
 
             entries.append({
                 'id': os.path.splitext(url_n.text.rpartition('/')[2])[0],
-                'title': '%s - %s' % (title, n.tag),
+                'title': f'{title} - {n.tag}',
                 'url': compat_urlparse.urljoin(url, url_n.text),
                 'duration': float_or_none(n.find('./duration').text),
             })
@@ -358,18 +358,17 @@ class GenericIE(InfoExtractor):
                     if default_search == 'auto_warning':
                         if re.match(r'^(?:url|URL)$', url):
                             raise ExtractorError(
-                                'Invalid URL:  %r . Call youtube-dl like this:  youtube-dl -v "https://www.youtube.com/watch?v=BaW_jenozKc"  ' % url,
+                                f'Invalid URL:  {url!r} . Call youtube-dl like this:  youtube-dl -v "https://www.youtube.com/watch?v=BaW_jenozKc"  ',
                                 expected=True)
                         else:
                             self._downloader.report_warning(
-                                'Falling back to youtube search for  %s . Set --default-search "auto" to suppress this warning.' % url)
+                                f'Falling back to youtube search for  {url} . Set --default-search "auto" to suppress this warning.')
                     return self.url_result('ytsearch:' + url)
 
             if default_search in ('error', 'fixup_error'):
                 raise ExtractorError(
-                    '%r is not a valid URL. '
-                    'Set --default-search "ytsearch" (or run  youtube-dl "ytsearch:%s" ) to search YouTube'
-                    % (url, url), expected=True)
+                    f'{url!r} is not a valid URL. '
+                    f'Set --default-search "ytsearch" (or run  youtube-dl "ytsearch:{url}" ) to search YouTube', expected=True)
             else:
                 if ':' not in default_search:
                     default_search += ':'
@@ -384,12 +383,12 @@ class GenericIE(InfoExtractor):
         else:
             video_id = self._generic_id(url)
 
-        self.to_screen('%s: Requesting header' % video_id)
+        self.to_screen(f'{video_id}: Requesting header')
 
         head_req = HEADRequest(url)
         head_response = self._request_webpage(
             head_req, video_id,
-            note=False, errnote='Could not send HEAD request to %s' % url,
+            note=False, errnote=f'Could not send HEAD request to {url}',
             fatal=False)
 
         if head_response is not False:
@@ -619,9 +618,9 @@ class GenericIE(InfoExtractor):
              r'kt_player\s*\(\s*(["\'])(?:(?!\1)[\w\W])+\1\s*,\s*(["\'])https?://(?:\S+?/)+kt_player\.swf\?v=(?P<ver>\d+(?:\.\d+)+)\2\s*,',
              ), webpage, 'KVS player', group='ver', default=False)
         if found:
-            self.report_extraction('%s: KVS Player' % (video_id, ))
+            self.report_extraction(f'{video_id}: KVS Player')
             if found.split('.')[0] not in ('4', '5', '6'):
-                self.report_warning('Untested major version (%s) in player engine - download may fail.' % (found, ))
+                self.report_warning(f'Untested major version ({found}) in player engine - download may fail.')
             return merge_dicts(
                 self._extract_kvs(url, webpage, video_id),
                 info_dict)
@@ -693,7 +692,7 @@ class GenericIE(InfoExtractor):
             REDIRECT_REGEX = r'[0-9]{,2};\s*(?:URL|url)=\'?([^\'"]+)'
             found = re.search(
                 r'(?i)<meta\s+(?=(?:[a-z-]+="[^"]+"\s+)*http-equiv="refresh")'
-                r'(?:[a-z-]+="[^"]+"\s+)*?content="%s' % REDIRECT_REGEX,
+                rf'(?:[a-z-]+="[^"]+"\s+)*?content="{REDIRECT_REGEX}',
                 webpage)
             if not found:
                 # Look also in Refresh HTTP header

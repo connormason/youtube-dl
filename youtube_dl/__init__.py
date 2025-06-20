@@ -56,10 +56,10 @@ def _real_main(argv=None):
     if opts.headers is not None:
         for h in opts.headers:
             if ':' not in h:
-                parser.error('wrong header formatting, it should be key:value, not "%s"' % h)
+                parser.error(f'wrong header formatting, it should be key:value, not "{h}"')
             key, value = h.split(':', 1)
             if opts.verbose:
-                write_string('[debug] Adding header from command line option %s:%s\n' % (key, value))
+                write_string(f'[debug] Adding header from command line option {key}:{value}\n')
             std_headers[key] = value
 
     # Dump user agent
@@ -80,7 +80,7 @@ def _real_main(argv=None):
             if opts.verbose:
                 write_string('[debug] Batch file urls: ' + repr(batch_urls) + '\n')
         except OSError:
-            sys.exit('ERROR: batch file %s could not be read' % opts.batchfile)
+            sys.exit(f'ERROR: batch file {opts.batchfile} could not be read')
     all_urls = batch_urls + [url.strip() for url in args]  # batch_urls are already striped in read_batch_urls
     _enc = preferredencoding()
     all_urls = [url.decode(_enc, 'ignore') if isinstance(url, bytes) else url for url in all_urls]
@@ -102,7 +102,7 @@ def _real_main(argv=None):
             if hasattr(ie, 'SEARCH_KEY'):
                 _SEARCHES = ('cute kittens', 'slithering pythons', 'falling cat', 'angry poodle', 'purple fish', 'running tortoise', 'sleeping bunny', 'burping cow')
                 _COUNTS = ('', '5', '10', 'all')
-                desc += ' (Example: "%s%s:%s" )' % (ie.SEARCH_KEY, random.choice(_COUNTS), random.choice(_SEARCHES))
+                desc += f' (Example: "{ie.SEARCH_KEY}{random.choice(_COUNTS)}:{random.choice(_SEARCHES)}" )'
             write_string(desc + '\n', out=sys.stdout)
         sys.exit(0)
 

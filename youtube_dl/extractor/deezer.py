@@ -36,7 +36,7 @@ class DeezerPlaylistIE(InfoExtractor):
             default=None)
         if geoblocking_msg is not None:
             raise ExtractorError(
-                'Deezer said: %s' % geoblocking_msg, expected=True)
+                f'Deezer said: {geoblocking_msg}', expected=True)
 
         data_json = self._search_regex(
             (r'__DZR_APP_STATE__\s*=\s*({.+?})\s*</script>',
@@ -72,7 +72,7 @@ class DeezerPlaylistIE(InfoExtractor):
             entries.append({
                 'id': s['SNG_ID'],
                 'duration': int_or_none(s.get('DURATION')),
-                'title': '%s - %s' % (artists, s['SNG_TITLE']),
+                'title': '{} - {}'.format(artists, s['SNG_TITLE']),
                 'uploader': s['ART_NAME'],
                 'uploader_id': s['ART_ID'],
                 'age_limit': 16 if s.get('EXPLICIT_LYRICS') == '1' else 0,

@@ -1644,7 +1644,7 @@ def _parse_unichr(s):
         return compat_chr(s)
     except ValueError:
         # work around "unichr() arg not in range(0x10000) (narrow Python build)"
-        return ('\\U%08x' % s).decode('unicode-escape')
+        return (f'\\U{s:08x}').decode('unicode-escape')
 
 
 _map = dict(

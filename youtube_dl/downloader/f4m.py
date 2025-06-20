@@ -315,7 +315,7 @@ class F4mFD(FragmentFD):
     def real_download(self, filename, info_dict):
         man_url = info_dict['url']
         requested_bitrate = info_dict.get('tbr')
-        self.to_screen('[%s] Downloading f4m manifest' % self.FD_NAME)
+        self.to_screen(f'[{self.FD_NAME}] Downloading f4m manifest')
 
         urlh = self.ydl.urlopen(self._prepare_url(info_dict, man_url))
         man_url = urlh.geturl()
@@ -332,8 +332,8 @@ class F4mFD(FragmentFD):
             formats = sorted(formats, key=lambda f: f[0])
             rate, media = formats[-1]
         else:
-            rate, media = list(filter(
-                lambda f: int(f[0]) == requested_bitrate, formats))[0]
+            rate, media = next(filter(
+                lambda f: int(f[0]) == requested_bitrate, formats))
 
         # Prefer baseURL for relative URLs as per 11.2 of F4M 3.0 spec.
         man_base_url = get_base_url(doc) or man_url

@@ -49,7 +49,7 @@ class ExternalFD(FileDownloader):
             # correct and expected termination thus all postprocessing
             # should take place
             retval = 0
-            self.to_screen('[%s] Interrupted by user' % self.get_basename())
+            self.to_screen(f'[{self.get_basename()}] Interrupted by user')
         finally:
             if self._cookies_tempfile and os.path.isfile(self._cookies_tempfile):
                 try:
@@ -66,7 +66,7 @@ class ExternalFD(FileDownloader):
             }
             if filename != '-':
                 fsize = os.path.getsize(encodeFilename(tmpfilename))
-                self.to_screen('\r[%s] Downloaded %s bytes' % (self.get_basename(), fsize))
+                self.to_screen(f'\r[{self.get_basename()}] Downloaded {fsize} bytes')
                 self.try_rename(tmpfilename, filename)
                 status.update({
                     'downloaded_bytes': fsize,
@@ -150,7 +150,7 @@ class CurlFD(ExternalFD):
         if cookie_header:
             cmd += ['--cookie', cookie_header]
         for key, val in self._header_items(info_dict):
-            cmd += ['--header', '%s: %s' % (key, val)]
+            cmd += ['--header', f'{key}: {val}']
         cmd += self._bool_option('--continue-at', 'continuedl', '-', '0')
         cmd += self._valueless_option('--silent', 'noprogress')
         cmd += self._valueless_option('--verbose', 'verbose')
@@ -185,7 +185,7 @@ class AxelFD(ExternalFD):
     def _make_cmd(self, tmpfilename, info_dict):
         cmd = [self.exe, '-o', tmpfilename]
         for key, val in self._header_items(info_dict):
-            cmd += ['-H', '%s: %s' % (key, val)]
+            cmd += ['-H', f'{key}: {val}']
         cookie_header = self.ydl.cookiejar.get_cookie_header(info_dict['url'])
         if cookie_header:
             cmd += ['-H', f'Cookie: {cookie_header}', '--max-redirect=0']
@@ -202,7 +202,7 @@ class WgetFD(ExternalFD):
         if self.ydl.cookiejar.get_cookie_header(info_dict['url']):
             cmd += ['--load-cookies', self._write_cookies()]
         for key, val in self._header_items(info_dict):
-            cmd += ['--header', '%s: %s' % (key, val)]
+            cmd += ['--header', f'{key}: {val}']
         cmd += self._option('--limit-rate', 'ratelimit')
         retry = self._option('--tries', 'retries')
         if len(retry) == 2:
@@ -213,7 +213,7 @@ class WgetFD(ExternalFD):
         proxy = self.params.get('proxy')
         if proxy:
             for var in ('http_proxy', 'https_proxy'):
-                cmd += ['--execute', '%s=%s' % (var, proxy)]
+                cmd += ['--execute', f'{var}={proxy}']
         cmd += self._valueless_option('--no-check-certificate', 'nocheckcertificate')
         cmd += self._configuration_args()
         cmd += ['--', info_dict['url']]
@@ -239,7 +239,7 @@ class Aria2cFD(ExternalFD):
         if self.ydl.cookiejar.get_cookie_header(info_dict['url']):
             cmd += [f'--load-cookies={self._write_cookies()}']
         for key, val in self._header_items(info_dict):
-            cmd += ['--header', '%s: %s' % (key, val)]
+            cmd += ['--header', f'{key}: {val}']
         cmd += self._configuration_args(['--max-connection-per-server', '4'])
         cmd += ['--out', os.path.basename(tmpfilename)]
         cmd += self._option('--max-overall-download-limit', 'ratelimit')
@@ -264,11 +264,11 @@ class Aria2cFD(ExternalFD):
         cmd += ['--auto-file-renaming=false']
         if 'fragments' in info_dict:
             cmd += ['--file-allocation=none', '--uri-selector=inorder']
-            url_list_file = '%s.frag.urls' % (tmpfilename, )
+            url_list_file = f'{tmpfilename}.frag.urls'
             url_list = []
             for frag_index, fragment in enumerate(info_dict['fragments']):
                 fragment_filename = '%s-Frag%d' % (os.path.basename(tmpfilename), frag_index)
-                url_list.append('%s\n\tout=%s' % (fragment['url'], self._aria2c_filename(fragment_filename)))
+                url_list.append('{}\n\tout={}'.format(fragment['url'], self._aria2c_filename(fragment_filename)))
             stream, _ = self.sanitize_open(url_list_file, 'wb')
             stream.write('\n'.join(url_list).encode())
             stream.close()
@@ -346,7 +346,7 @@ class HttpieFD(ExternalFD):
     def _make_cmd(self, tmpfilename, info_dict):
         cmd = ['http', '--download', '--output', tmpfilename, info_dict['url']]
         for key, val in self._header_items(info_dict):
-            cmd += ['%s:%s' % (key, val)]
+            cmd += [f'{key}:{val}']
 
         # httpie 3.1.0+ removes the Cookie header on redirect, so this should be safe for now. [1]
         # If we ever need cookie handling for redirects, we can export the cookiejar into a session. [2]
@@ -354,7 +354,7 @@ class HttpieFD(ExternalFD):
         # 2: https://httpie.io/docs/cli/sessions
         cookie_header = self.ydl.cookiejar.get_cookie_header(info_dict['url'])
         if cookie_header:
-            cmd += ['Cookie:%s' % cookie_header]
+            cmd += [f'Cookie:{cookie_header}']
         return cmd
 
 
@@ -414,18 +414,18 @@ class FFmpegFD(ExternalFD):
             headers = handle_youtubedl_headers(info_dict['http_headers'])
             args += [
                 '-headers',
-                ''.join('%s: %s\r\n' % (key, val) for key, val in headers.items())]
+                ''.join(f'{key}: {val}\r\n' for key, val in headers.items())]
 
         env = None
         proxy = self.params.get('proxy')
         if proxy:
             if not re.match(r'^[\da-zA-Z]+://', proxy):
-                proxy = 'http://%s' % proxy
+                proxy = f'http://{proxy}'
 
             if proxy.startswith('socks'):
                 self.report_warning(
-                    '%s does not support SOCKS proxies. Downloading is likely to fail. '
-                    'Consider adding --hls-prefer-native to your command.' % self.get_basename())
+                    f'{self.get_basename()} does not support SOCKS proxies. Downloading is likely to fail. '
+                    'Consider adding --hls-prefer-native to your command.')
 
             # Since December 2015 ffmpeg supports -http_proxy option (see
             # http://git.videolan.org/?p=ffmpeg.git;a=commit;h=b4eb1f29ebddd60c41a2eb39f5af701e38e0d3fd)

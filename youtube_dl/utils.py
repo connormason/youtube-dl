@@ -1686,7 +1686,8 @@ USER_AGENTS = {
 
 
 NO_DEFAULT = object()
-IDENTITY = lambda x: x
+def IDENTITY(x):
+    return x
 
 ENGLISH_MONTH_NAMES = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -1808,9 +1809,11 @@ def write_json_file(obj, fn):
         # os.path.basename returns a bytes object, but NamedTemporaryFile
         # will fail if the filename contains non-ascii characters unless we
         # use a unicode object
-        path_basename = lambda f: os.path.basename(f).decode(encoding)
+        def path_basename(f):
+            return os.path.basename(f).decode(encoding)
         # the same for os.path.dirname
-        path_dirname = lambda f: os.path.dirname(f).decode(encoding)
+        def path_dirname(f):
+            return os.path.dirname(f).decode(encoding)
     else:
         path_basename = os.path.basename
         path_dirname = os.path.dirname
@@ -1824,13 +1827,10 @@ def write_json_file(obj, fn):
 
     # In Python 2.x, json.dump expects a bytestream.
     # In Python 3.x, it writes to a character stream
-    if sys.version_info < (3, 0):
-        args['mode'] = 'wb'
-    else:
-        args.update({
-            'mode': 'w',
-            'encoding': 'utf-8',
-        })
+    args.update({
+        'mode': 'w',
+        'encoding': 'utf-8',
+    })
 
     tf = tempfile.NamedTemporaryFile(**compat_kwargs(args))
 
@@ -1852,20 +1852,11 @@ def write_json_file(obj, fn):
         raise
 
 
-if sys.version_info >= (2, 7):
-    def find_xpath_attr(node, xpath, key, val=None):
-        """ Find the xpath xpath[@key=val] """
-        assert re.match(r'^[a-zA-Z_-]+$', key)
-        expr = xpath + ('[@%s]' % key if val is None else "[@%s='%s']" % (key, val))
-        return node.find(expr)
-else:
-    def find_xpath_attr(node, xpath, key, val=None):
-        for f in node.findall(compat_xpath(xpath)):
-            if key not in f.attrib:
-                continue
-            if val is None or f.attrib.get(key) == val:
-                return f
-        return None
+def find_xpath_attr(node, xpath, key, val=None):
+    """ Find the xpath xpath[@key=val] """
+    assert re.match(r'^[a-zA-Z_-]+$', key)
+    expr = xpath + (f'[@{key}]' if val is None else f"[@{key}='{val}']")
+    return node.find(expr)
 
 
 # On python2.6 the xml.etree.ElementTree.Element methods don't support
@@ -1879,7 +1870,7 @@ def xpath_with_ns(path, ns_map):
             replaced.append(c[0])
         else:
             ns, tag = c
-            replaced.append('{%s}%s' % (ns_map[ns], tag))
+            replaced.append(f'{{{ns_map[ns]}}}{tag}')
     return '/'.join(replaced)
 
 
@@ -1900,7 +1891,7 @@ def xpath_element(node, xpath, name=None, fatal=False, default=NO_DEFAULT):
             return default
         elif fatal:
             name = xpath if name is None else name
-            raise ExtractorError('Could not find XML element %s' % name)
+            raise ExtractorError(f'Could not find XML element {name}')
         else:
             return None
     return n
@@ -1915,7 +1906,7 @@ def xpath_text(node, xpath, name=None, fatal=False, default=NO_DEFAULT):
             return default
         elif fatal:
             name = xpath if name is None else name
-            raise ExtractorError('Could not find XML element\'s text %s' % name)
+            raise ExtractorError(f'Could not find XML element\'s text {name}')
         else:
             return None
     return n.text
@@ -1927,8 +1918,8 @@ def xpath_attr(node, xpath, key, name=None, fatal=False, default=NO_DEFAULT):
         if default is not NO_DEFAULT:
             return default
         elif fatal:
-            name = '%s[@%s]' % (xpath, key) if name is None else name
-            raise ExtractorError('Could not find XML attribute %s' % name)
+            name = f'{xpath}[@{key}]' if name is None else name
+            raise ExtractorError(f'Could not find XML attribute {name}')
         else:
             return None
     return n.attrib[key]
@@ -1953,7 +1944,7 @@ def get_element_by_attribute(attribute, value, html, escape_value=True):
 def get_elements_by_class(class_name, html):
     """Return the content of all tags with the specified class in the passed HTML document as a list"""
     return get_elements_by_attribute(
-        'class', r'[^\'"]*\b%s\b[^\'"]*' % re.escape(class_name),
+        'class', rf'[^\'"]*\b{re.escape(class_name)}\b[^\'"]*',
         html, escape_value=False)
 
 
@@ -1963,15 +1954,15 @@ def get_elements_by_attribute(attribute, value, html, escape_value=True):
     value = re.escape(value) if escape_value else value
 
     retlist = []
-    for m in re.finditer(r'''(?xs)
+    for m in re.finditer(rf'''(?xs)
         <([a-zA-Z0-9:._-]+)
          (?:\s+[a-zA-Z0-9:._-]+(?:=[a-zA-Z0-9:._-]*|="[^"]*"|='[^']*'|))*?
-         \s+%s=['"]?%s['"]?
+         \s+{re.escape(attribute)}=['"]?{value}['"]?
          (?:\s+[a-zA-Z0-9:._-]+(?:=[a-zA-Z0-9:._-]*|="[^"]*"|='[^']*'|))*?
         \s*>
         (?P<content>.*?)
         </\1>
-    ''' % (re.escape(attribute), value), html):
+    ''', html):
         res = m.group('content')
 
         if res.startswith('"') or res.startswith("'"):
@@ -2142,7 +2133,7 @@ def sanitize_url(url):
     # Prepend protocol-less URLs with `http:` scheme in order to mitigate
     # the number of unwanted failures due to missing protocol
     if url.startswith('//'):
-        return 'http:%s' % url
+        return f'http:{url}'
     # Fix some common typos seen so far
     COMMON_TYPOS = (
         # https://github.com/ytdl-org/youtube-dl/issues/15649
@@ -2164,8 +2155,8 @@ def extract_basic_auth(url):
         parts.hostname if parts.port is None
         else '%s:%d' % (parts.hostname, parts.port))))
     auth_payload = base64.b64encode(
-        ('%s:%s' % (parts.username, parts.password or '')).encode('utf-8'))
-    return url, 'Basic {0}'.format(auth_payload.decode('ascii'))
+        ('{}:{}'.format(parts.username, parts.password or '')).encode('utf-8'))
+    return url, 'Basic {}'.format(auth_payload.decode('ascii'))
 
 
 def sanitized_Request(url, *args, **kwargs):
@@ -2212,7 +2203,7 @@ def _htmlentity_transform(entity_with_semicolon):
         numstr = mobj.group(1)
         if numstr.startswith('x'):
             base = 16
-            numstr = '0%s' % numstr
+            numstr = f'0{numstr}'
         else:
             base = 10
         # See https://github.com/ytdl-org/youtube-dl/issues/7518\
@@ -2223,7 +2214,7 @@ def _htmlentity_transform(entity_with_semicolon):
             pass
 
     # Unknown entity in name, return its literal representation
-    return '&%s;' % entity
+    return f'&{entity};'
 
 
 def unescapeHTML(s):
@@ -2340,16 +2331,13 @@ def make_HTTPS_handler(params, **kwargs):
             # but HTTPSHandler has no context=)
             return YoutubeDLHTTPSHandler(params, context=context, **kwargs)
 
-    if sys.version_info < (3, 2):
-        return YoutubeDLHTTPSHandler(params, **kwargs)
-    else:  # Python3 < 3.4
-        context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-        context.verify_mode = (ssl.CERT_NONE
-                               if opts_no_check_certificate
-                               else ssl.CERT_REQUIRED)
-        context.set_default_verify_paths()
-        set_alpn_protocols(context)
-        return YoutubeDLHTTPSHandler(params, context=context, **kwargs)
+    context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+    context.verify_mode = (ssl.CERT_NONE
+                           if opts_no_check_certificate
+                           else ssl.CERT_REQUIRED)
+    context.set_default_verify_paths()
+    set_alpn_protocols(context)
+    return YoutubeDLHTTPSHandler(params, context=context, **kwargs)
 
 
 def bug_reports_message(before=';'):
@@ -2361,9 +2349,9 @@ def bug_reports_message(before=';'):
     msg = (
         'please report this issue on https://github.com/ytdl-org/youtube-dl/issues ,'
         ' using the appropriate issue template.'
-        ' Make sure you are using the latest version; %s.'
+        f' Make sure you are using the latest version; {update_cmd}.'
         ' Be sure to call youtube-dl with the --verbose option and include the complete output.'
-    ) % update_cmd
+    )
 
     before = (before or '').rstrip()
     if not before or before.endswith(('.', '!', '?')):
@@ -2390,10 +2378,10 @@ class ExtractorError(YoutubeDLError):
         if video_id is not None:
             msg = video_id + ': ' + msg
         if cause:
-            msg += ' (caused by %r)' % cause
+            msg += f' (caused by {cause!r})'
         if not expected:
             msg += bug_reports_message()
-        super(ExtractorError, self).__init__(msg)
+        super().__init__(msg)
 
         self.traceback = tb
         self.exc_info = sys.exc_info()  # preserve original exception
@@ -2408,8 +2396,8 @@ class ExtractorError(YoutubeDLError):
 
 class UnsupportedError(ExtractorError):
     def __init__(self, url):
-        super(UnsupportedError, self).__init__(
-            'Unsupported URL: %s' % url, expected=True)
+        super().__init__(
+            f'Unsupported URL: {url}', expected=True)
         self.url = url
 
 
@@ -2425,7 +2413,7 @@ class GeoRestrictedError(ExtractorError):
     geographic location due to geographic restrictions imposed by a website.
     """
     def __init__(self, msg, countries=None):
-        super(GeoRestrictedError, self).__init__(msg, expected=True)
+        super().__init__(msg, expected=True)
         self.msg = msg
         self.countries = countries
 
@@ -2440,7 +2428,7 @@ class DownloadError(YoutubeDLError):
 
     def __init__(self, msg, exc_info=None):
         """ exc_info, if given, is the original exception that caused the trouble (as returned by sys.exc_info()). """
-        super(DownloadError, self).__init__(msg)
+        super().__init__(msg)
         self.exc_info = exc_info
 
 
@@ -2461,7 +2449,7 @@ class PostProcessingError(YoutubeDLError):
     """
 
     def __init__(self, msg):
-        super(PostProcessingError, self).__init__(msg)
+        super().__init__(msg)
         self.msg = msg
 
 
@@ -2488,7 +2476,7 @@ class ContentTooShortError(YoutubeDLError):
     """
 
     def __init__(self, downloaded, expected):
-        super(ContentTooShortError, self).__init__(
+        super().__init__(
             f'Downloaded {downloaded} bytes, expected {expected} bytes'
         )
         # Both in bytes
@@ -2498,7 +2486,7 @@ class ContentTooShortError(YoutubeDLError):
 
 class XAttrMetadataError(YoutubeDLError):
     def __init__(self, code=None, msg='Unknown error'):
-        super(XAttrMetadataError, self).__init__(msg)
+        super().__init__(msg)
         self.code = code
         self.msg = msg
 
@@ -2520,8 +2508,6 @@ def _create_http_connection(ydl_handler, http_class, is_https, *args, **kwargs):
     # Working around python 2 bug (see http://bugs.python.org/issue17849) by limiting
     # expected HTTP responses to meet HTTP/1.0 or later (see also
     # https://github.com/ytdl-org/youtube-dl/issues/6727)
-    if sys.version_info < (3, 0):
-        kwargs['strict'] = True
     hc = http_class(*args, **compat_kwargs(kwargs))
     source_address = ydl_handler._params.get('source_address')
 
@@ -2540,8 +2526,7 @@ def _create_http_connection(ydl_handler, http_class, is_https, *args, **kwargs):
             if addrs and not ip_addrs:
                 ip_version = 'v4' if af == socket.AF_INET else 'v6'
                 raise OSError(
-                    "No remote IP%s addresses available for connect, can't use '%s' as source address"
-                    % (ip_version, source_address[0]))
+                    f"No remote IP{ip_version} addresses available for connect, can't use '{source_address[0]}' as source address")
             for res in ip_addrs:
                 af, socktype, proto, canonname, sa = res
                 sock = None
@@ -2732,13 +2717,6 @@ class YoutubeDLHandler(compat_urllib_request.HTTPHandler):
 
         req.headers = handle_youtubedl_headers(req.headers)
 
-        if sys.version_info < (2, 7):
-            # avoid possible race where __r_type may be unset
-            req.get_type()
-            if '#' in req.get_full_url():
-                # Python 2.6 is brain-dead when it comes to fragments
-                req._Request__original = req._Request__original.partition('#')[0]
-                req._Request__r_type = req._Request__r_type.partition('#')[0]
 
         # Use the totally undocumented AbstractHTTPHandler per
         # https://github.com/yt-dlp/yt-dlp/pull/4158
@@ -2805,8 +2783,7 @@ class YoutubeDLHandler(compat_urllib_request.HTTPHandler):
             location = resp.headers.get('Location')
             if location:
                 # As of RFC 2616 default charset is iso-8859-1 that is respected by python 3
-                if sys.version_info >= (3, 0):
-                    location = location.encode('iso-8859-1')
+                location = location.encode('iso-8859-1')
                 location = location.decode('utf-8')
                 # resolve embedded . and ..
                 location_fixed = self._fix_path(location)
@@ -2977,7 +2954,7 @@ class YoutubeDLCookieJar(compat_cookiejar.MozillaCookieJar):
                 raise compat_cookiejar.LoadError('invalid length %d' % len(cookie_list))
             cookie = self._CookieFileEntry(*cookie_list)
             if cookie.expires_at and not cookie.expires_at.isdigit():
-                raise compat_cookiejar.LoadError('invalid expires at %s' % cookie.expires_at)
+                raise compat_cookiejar.LoadError(f'invalid expires at {cookie.expires_at}')
             return line
 
         cf = io.StringIO()
@@ -2987,8 +2964,7 @@ class YoutubeDLCookieJar(compat_cookiejar.MozillaCookieJar):
                     cf.write(prepare_line(line))
                 except compat_cookiejar.LoadError as e:
                     write_string(
-                        'WARNING: skipping cookie file entry due to %s: %r\n'
-                        % (e, line), sys.stderr)
+                        f'WARNING: skipping cookie file entry due to {e}: {line!r}\n', sys.stderr)
                     continue
         cf.seek(0)
         self._really_load(cf, filename, ignore_discard, ignore_expires)
@@ -3292,7 +3268,7 @@ class DateRange:
         else:
             self.end = datetime.datetime.max.date()
         if self.start > self.end:
-            raise ValueError('Date range: "%s" , the start date must be before the end date' % self)
+            raise ValueError(f'Date range: "{self}" , the start date must be before the end date')
 
     @classmethod
     def day(cls, day):
@@ -3306,7 +3282,7 @@ class DateRange:
         return self.start <= date <= self.end
 
     def __str__(self):
-        return '%s - %s' % (self.start.isoformat(), self.end.isoformat())
+        return f'{self.start.isoformat()} - {self.end.isoformat()}'
 
     def __eq__(self, other):
         return (isinstance(other, DateRange)
@@ -3477,14 +3453,14 @@ if sys.platform == 'win32':
         handle = msvcrt.get_osfhandle(f.fileno())
         if not LockFileEx(handle, 0x2 if exclusive else 0x0, 0,
                           whole_low, whole_high, f._lock_file_overlapped_p):
-            raise OSError('Locking file failed: %r' % ctypes.FormatError())
+            raise OSError(f'Locking file failed: {ctypes.FormatError()!r}')
 
     def _unlock_file(f):
         assert f._lock_file_overlapped_p
         handle = msvcrt.get_osfhandle(f.fileno())
         if not UnlockFileEx(handle, 0,
                             whole_low, whole_high, f._lock_file_overlapped_p):
-            raise OSError('Unlocking file failed: %r' % ctypes.FormatError())
+            raise OSError(f'Unlocking file failed: {ctypes.FormatError()!r}')
 
 else:
     # Some platforms, such as Jython, is missing fcntl
@@ -3582,13 +3558,13 @@ def format_bytes(bytes):
         exponent = int(math.log(bytes, 1024.0))
     suffix = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'][exponent]
     converted = float(bytes) / float(1024 ** exponent)
-    return '%.2f%s' % (converted, suffix)
+    return f'{converted:.2f}{suffix}'
 
 
 def lookup_unit_table(unit_table, s):
     units_re = '|'.join(re.escape(u) for u in unit_table)
     m = re.match(
-        r'(?P<num>[0-9]+(?:[,.][0-9]*)?)\s*(?P<unit>%s)\b' % units_re, s)
+        rf'(?P<num>[0-9]+(?:[,.][0-9]*)?)\s*(?P<unit>{units_re})\b', s)
     if not m:
         return None
     num_str = m.group('num').replace(',', '.')
@@ -3960,7 +3936,7 @@ def check_executable(exe, args=[]):
     args can be a list of arguments for a short output (like -version) """
     try:
         process_communicate_or_kill(subprocess.Popen(
-            [exe] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
+            [exe, *args], stdout=subprocess.PIPE, stderr=subprocess.PIPE))
     except OSError:
         return False
     return exe
@@ -3975,7 +3951,7 @@ def get_exe_version(exe, args=['--version'],
         # SIGTTOU if youtube-dl is run in the background.
         # See https://github.com/ytdl-org/youtube-dl/issues/955#issuecomment-209789656
         out, _ = process_communicate_or_kill(subprocess.Popen(
-            [encodeArgument(exe)] + args,
+            [encodeArgument(exe), *args],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT))
     except OSError:
@@ -4004,7 +3980,7 @@ class LazyList(compat_collections_abc.Iterable):
             if cause:
                 # reproduce `raise from`
                 self.__cause__ = cause
-            super(IndexError, self).__init__()
+            super().__init__()
 
     def __init__(self, iterable, **kwargs):
         # kwarg-only
@@ -4199,10 +4175,6 @@ def lowercase_escape(s):
 
 def escape_rfc3986(s, safe=None):
     """Escape non-ASCII characters as suggested by RFC 3986"""
-    if sys.version_info < (3, 0):
-        s = _encode_compat_str(s, 'utf-8')
-        if safe is not None:
-            safe = _encode_compat_str(safe, 'utf-8')
     if safe is None:
         safe = b"%/;:@&=+$,!~*'()?#[]"
     # ensure unicode: after quoting, it can always be converted
@@ -4285,7 +4257,7 @@ def update_Request(req, url=None, data=None, headers={}, query={}):
 
 
 def _multipart_encode_impl(data, boundary):
-    content_type = 'multipart/form-data; boundary=%s' % boundary
+    content_type = f'multipart/form-data; boundary={boundary}'
 
     out = b''
     for k, v in data.items():
@@ -4411,7 +4383,8 @@ def merge_dicts(*dicts, **kwargs):
                     and isinstance(to_dict[k], compat_str)
                     and not to_dict[k])
     else:
-        can_merge_str = lambda k, v, to_dict: False
+        def can_merge_str(k, v, to_dict):
+            return False
 
     merged = {}
     for a_dict in reversed(dicts) if rev else dicts:
@@ -4476,7 +4449,7 @@ def parse_age_limit(s):
         return int(m.group('age'))
     if s in US_RATINGS:
         return US_RATINGS[s]
-    m = re.match(r'^TV[_-]?(%s)$' % '|'.join(k[3:] for k in TV_PARENTAL_GUIDELINES), s)
+    m = re.match(r'^TV[_-]?({})$'.format('|'.join(k[3:] for k in TV_PARENTAL_GUIDELINES)), s)
     if m:
         return TV_PARENTAL_GUIDELINES['TV-' + m.group(1)]
     return None
@@ -4543,9 +4516,11 @@ def js_to_json(code, *args, **kwargs):
         im = re.split(r'^!+', v)
         if len(im) > 1 and not im[-1].endswith(':'):
             if (len(v) - len(im[1])) % 2 == 1:
-                inv = lambda x: 'true' if x == 0 else 'false'
+                def inv(x):
+                    return 'true' if x == 0 else 'false'
             else:
-                inv = lambda x: 'false' if x == 0 else 'true'
+                def inv(x):
+                    return 'false' if x == 0 else 'true'
         if not any(x for x in im):
             return
         v = im[-1]
@@ -4702,7 +4677,7 @@ def parse_codecs(codecs_str):
             if not acodec:
                 acodec = full_codec
         else:
-            write_string('WARNING: Unknown codec %s\n' % full_codec, sys.stderr)
+            write_string(f'WARNING: Unknown codec {full_codec}\n', sys.stderr)
     if not vcodec and not acodec:
         if len(split_codecs) == 2:
             return {
@@ -4732,7 +4707,7 @@ def urlhandle_detect_ext(url_handle):
 
 
 def encode_data_uri(data, mime_type):
-    return 'data:%s;base64,%s' % (mime_type, base64.b64encode(data).decode('ascii'))
+    return 'data:{};base64,{}'.format(mime_type, base64.b64encode(data).decode('ascii'))
 
 
 def age_restricted(content_limit, age_limit):
@@ -4789,7 +4764,7 @@ def determine_protocol(info_dict):
 
 def render_table(header_row, data):
     """ Render a list of rows, each as a list of values """
-    table = [header_row] + data
+    table = [header_row, *data]
     max_lens = [max(len(compat_str(v)) for v in col) for col in zip(*table)]
     format_str = ' '.join('%-' + compat_str(ml + 1) + 's' for ml in max_lens[:-1]) + '%s'
     return '\n'.join(format_str % tuple(row) for row in table)
@@ -4806,14 +4781,14 @@ def _match_one(filter_part, dct):
     }
     operator_rex = re.compile(r'''(?x)\s*
         (?P<key>[a-z_]+)
-        \s*(?P<op>%s)(?P<none_inclusive>\s*\?)?\s*
+        \s*(?P<op>{})(?P<none_inclusive>\s*\?)?\s*
         (?:
             (?P<intval>[0-9.]+(?:[kKmMgGtTpPeEzZyY]i?[Bb]?)?)|
             (?P<quote>["\'])(?P<quotedstrval>(?:\\.|(?!(?P=quote)|\\).)+?)(?P=quote)|
             (?P<strval>(?![0-9.])[a-z0-9A-Z]*)
         )
         \s*$
-        ''' % '|'.join(map(re.escape, COMPARISON_OPERATORS.keys())))
+        '''.format('|'.join(map(re.escape, COMPARISON_OPERATORS.keys()))))
     m = operator_rex.search(filter_part)
     if m:
         op = COMPARISON_OPERATORS[m.group('op')]
@@ -4828,11 +4803,11 @@ def _match_one(filter_part, dct):
                 and isinstance(actual_value, compat_str))):
             if m.group('op') not in ('=', '!='):
                 raise ValueError(
-                    'Operator %s does not support string values!' % m.group('op'))
+                    'Operator {} does not support string values!'.format(m.group('op')))
             comparison_value = m.group('quotedstrval') or m.group('strval') or m.group('intval')
             quote = m.group('quote')
             if quote is not None:
-                comparison_value = comparison_value.replace(r'\%s' % quote, quote)
+                comparison_value = comparison_value.replace(rf'\{quote}', quote)
         else:
             try:
                 comparison_value = int(m.group('intval'))
@@ -4842,7 +4817,7 @@ def _match_one(filter_part, dct):
                     comparison_value = parse_filesize(m.group('intval') + 'B')
                 if comparison_value is None:
                     raise ValueError(
-                        'Invalid integer value %r in filter part %r' % (
+                        'Invalid integer value {!r} in filter part {!r}'.format(
                             m.group('intval'), filter_part))
         if actual_value is None:
             return m.group('none_inclusive')
@@ -4853,16 +4828,16 @@ def _match_one(filter_part, dct):
         '!': lambda v: (v is False) if isinstance(v, bool) else (v is None),
     }
     operator_rex = re.compile(r'''(?x)\s*
-        (?P<op>%s)\s*(?P<key>[a-z_]+)
+        (?P<op>{})\s*(?P<key>[a-z_]+)
         \s*$
-        ''' % '|'.join(map(re.escape, UNARY_OPERATORS.keys())))
+        '''.format('|'.join(map(re.escape, UNARY_OPERATORS.keys()))))
     m = operator_rex.search(filter_part)
     if m:
         op = UNARY_OPERATORS[m.group('op')]
         actual_value = dct.get(m.group('key'))
         return op(actual_value)
 
-    raise ValueError('Invalid filter part %r' % filter_part)
+    raise ValueError(f'Invalid filter part {filter_part!r}')
 
 
 def match_str(filter_str, dct):
@@ -4878,7 +4853,7 @@ def match_filter_func(filter_str):
             return None
         else:
             video_title = info_dict.get('title', info_dict.get('id', 'video'))
-            return '%s does not pass filter %s, skipping ..' % (video_title, filter_str)
+            return f'{video_title} does not pass filter {filter_str}, skipping ..'
     return _match_func
 
 
@@ -4959,11 +4934,11 @@ def dfxp2srt(dfxp_data):
                         if self._applied_styles and self._applied_styles[-1].get(k) == v:
                             continue
                         if k == 'color':
-                            font += ' color="%s"' % v
+                            font += f' color="{v}"'
                         elif k == 'fontSize':
-                            font += ' size="%s"' % v
+                            font += f' size="{v}"'
                         elif k == 'fontFamily':
-                            font += ' face="%s"' % v
+                            font += f' face="{v}"'
                         elif k == 'fontWeight' and v == 'bold':
                             self._out += '<b>'
                             unclosed_elements.append('b')
@@ -4987,7 +4962,7 @@ def dfxp2srt(dfxp_data):
             if tag not in (_x('ttml:br'), 'br'):
                 unclosed_elements = self._unclosed_elements.pop()
                 for element in reversed(unclosed_elements):
-                    self._out += '</%s>' % element
+                    self._out += f'</{element}>'
                 if unclosed_elements and self._applied_styles:
                     self._applied_styles.pop()
 
@@ -5822,7 +5797,7 @@ class PerRequestProxyHandler(compat_urllib_request.ProxyHandler):
     def __init__(self, proxies=None):
         # Set default handlers
         for type in ('http', 'https'):
-            setattr(self, '%s_open' % type,
+            setattr(self, f'{type}_open',
                     lambda r, proxy='__noproxy__', type=type, meth=self.proxy_open:
                         meth(r, proxy, type))
         compat_urllib_request.ProxyHandler.__init__(self, proxies)
@@ -5908,7 +5883,7 @@ def ohdave_rsa_encrypt(data, exponent, modulus):
 
     payload = int(binascii.hexlify(data[::-1]), 16)
     encrypted = pow(payload, exponent, modulus)
-    return '%x' % encrypted
+    return f'{encrypted:x}'
 
 
 def pkcs1pad(data, length):
@@ -5923,7 +5898,7 @@ def pkcs1pad(data, length):
         raise ValueError('Input data too long for PKCS#1 padding')
 
     pseudo_random = [random.randint(0, 254) for _ in range(length - len(data) - 3)]
-    return [0, 2] + pseudo_random + [0] + data
+    return [0, 2, *pseudo_random, 0, *data]
 
 
 def encode_base_n(num, n, table=None):
@@ -5998,7 +5973,8 @@ def decode_png(png_data):
         raise OSError('Not a valid PNG file.')
 
     int_map = {1: '>B', 2: '>H', 4: '>I'}
-    unpack_integer = lambda x: compat_struct_unpack(int_map[len(x)], x)[0]
+    def unpack_integer(x):
+        return compat_struct_unpack(int_map[len(x)], x)[0]
 
     chunks = []
 
@@ -6110,9 +6086,8 @@ def write_xattr(path, key, value):
                 # TODO: fallback to CLI tools
                 raise XAttrUnavailableError(
                     'python-pyxattr is detected but is too old. '
-                    'youtube-dl requires %s or above while your version is %s. '
-                    'Falling back to other xattr implementations' % (
-                        pyxattr_required_version, xattr.__version__))
+                    f'youtube-dl requires {pyxattr_required_version} or above while your version is {xattr.__version__}. '
+                    'Falling back to other xattr implementations')
 
             setxattr = xattr.set
         else:  # xattr
@@ -6317,12 +6292,15 @@ def traverse_obj(obj, *paths, **kwargs):
     # instant compat
     str = compat_str
 
-    casefold = lambda k: compat_casefold(k) if isinstance(k, str) else k
+    def casefold(k):
+        return compat_casefold(k) if isinstance(k, str) else k
 
     if isinstance(expected_type, type):
-        type_test = lambda val: val if isinstance(val, expected_type) else None
+        def type_test(val):
+            return val if isinstance(val, expected_type) else None
     else:
-        type_test = lambda val: try_call(expected_type or IDENTITY, args=(val,))
+        def type_test(val):
+            return try_call(expected_type or IDENTITY, args=(val,))
 
     def lookup_or_none(v, k, getter=None):
         with compat_contextlib_suppress(LookupError):
@@ -6331,8 +6309,7 @@ def traverse_obj(obj, *paths, **kwargs):
     def from_iterable(iterables):
         # chain.from_iterable(['ABC', 'DEF']) --> A B C D E F
         for it in iterables:
-            for item in it:
-                yield item
+            yield from it
 
     def apply_key(key, obj, is_last):
         branching = False
@@ -6534,7 +6511,7 @@ def T(*x):
 
 
 def get_first(obj, keys, **kwargs):
-    return traverse_obj(obj, (Ellipsis,) + tuple(variadic(keys)), get_all=False, **kwargs)
+    return traverse_obj(obj, (Ellipsis, *tuple(variadic(keys))), get_all=False, **kwargs)
 
 
 def join_nonempty(*values, **kwargs):
@@ -6690,7 +6667,7 @@ class _UnsafeExtensionError(Exception):
         )))
 
     def __init__(self, extension):
-        super(_UnsafeExtensionError, self).__init__(f'unsafe file extension: {extension!r}')
+        super().__init__(f'unsafe file extension: {extension!r}')
         self.extension = extension
 
     # support --no-check-extensions

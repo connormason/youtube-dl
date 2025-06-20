@@ -206,10 +206,10 @@ class HttpFD(FileDownloader):
                 min_data_len = self.params.get('min_filesize')
                 max_data_len = self.params.get('max_filesize')
                 if min_data_len is not None and data_len < min_data_len:
-                    self.to_screen('\r[download] File is smaller than min-filesize (%s bytes < %s bytes). Aborting.' % (data_len, min_data_len))
+                    self.to_screen(f'\r[download] File is smaller than min-filesize ({data_len} bytes < {min_data_len} bytes). Aborting.')
                     return False
                 if max_data_len is not None and data_len > max_data_len:
-                    self.to_screen('\r[download] File is larger than max-filesize (%s bytes > %s bytes). Aborting.' % (data_len, max_data_len))
+                    self.to_screen(f'\r[download] File is larger than max-filesize ({data_len} bytes > {max_data_len} bytes). Aborting.')
                     return False
 
             byte_counter = 0 + ctx.resume_len
@@ -259,20 +259,20 @@ class HttpFD(FileDownloader):
                         ctx.filename = self.undo_temp_name(ctx.tmpfilename)
                         self.report_destination(ctx.filename)
                     except OSError as err:
-                        self.report_error('unable to open for writing: %s' % str(err))
+                        self.report_error(f'unable to open for writing: {err!s}')
                         return False
 
                     if self.params.get('xattr_set_filesize', False) and data_len is not None:
                         try:
                             write_xattr(ctx.tmpfilename, 'user.ytdl.filesize', str(data_len).encode('utf-8'))
                         except (XAttrUnavailableError, XAttrMetadataError) as err:
-                            self.report_error('unable to set filesize xattr: %s' % str(err))
+                            self.report_error(f'unable to set filesize xattr: {err!s}')
 
                 try:
                     ctx.stream.write(data_block)
                 except OSError as err:
                     self.to_stderr('\n')
-                    self.report_error('unable to write data: %s' % str(err))
+                    self.report_error(f'unable to write data: {err!s}')
                     return False
 
                 # Apply rate limit
@@ -354,5 +354,5 @@ class HttpFD(FileDownloader):
             except SucceedDownload:
                 return True
 
-        self.report_error('giving up after %s retries' % retries)
+        self.report_error(f'giving up after {retries} retries')
         return False

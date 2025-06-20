@@ -24,7 +24,7 @@ class EmbedThumbnailPPError(PostProcessingError):
 
 class EmbedThumbnailPP(FFmpegPostProcessor):
     def __init__(self, downloader=None, already_have_thumbnail=False):
-        super(EmbedThumbnailPP, self).__init__(downloader)
+        super().__init__(downloader)
         self._already_have_thumbnail = already_have_thumbnail
 
     def run(self, info):
@@ -53,7 +53,7 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
             thumbnail_ext = thumbnail_ext[1:].lower()
             if thumbnail_ext != 'webp' and is_webp(thumbnail_filename):
                 self._downloader.to_screen(
-                    '[ffmpeg] Correcting extension to webp and escaping path for thumbnail "%s"' % thumbnail_filename)
+                    f'[ffmpeg] Correcting extension to webp and escaping path for thumbnail "{thumbnail_filename}"')
                 thumbnail_webp_filename = replace_extension(thumbnail_filename, 'webp')
                 os.rename(encodeFilename(thumbnail_filename), encodeFilename(thumbnail_webp_filename))
                 thumbnail_filename = thumbnail_webp_filename
@@ -66,7 +66,7 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
             escaped_thumbnail_filename = thumbnail_filename.replace('%', '#')
             os.rename(encodeFilename(thumbnail_filename), encodeFilename(escaped_thumbnail_filename))
             escaped_thumbnail_jpg_filename = replace_extension(escaped_thumbnail_filename, 'jpg')
-            self._downloader.to_screen('[ffmpeg] Converting thumbnail "%s" to JPEG' % escaped_thumbnail_filename)
+            self._downloader.to_screen(f'[ffmpeg] Converting thumbnail "{escaped_thumbnail_filename}" to JPEG')
             self.run_ffmpeg(escaped_thumbnail_filename, escaped_thumbnail_jpg_filename, ['-bsf:v', 'mjpeg2jpeg'])
             os.remove(encodeFilename(escaped_thumbnail_filename))
             thumbnail_jpg_filename = replace_extension(thumbnail_filename, 'jpg')
@@ -79,7 +79,7 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
                 '-c', 'copy', '-map', '0', '-map', '1',
                 '-metadata:s:v', 'title="Album cover"', '-metadata:s:v', 'comment="Cover (Front)"']
 
-            self._downloader.to_screen('[ffmpeg] Adding thumbnail to "%s"' % filename)
+            self._downloader.to_screen(f'[ffmpeg] Adding thumbnail to "{filename}"')
 
             self.run_ffmpeg_multiple_files([filename, thumbnail_filename], temp_filename, options)
 
@@ -103,10 +103,10 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
                    encodeArgument('-o'),
                    encodeFilename(temp_filename, True)]
 
-            self._downloader.to_screen('[atomicparsley] Adding thumbnail to "%s"' % filename)
+            self._downloader.to_screen(f'[atomicparsley] Adding thumbnail to "{filename}"')
 
             if self._downloader.params.get('verbose', False):
-                self._downloader.to_screen('[debug] AtomicParsley command line: %s' % shell_quote(cmd))
+                self._downloader.to_screen(f'[debug] AtomicParsley command line: {shell_quote(cmd)}')
 
             p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = process_communicate_or_kill(p)

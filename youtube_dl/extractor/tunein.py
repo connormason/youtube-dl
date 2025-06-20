@@ -92,7 +92,7 @@ class TuneInStationIE(TuneInBaseIE):
 
     @classmethod
     def suitable(cls, url):
-        return False if TuneInClipIE.suitable(url) else super(TuneInStationIE, cls).suitable(url)
+        return False if TuneInClipIE.suitable(url) else super().suitable(url)
 
     _TESTS = [{
         'url': 'http://tunein.com/radio/Jazz24-885-s34682/',
@@ -178,5 +178,5 @@ class TuneInShortenerIE(InfoExtractor):
         urlh = self._request_webpage(
             url, redirect_id, note='Downloading redirect page')
         url = urlh.geturl()
-        self.to_screen('Following redirect: %s' % url)
+        self.to_screen(f'Following redirect: {url}')
         return self.url_result(url)
