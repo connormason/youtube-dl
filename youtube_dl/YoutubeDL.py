@@ -780,19 +780,11 @@ class YoutubeDL:
         process -- whether to resolve all unresolved references (URLs, playlist items),
             must be True for download to work.
         """
-        print(f'url:                     {url}')
-        print(f'download:                {download}')
-        print(f'ie_key:                  {ie_key}')
-        print(f'extra_info:              {extra_info}')
-        print(f'process:                 {process}')
-
         if ie_key:
             ies = [self.get_info_extractor(ie_key)]
         else:
             ies = self._ies
 
-        print(f'ies: {ies}')
-        print('')
         for ie in ies:
             if not ie.suitable(url):
                 continue
