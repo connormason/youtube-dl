@@ -385,6 +385,7 @@ class InfoExtractor:
         if '_VALID_URL_RE' not in cls.__dict__:
             # _VALID_URL can now be a list/tuple of patterns
             cls._VALID_URL_RE = tuple(map(re.compile, variadic(cls._VALID_URL)))
+
         # 20% faster than next(filter(None, (p.match(url) for p in cls._VALID_URL_RE)), None) in 2.7
         for p in cls._VALID_URL_RE:
             p = p.match(url)

@@ -52,7 +52,6 @@ from .compat import compat_urllib_request
 from .compat import compat_urllib_request_DataHandler
 from .downloader import get_suitable_downloader
 from .downloader.rtmp import rtmpdump_version
-from .extractor import _LAZY_LOADER
 from .extractor import gen_extractor_classes
 from .extractor import get_info_extractor
 from .postprocessor import FFmpegFixupM3u8PP
@@ -925,12 +924,14 @@ class YoutubeDL:
             ie_result is None
         ):  # Finished already (backwards compatibility; listformats and friends should be moved here)
             return
+
         if isinstance(ie_result, list):
             # Backwards compatibility: old IE result format
             ie_result = {
                 '_type': 'compat_list',
                 'entries': ie_result,
             }
+
         self.add_default_extra_info(ie_result, ie, url)
         if process:
             return self.process_ie_result(ie_result, download, extra_info)
@@ -2453,8 +2454,6 @@ class YoutubeDL:
             return self.write_debug(''.join(s))
 
         writeln_debug('youtube-dl version ', __version__)
-        if _LAZY_LOADER:
-            writeln_debug('Lazy loading extractors enabled')
         if ytdl_is_updateable():
             writeln_debug('Single file build')
         try:
